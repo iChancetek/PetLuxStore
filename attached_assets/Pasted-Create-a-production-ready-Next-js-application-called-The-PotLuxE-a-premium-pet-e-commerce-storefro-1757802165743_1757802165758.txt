@@ -1,0 +1,75 @@
+Create a production-ready Next.js application called The PotLuxE — a premium pet e-commerce storefront with modern UI, fast performance, accessibility, search, personalization, and GenAI features (smart product descriptions, search suggestions, personalized product recommendations, and an on-site AI assistant). Use Neon (Postgres) as the database, Drizzle for DB models/queries, Clerk for authentication and billing, and shadcn components for UI/auth flows. Styling with Tailwind CSS; use shadcn/ui for cards, forms, and layout primitives. The attached logo image should be used in the header and favicon.
+
+Tech stack (explicit)
+
+Framework: Next.js (latest stable) with App Router / Server Components as appropriate
+
+Styling: Tailwind CSS + shadcn/ui components + Lucide icons
+
+DB: Neon (hosted Postgres)
+
+ORM: Drizzle ORM (TypeScript) for schema definition and queries
+
+Auth & Billing: Clerk (authentication + Clerk Billing / Stripe integration for subscriptions & one-time payments)
+
+Payments: Clerk Billing backed by Stripe (or Clerk’s recommended payments flow)
+
+Images: Cloudinary or Next.js Image Optimization (use provider of choice)
+
+Search & Recs: Vector search for RAG (optional) / Algolia or in-house search + GenAI prompting for suggestions
+
+GenAI: OpenAI (or user’s chosen provider) for:
+
+product description generation
+
+persona-based marketing copy
+
+conversational site assistant / on-site chatbot
+
+dynamic cross-sell/up-sell messages
+
+
+
+Monitoring & Analytics: Sentry (errors) + Plausible / Google Analytics (privacy choice)
+
+Testing: Cypress (E2E), Jest + React Testing Library (unit)
+
+Key pages & UX flows
+
+Home / Landing — hero with featured collections, GenAI curated picks (“Picks for [pet name]”), search bar with autocomplete.
+
+Shop / Category pages — filters (brand, size, price, rating), sorting, faceted search.
+
+Product detail — gallery, variants, stock, subscription options, generated product description + “Why this product is great for [pet type]” (GenAI), reviews.
+
+Cart & Checkout — Clerk billing integration, shipping options, apply discounts, subscription management.
+
+Account — Clerk auth, order history, manage subscriptions, address book.
+
+AI Assistant — a floating chat widget (RAG to product FAQ + product dataset) that can:
+
+answer product questions
+
+generate feed/food/size suggestions
+
+create a custom shopping list for user’s pet
+
+Admin / CMS — upload products, manage inventory, view orders, edit GenAI prompt templates. (Can be a protected route / mini admin)
+
+Policies / Help / Contact
+
+GenAI features (concrete)
+
+Auto product descriptions: For new products, call GenAI to generate short & long descriptions, bullet benefits, feeding guidelines, and SEO meta. Provide an “Edit” UI for human review.
+
+Personalized recommendations: On home and product pages show GenAI-enhanced “Recommended for your pet” by combining user profile + browsing history + product embeddings.
+
+Search suggestions & rewrite queries: Use GenAI to rewrite ambiguous queries (e.g., “best for seniors” → “best food for senior dogs 10+”).
+
+On-site Chat Assistant: Uses RAG to combine product DB + docs + reviews; fallback to LLM for general pet advice. Include safety & veterinary disclaimer.
+
+Marketing copy variants: Auto-generate ad headlines, email subject lines, and social captions.
+
+Example GenAI prompt (for product description):
+
+“Write a short (40–60 words) and a long (150–200 words) product description for the following pet product. Include three bullet benefits, suggested usage, and a 120-character SEO meta description. Product: [title], Category: [category], Key features: [list], Target: [dog/cat/other], Tone: premium & playful.”
