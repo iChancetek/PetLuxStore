@@ -170,9 +170,6 @@ export class DatabaseStorage implements IStorage {
     sortBy?: 'price' | 'rating' | 'created' | 'ai_match';
     sortOrder?: 'asc' | 'desc';
   }): Promise<{ products: Product[]; total: number }> {
-    let query = db.select().from(products).where(eq(products.isActive, true));
-    let countQuery = db.select({ count: sql<number>`count(*)` }).from(products).where(eq(products.isActive, true));
-
     const conditions = [eq(products.isActive, true)];
 
     if (filters?.categoryId) {
@@ -201,36 +198,31 @@ export class DatabaseStorage implements IStorage {
       conditions.push(sql`${products.inStock} > 0`);
     }
 
-    if (conditions.length > 1) {
-      query = query.where(and(...conditions));
-      countQuery = countQuery.where(and(...conditions));
-    }
+    // Build the where condition
+    const whereCondition = conditions.length > 1 ? and(...conditions) : conditions[0];
 
-    // Sorting
-    if (filters?.sortBy) {
-      const sortColumn = filters.sortBy === 'created' ? products.createdAt :
-                        filters.sortBy === 'rating' ? products.rating :
-                        filters.sortBy === 'ai_match' ? products.aiMatch : products.price;
-      
-      if (filters.sortOrder === 'desc') {
-        query = query.orderBy(desc(sortColumn));
-      } else {
-        query = query.orderBy(asc(sortColumn));
-      }
-    } else {
-      query = query.orderBy(desc(products.createdAt));
-    }
+    // Build sort column
+    const sortColumn = filters?.sortBy === 'created' ? products.createdAt :
+                      filters?.sortBy === 'rating' ? products.rating :
+                      filters?.sortBy === 'ai_match' ? products.aiMatch : products.price;
+    
+    const sortDirection = filters?.sortOrder === 'desc' ? desc : asc;
+    const orderBy = filters?.sortBy ? sortDirection(sortColumn) : desc(products.createdAt);
 
-    // Pagination
+    // Build queries
+    let productsQuery = db.select().from(products).where(whereCondition).orderBy(orderBy);
+    
     if (filters?.limit) {
-      query = query.limit(filters.limit);
+      productsQuery = productsQuery.limit(filters.limit);
     }
     if (filters?.offset) {
-      query = query.offset(filters.offset);
+      productsQuery = productsQuery.offset(filters.offset);
     }
 
+    const countQuery = db.select({ count: sql<number>`count(*)` }).from(products).where(whereCondition);
+
     const [productsResult, totalResult] = await Promise.all([
-      query,
+      productsQuery,
       countQuery
     ]);
 

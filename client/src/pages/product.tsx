@@ -48,18 +48,6 @@ export default function Product() {
   const { data: product, isLoading: loadingProduct } = useQuery({
     queryKey: ["/api/products/slug", params?.slug],
     enabled: isAuthenticated && !!params?.slug,
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-      }
-    },
   });
 
   // Fetch product reviews
@@ -89,13 +77,6 @@ export default function Product() {
       });
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
     },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: "Failed to add item to cart. Please try again.",
-        variant: "destructive",
-      });
-    },
   });
 
   // Add review mutation
@@ -114,13 +95,6 @@ export default function Product() {
       setReviewText("");
       setReviewRating(5);
       queryClient.invalidateQueries({ queryKey: ["/api/products", product.id, "reviews"] });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to submit review. Please try again.",
-        variant: "destructive",
-      });
     },
   });
 

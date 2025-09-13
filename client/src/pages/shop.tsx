@@ -60,18 +60,6 @@ export default function Shop() {
       limit: productsPerPage 
     }],
     enabled: isAuthenticated,
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-      }
-    },
   });
 
   // Fetch categories for filters

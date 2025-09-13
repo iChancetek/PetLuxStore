@@ -51,18 +51,6 @@ export default function Admin() {
   const { data: stats, isLoading: loadingStats } = useQuery({
     queryKey: ["/api/admin/stats"],
     enabled: isAuthenticated,
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-      }
-    },
   });
 
   // Fetch products for management

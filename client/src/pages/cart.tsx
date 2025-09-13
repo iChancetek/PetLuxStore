@@ -38,18 +38,6 @@ export default function Cart() {
   const { data: cartItems, isLoading: loadingCart } = useQuery({
     queryKey: ["/api/cart"],
     enabled: isAuthenticated,
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-      }
-    },
   });
 
   // Update cart item quantity
@@ -59,13 +47,6 @@ export default function Cart() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to update quantity. Please try again.",
-        variant: "destructive",
-      });
     },
   });
 
@@ -81,13 +62,6 @@ export default function Cart() {
         description: "Item has been removed from your cart.",
       });
     },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to remove item. Please try again.",
-        variant: "destructive",
-      });
-    },
   });
 
   // Clear cart
@@ -100,13 +74,6 @@ export default function Cart() {
       toast({
         title: "Cart cleared",
         description: "All items have been removed from your cart.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to clear cart. Please try again.",
-        variant: "destructive",
       });
     },
   });

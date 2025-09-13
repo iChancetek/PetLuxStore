@@ -17,7 +17,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
 }
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2023-10-16",
+  apiVersion: "2024-06-20",
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -27,7 +27,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub;
       const user = await storage.getUser(userId);
       res.json(user);
     } catch (error) {
@@ -193,7 +193,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Cart routes
   app.get('/api/cart', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub;
       const cartItems = await storage.getCartItems(userId);
       res.json(cartItems);
     } catch (error) {
@@ -204,7 +204,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/cart', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub;
       const cartItemData = insertCartItemSchema.parse({
         ...req.body,
         userId
@@ -241,7 +241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/cart', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub;
       await storage.clearCart(userId);
       res.json({ message: "Cart cleared" });
     } catch (error) {
@@ -270,7 +270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Orders routes
   app.get('/api/orders', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub;
       const orders = await storage.getOrders(userId);
       res.json(orders);
     } catch (error) {
@@ -294,7 +294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/orders', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub;
       const { orderData, orderItems } = req.body;
 
       // Generate order number
@@ -328,7 +328,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/products/:id/reviews', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub;
       const reviewData = insertReviewSchema.parse({
         ...req.body,
         userId,

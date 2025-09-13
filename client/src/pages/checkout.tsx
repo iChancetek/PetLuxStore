@@ -128,18 +128,6 @@ export default function Checkout() {
   const { data: cartItems, isLoading: loadingCart } = useQuery({
     queryKey: ["/api/cart"],
     enabled: isAuthenticated,
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-      }
-    },
   });
 
   const items = cartItems || [];

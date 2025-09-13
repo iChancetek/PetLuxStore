@@ -231,16 +231,6 @@ export default function ChatAssistant() {
         </Card>
       )}
 
-      <style jsx>{`
-        .chat-bubble {
-          animation: float 3s ease-in-out infinite;
-        }
-        
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-6px); }
-        }
-      `}</style>
     </div>
   );
 }

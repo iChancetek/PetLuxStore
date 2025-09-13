@@ -278,11 +278,6 @@ export default function Landing() {
         </div>
       </footer>
 
-      <style jsx>{`
-        .gradient-hero {
-          background: linear-gradient(135deg, hsl(152 47% 26%) 0%, hsl(152 47% 35%) 100%);
-        }
-      `}</style>
     </div>
   );
 }

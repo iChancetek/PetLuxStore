@@ -35,19 +35,6 @@ export default function Home() {
   const { data: recommendations, isLoading: loadingRecommendations } = useQuery({
     queryKey: ["/api/products", { limit: 8, sortBy: "ai_match", sortOrder: "desc" }],
     enabled: isAuthenticated,
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-    },
   });
 
   // Fetch categories
@@ -310,20 +297,6 @@ export default function Home() {
       <Footer />
       <ChatAssistant />
 
-      <style jsx>{`
-        .gradient-hero {
-          background: linear-gradient(135deg, hsl(152 47% 26%) 0%, hsl(152 47% 35%) 100%);
-        }
-        
-        .ai-pulse {
-          animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.7; }
-        }
-      `}</style>
     </div>
   );
 }
