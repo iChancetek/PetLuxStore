@@ -187,19 +187,20 @@ async function buildChatContext(req: any, frontendContext: any, userMessage: str
     let userProfile: AIUserProfile | undefined;
     if (userId) {
       try {
-        const profile = await storage.getUserById(userId);
-        const recentOrders = await storage.getUserOrders(userId, 1, 10);
-        const recentActivity = await storage.getUserActivity(userId, 1, 20);
+        const profile = await storage.getUser(userId);
+        const { orders: recentOrders } = await storage.getOrdersByUser(userId, { page: 1, limit: 10 });
+        const { events: recentActivity } = await storage.getUserActivity({ userId, page: 1, limit: 20 });
         
         userProfile = {
           role: profile?.role || 'customer',
-          previousPurchases: recentOrders.data.map(order => order.id).slice(0, 5),
-          browsedProducts: recentActivity.data
-            .filter(activity => activity.entityType === 'product')
-            .map(activity => activity.entityId)
+          previousPurchases: recentOrders.map(order => order.id).slice(0, 5),
+          browsedProducts: recentActivity
+            .filter(event => event.type === 'product_view' && event.productId)
+            .map(event => event.productId!)
             .slice(0, 10)
         };
       } catch (error) {
+        console.warn('Error building user profile for AI context:', error);
         // Continue without user profile if there's an error
       }
     }
@@ -800,6 +801,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Generate AI response with full context
       const chatResponse = await generateChatResponse(message, aiContext);
+
+      // Fallback message if OpenAI returns empty content
+      if (!chatResponse.message || chatResponse.message.trim() === '') {
+        console.warn('OpenAI returned empty response, using fallback');
+        chatResponse.message = "I apologize, but I'm having trouble processing your request right now. Could you please try rephrasing your question or ask me something else about our pet products?";
+      }
 
       // Save interaction to database
       if (userId) {
