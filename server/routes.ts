@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupClerkAuth, requireAuth, optionalAuth } from "./clerkAuth";
 import { 
   generateProductDescription, 
   generateProductRecommendations, 
@@ -22,10 +22,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
-  await setupAuth(app);
+  setupClerkAuth(app);
 
   // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  app.get('/api/auth/user', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
       const user = await storage.getUser(userId);
@@ -137,7 +137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI-powered product description generation (admin only)
-  app.post('/api/products/:id/generate-description', isAuthenticated, async (req, res) => {
+  app.post('/api/products/:id/generate-description', requireAuth, async (req, res) => {
     try {
       const product = await storage.getProductById(req.params.id);
       if (!product) {
@@ -191,7 +191,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Cart routes
-  app.get('/api/cart', isAuthenticated, async (req: any, res) => {
+  app.get('/api/cart', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
       const cartItems = await storage.getCartItems(userId);
@@ -202,7 +202,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/cart', isAuthenticated, async (req: any, res) => {
+  app.post('/api/cart', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
       const cartItemData = insertCartItemSchema.parse({
@@ -218,7 +218,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/cart/:id', isAuthenticated, async (req, res) => {
+  app.patch('/api/cart/:id', requireAuth, async (req, res) => {
     try {
       const { quantity } = req.body;
       const cartItem = await storage.updateCartItem(req.params.id, quantity);
@@ -229,7 +229,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/cart/:id', isAuthenticated, async (req, res) => {
+  app.delete('/api/cart/:id', requireAuth, async (req, res) => {
     try {
       await storage.removeFromCart(req.params.id);
       res.json({ message: "Item removed from cart" });
@@ -239,7 +239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/cart', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/cart', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
       await storage.clearCart(userId);
@@ -251,7 +251,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Stripe payment routes
-  app.post("/api/create-payment-intent", isAuthenticated, async (req, res) => {
+  app.post("/api/create-payment-intent", requireAuth, async (req, res) => {
     try {
       const { amount } = req.body;
       const paymentIntent = await stripe.paymentIntents.create({
@@ -268,7 +268,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Orders routes
-  app.get('/api/orders', isAuthenticated, async (req: any, res) => {
+  app.get('/api/orders', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
       const orders = await storage.getOrders(userId);
@@ -279,7 +279,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/orders/:id', isAuthenticated, async (req, res) => {
+  app.get('/api/orders/:id', requireAuth, async (req, res) => {
     try {
       const order = await storage.getOrderById(req.params.id);
       if (!order) {
@@ -292,7 +292,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/orders', isAuthenticated, async (req: any, res) => {
+  app.post('/api/orders', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
       const { orderData, orderItems } = req.body;
@@ -326,7 +326,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/products/:id/reviews', isAuthenticated, async (req: any, res) => {
+  app.post('/api/products/:id/reviews', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
       const reviewData = insertReviewSchema.parse({
@@ -405,7 +405,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin routes
-  app.get('/api/admin/stats', isAuthenticated, async (req, res) => {
+  app.get('/api/admin/stats', requireAuth, async (req, res) => {
     try {
       // TODO: Add admin role check
       const stats = await storage.getDashboardStats();
@@ -416,7 +416,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/admin/orders', isAuthenticated, async (req, res) => {
+  app.get('/api/admin/orders', requireAuth, async (req, res) => {
     try {
       // TODO: Add admin role check
       const orders = await storage.getOrders(); // All orders for admin
@@ -427,7 +427,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/admin/products', isAuthenticated, async (req, res) => {
+  app.post('/api/admin/products', requireAuth, async (req, res) => {
     try {
       // TODO: Add admin role check
       const productData = insertProductSchema.parse(req.body);
@@ -439,7 +439,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/admin/products/:id', isAuthenticated, async (req, res) => {
+  app.patch('/api/admin/products/:id', requireAuth, async (req, res) => {
     try {
       // TODO: Add admin role check
       const updates = req.body;
@@ -451,7 +451,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/admin/products/:id', isAuthenticated, async (req, res) => {
+  app.delete('/api/admin/products/:id', requireAuth, async (req, res) => {
     try {
       // TODO: Add admin role check
       await storage.deleteProduct(req.params.id);
@@ -463,7 +463,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI Marketing Copy Generation (admin only)
-  app.post('/api/admin/marketing/generate', isAuthenticated, async (req, res) => {
+  app.post('/api/admin/marketing/generate', requireAuth, async (req, res) => {
     try {
       // TODO: Add admin role check
       const { productName, type, variants = 3 } = req.body;
