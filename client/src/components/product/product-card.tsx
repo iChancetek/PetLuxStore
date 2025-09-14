@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Star, Heart, ShoppingCart } from "lucide-react";
+import { Star, Heart, ShoppingCart, ImageOff } from "lucide-react";
 import { Link } from "wouter";
 
 interface ProductCardProps {
@@ -22,6 +22,7 @@ interface ProductCardProps {
     tags?: string[];
     brand?: string;
     inStock?: number;
+    imageUrl?: string;
   };
 }
 
@@ -29,6 +30,8 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
 
   const addToCartMutation = useMutation({
     mutationFn: async () => {
@@ -77,9 +80,40 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <Link href={productUrl}>
       <Card className="product-card cursor-pointer group hover:shadow-xl transition-all duration-300" data-testid={`card-product-${product.id}`}>
-        <CardContent className="p-6">
-          {/* Header with badges and wishlist */}
-          <div className="flex items-start justify-between mb-4">
+        <CardContent className="p-0">
+          {/* Product Image */}
+          <div className="relative aspect-square overflow-hidden rounded-t-lg bg-muted" data-testid={`image-container-${product.id}`}>
+            {product.imageUrl && !imageError ? (
+              <>
+                {imageLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-muted animate-pulse">
+                    <div className="w-8 h-8 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  </div>
+                )}
+                <img
+                  src={product.imageUrl}
+                  alt={product.name}
+                  className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${
+                    imageLoading ? "opacity-0" : "opacity-100"
+                  }`}
+                  onLoad={() => setImageLoading(false)}
+                  onError={() => {
+                    setImageError(true);
+                    setImageLoading(false);
+                  }}
+                  data-testid={`image-product-${product.id}`}
+                />
+              </>
+            ) : (
+              <div className="flex items-center justify-center h-full bg-muted text-muted-foreground" data-testid={`image-fallback-${product.id}`}>
+                <ImageOff className="w-12 h-12" />
+              </div>
+            )}
+          </div>
+          
+          <div className="p-6">
+            {/* Header with badges and wishlist */}
+            <div className="flex items-start justify-between mb-4">
             <div className="flex flex-wrap gap-2">
               {/* AI Match Badge */}
               {product.aiMatch && (
@@ -216,6 +250,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 </>
               )}
             </Button>
+          </div>
           </div>
         </CardContent>
       </Card>
