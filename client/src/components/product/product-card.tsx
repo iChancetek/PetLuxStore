@@ -79,13 +79,18 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   // Smart image URL determination
   const getImageUrl = (product: any) => {
+    // If imageUrl is explicitly null/empty, return null (no image)
+    if (!product.imageUrl || product.imageUrl === '') {
+      return null;
+    }
+    
     // If imageUrl exists and looks like a direct image URL (ends with image extension)
     if (product.imageUrl && /\.(jpg|jpeg|png|webp|gif)$/i.test(product.imageUrl)) {
       return product.imageUrl;
     }
     
     // If imageUrl is a spocket.co URL or not a direct image, use fallback
-    if (!product.imageUrl || product.imageUrl.includes('spocket.co') || !product.imageUrl.startsWith('http')) {
+    if (product.imageUrl.includes('spocket.co') || !product.imageUrl.startsWith('http')) {
       // Use product id or name to create a simple hash for consistent image mapping
       const hashString = product.id || product.name || 'default';
       const hash = hashString.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
@@ -120,7 +125,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               </div>
             )}
             
-            {imageError ? (
+            {imageError || !imageUrl ? (
               <div className="flex flex-col items-center justify-center h-full p-6 text-center">
                 <div className="w-16 h-16 mb-3 rounded-full bg-muted flex items-center justify-center">
                   <ImageOff className="w-8 h-8 text-muted-foreground" />
