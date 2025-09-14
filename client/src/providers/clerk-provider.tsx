@@ -1,18 +1,15 @@
 import { ClerkProvider } from '@clerk/clerk-react';
 
-// Temporarily disabled Clerk to fix startup issue
-// TODO: Re-enable once Clerk keys are properly configured
 export default function ClerkProviderWrapper({ children }: { children: React.ReactNode }) {
   const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
   
-  // If no Clerk key, just return children without Clerk wrapper
+  // Always provide ClerkProvider context, but log if key is missing
   if (!clerkPubKey) {
-    console.warn("Clerk publishable key not found, auth will be disabled");
-    return <>{children}</>;
+    console.error("VITE_CLERK_PUBLISHABLE_KEY not found. Authentication may not work properly.");
   }
 
   return (
-    <ClerkProvider publishableKey={clerkPubKey}>
+    <ClerkProvider publishableKey={clerkPubKey || ""}>
       {children}
     </ClerkProvider>
   );

@@ -44,7 +44,7 @@ export default function Navbar() {
     enabled: !!user,
   });
 
-  const cartItemCount = cartItems?.reduce((total: number, item: any) => total + item.quantity, 0) || 0;
+  const cartItemCount = Array.isArray(cartItems) ? cartItems.reduce((total: number, item: any) => total + item.quantity, 0) : 0;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
