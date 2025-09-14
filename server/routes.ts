@@ -25,8 +25,8 @@ if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
 }
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2024-06-20",
+const stripe = new Stripe(process.env.TESTING_STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2023-10-16",
 });
 
 // Audit logging helper function
@@ -306,7 +306,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Stripe payment routes
   app.post("/api/create-payment-intent", isAuthenticated, async (req, res) => {
     try {
+      console.log('Creating payment intent with amount:', req.body.amount);
       const { amount } = req.body;
+      
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ message: "Invalid amount provided" });
+      }
+      
       const paymentIntent = await stripe.paymentIntents.create({
         amount: Math.round(amount * 100), // Convert to cents
         currency: "usd",
@@ -314,8 +320,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId: req.user?.claims?.sub || '',
         },
       });
+      
+      console.log('Payment intent created successfully:', paymentIntent.id);
       res.json({ clientSecret: paymentIntent.client_secret });
     } catch (error: any) {
+      console.error('Stripe payment intent error:', error);
       res.status(500).json({ message: "Error creating payment intent: " + error.message });
     }
   });
