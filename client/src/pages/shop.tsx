@@ -164,7 +164,7 @@ export default function Shop() {
                         <span className="text-xs font-medium text-accent">AI-Sorted by Relevance</span>
                       </div>
                     </div>
-                    <Select value={`${filters.sortBy}-${filters.sortOrder}`} onValueChange={handleSortChange}>
+                    <Select value={`${filters.sortBy || 'created'}-${filters.sortOrder || 'desc'}`} onValueChange={handleSortChange}>
                       <SelectTrigger className="w-48" data-testid="select-sort">
                         <SelectValue />
                       </SelectTrigger>
