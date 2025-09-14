@@ -165,11 +165,31 @@ export default function Shop() {
                   {loadingProducts ? (
                     <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
                       {[...Array(9)].map((_, i) => (
-                        <div key={i} className="space-y-3">
-                          <Skeleton className="h-48 w-full rounded-lg" />
-                          <Skeleton className="h-4 w-3/4" />
-                          <Skeleton className="h-4 w-1/2" />
-                          <Skeleton className="h-8 w-full" />
+                        <div key={i} className="p-6 border rounded-lg space-y-4">
+                          <div className="flex justify-between items-start">
+                            <div className="flex gap-2">
+                              <Skeleton className="h-6 w-16 rounded-full" />
+                              <Skeleton className="h-6 w-12 rounded-full" />
+                            </div>
+                            <Skeleton className="h-8 w-8 rounded-full" />
+                          </div>
+                          <div className="flex gap-1">
+                            {[...Array(5)].map((_, j) => (
+                              <Skeleton key={j} className="h-4 w-4 rounded" />
+                            ))}
+                          </div>
+                          <Skeleton className="h-6 w-full" />
+                          <Skeleton className="h-4 w-2/3" />
+                          <div className="flex gap-1">
+                            <Skeleton className="h-5 w-16 rounded-full" />
+                            <Skeleton className="h-5 w-20 rounded-full" />
+                            <Skeleton className="h-5 w-12 rounded-full" />
+                          </div>
+                          <Skeleton className="h-5 w-20 rounded-full" />
+                          <div className="flex justify-between items-center">
+                            <Skeleton className="h-6 w-16" />
+                            <Skeleton className="h-8 w-24 rounded" />
+                          </div>
                         </div>
                       ))}
                     </div>

@@ -15,11 +15,12 @@ interface ProductCardProps {
     slug?: string;
     price: string;
     originalPrice?: string;
-    imageUrl?: string;
     aiMatch?: number;
     rating?: string;
     reviewCount?: number;
-    aiDescription?: string;
+    shortDescription?: string;
+    tags?: string[];
+    brand?: string;
     inStock?: number;
   };
 }
@@ -75,51 +76,45 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <Link href={productUrl}>
-      <Card className="product-card cursor-pointer group overflow-hidden hover:shadow-xl transition-all duration-300" data-testid={`card-product-${product.id}`}>
-        <div className="relative">
-          <img 
-            src={product.imageUrl || "https://images.unsplash.com/photo-1589941013453-ec89f33b5e95?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300"}
-            alt={product.name}
-            className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-            data-testid={`img-product-${product.id}`}
-          />
-          
-          {/* AI Match Badge */}
-          {product.aiMatch && (
-            <Badge 
-              className="absolute top-3 left-3 bg-accent text-accent-foreground"
-              data-testid={`badge-ai-match-${product.id}`}
-            >
-              AI Match: {product.aiMatch}%
-            </Badge>
-          )}
-          
-          {/* Sale Badge */}
-          {product.originalPrice && (
-            <Badge 
-              variant="destructive" 
-              className="absolute top-3 right-12"
-              data-testid={`badge-sale-${product.id}`}
-            >
-              Sale
-            </Badge>
-          )}
-          
-          {/* Wishlist Button */}
-          <Button
-            variant="secondary"
-            size="icon"
-            className="absolute top-3 right-3 bg-card/80 hover:bg-card"
-            onClick={handleWishlistToggle}
-            data-testid={`button-wishlist-${product.id}`}
-          >
-            <Heart 
-              className={`h-4 w-4 ${isWishlisted ? "text-red-500 fill-red-500" : "text-muted-foreground"}`} 
-            />
-          </Button>
-        </div>
-        
+      <Card className="product-card cursor-pointer group hover:shadow-xl transition-all duration-300" data-testid={`card-product-${product.id}`}>
         <CardContent className="p-6">
+          {/* Header with badges and wishlist */}
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex flex-wrap gap-2">
+              {/* AI Match Badge */}
+              {product.aiMatch && (
+                <Badge 
+                  className="bg-accent text-accent-foreground"
+                  data-testid={`badge-ai-match-${product.id}`}
+                >
+                  AI Match: {product.aiMatch}%
+                </Badge>
+              )}
+              
+              {/* Sale Badge */}
+              {product.originalPrice && (
+                <Badge 
+                  variant="destructive" 
+                  data-testid={`badge-sale-${product.id}`}
+                >
+                  Sale
+                </Badge>
+              )}
+            </div>
+            
+            {/* Wishlist Button */}
+            <Button
+              variant="secondary"
+              size="icon"
+              className="bg-card/80 hover:bg-card shrink-0"
+              onClick={handleWishlistToggle}
+              data-testid={`button-wishlist-${product.id}`}
+            >
+              <Heart 
+                className={`h-4 w-4 ${isWishlisted ? "text-red-500 fill-red-500" : "text-muted-foreground"}`} 
+              />
+            </Button>
+          </div>
           {/* Rating */}
           <div className="flex items-center space-x-2 mb-2">
             <div className="flex text-accent">
@@ -148,12 +143,36 @@ export default function ProductCard({ product }: ProductCardProps) {
             {product.name}
           </h3>
           
-          {/* AI Description */}
-          {product.aiDescription && (
-            <p className="text-muted-foreground text-sm mb-4 line-clamp-2" data-testid={`text-ai-description-${product.id}`}>
-              {product.aiDescription}
+          {/* Brand */}
+          {product.brand && (
+            <p className="text-sm text-muted-foreground mb-2" data-testid={`text-brand-${product.id}`}>
+              By {product.brand}
             </p>
           )}
+          
+          {/* Key Bullet Points */}
+          <div className="mb-4">
+            {product.shortDescription && (
+              <p className="text-sm text-muted-foreground mb-2" data-testid={`text-short-description-${product.id}`}>
+                {product.shortDescription}
+              </p>
+            )}
+            
+            {product.tags && product.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-2">
+                {product.tags.slice(0, 3).map((tag, index) => (
+                  <Badge 
+                    key={index} 
+                    variant="outline" 
+                    className="text-xs"
+                    data-testid={`badge-tag-${product.id}-${index}`}
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
           
           {/* Stock Status */}
           {product.inStock !== undefined && (
