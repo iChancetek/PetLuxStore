@@ -82,33 +82,14 @@ export default function ProductCard({ product }: ProductCardProps) {
       <Card className="product-card cursor-pointer group hover:shadow-xl transition-all duration-300" data-testid={`card-product-${product.id}`}>
         <CardContent className="p-0">
           {/* Product Image */}
-          <div className="relative aspect-square overflow-hidden rounded-t-lg bg-muted" data-testid={`image-container-${product.id}`}>
-            {product.imageUrl && !imageError ? (
-              <>
-                {imageLoading && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-muted animate-pulse">
-                    <div className="w-8 h-8 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                  </div>
-                )}
-                <img
-                  src={product.imageUrl}
-                  alt={product.name}
-                  className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${
-                    imageLoading ? "opacity-0" : "opacity-100"
-                  }`}
-                  onLoad={() => setImageLoading(false)}
-                  onError={() => {
-                    setImageError(true);
-                    setImageLoading(false);
-                  }}
-                  data-testid={`image-product-${product.id}`}
-                />
-              </>
-            ) : (
-              <div className="flex items-center justify-center h-full bg-muted text-muted-foreground" data-testid={`image-fallback-${product.id}`}>
-                <ImageOff className="w-12 h-12" />
+          <div className="relative aspect-square overflow-hidden rounded-t-lg bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20" data-testid={`image-container-${product.id}`}>
+            <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+              <div className="w-16 h-16 mb-3 rounded-full bg-primary/10 flex items-center justify-center">
+                <Heart className="w-8 h-8 text-primary" />
               </div>
-            )}
+              <h4 className="font-medium text-sm text-foreground/80 mb-1">Premium Pet Product</h4>
+              <p className="text-xs text-muted-foreground">Professional photo coming soon</p>
+            </div>
           </div>
           
           <div className="p-6">
@@ -149,6 +130,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               />
             </Button>
           </div>
+          
           {/* Rating */}
           <div className="flex items-center space-x-2 mb-2">
             <div className="flex text-accent">
