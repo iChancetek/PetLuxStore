@@ -192,44 +192,77 @@ Provide a JSON response:
   }
 }
 
-// AI Chat Assistant
+// AI Chat Assistant with RAG
 export async function generateChatResponse(
   userMessage: string,
   context: {
-    conversationHistory?: Array<{ role: string; content: string }>;
+    conversationHistory: Array<{ role: string; content: string }>;
+    currentProduct?: any;
+    categories: any[];
+    productsTopK: any[];
     userProfile?: any;
-    availableProducts?: any[];
-    currentPage?: string;
+    navigation: Record<string, string>;
+    currentPage: string;
   }
 ): Promise<ChatResponse> {
   try {
-    const systemPrompt = `You are PetLuxE AI Assistant, a knowledgeable and friendly pet care expert who helps customers find the perfect products for their pets and provides pet care advice.
+    // Build comprehensive system prompt with RAG context
+    const systemPrompt = `You are PetLuxE AI Assistant, an expert pet care advisor who helps customers find perfect products and provides personalized advice. You have comprehensive knowledge about our product catalog, website features, and pet care expertise.
 
-Guidelines:
-- Be helpful, friendly, and knowledgeable about pets
-- Focus on pet wellness and matching products to specific needs
-- If asked about products, provide specific recommendations when possible
-- Include safety disclaimers for health-related questions
-- Keep responses concise but informative
+## WEBSITE INFORMATION
+Current Page: ${context.currentPage}
+Available Pages: ${Object.entries(context.navigation).map(([path, desc]) => `${path}: ${desc}`).join(', ')}
+
+## PRODUCT CATALOG
+Available Categories: ${context.categories.map(cat => `${cat.name} (${cat.slug})`).join(', ')}
+
+## CURRENT CONTEXT
+${context.currentProduct ? `
+Current Product: ${context.currentProduct.name} - ${context.currentProduct.category}
+Price: $${context.currentProduct.price} | Rating: ${context.currentProduct.rating}/5 | In Stock: ${context.currentProduct.inStock}
+Description: ${context.currentProduct.shortDescription || 'Premium pet product'}
+` : 'No specific product in focus'}
+
+## PRODUCT RECOMMENDATIONS AVAILABLE
+Top Products: ${context.productsTopK.slice(0, 5).map(p => `${p.name} ($${p.price}, ${p.rating}★)`).join(', ')}${context.productsTopK.length > 5 ? '...' : ''}
+
+${context.userProfile ? `
+## USER PROFILE
+Role: ${context.userProfile.role}
+Previous Orders: ${context.userProfile.previousPurchases?.length || 0}
+Recently Browsed: ${context.userProfile.browsedProducts?.length || 0} products
+` : ''}
+
+## GUIDELINES
+- Answer questions about specific products using the provided catalog
+- Recommend products from the available inventory with specific names and prices
+- Explain website navigation and features accurately 
+- Provide pet care advice with safety disclaimers
+- Be conversational, helpful, and knowledgeable
+- Reference specific product details when recommending
+- Always include product IDs in recommendations for action buttons
+
+## RESPONSE FORMAT
+- Keep responses concise but informative (under 300 words)
+- Include specific product names, prices, and features when relevant
+- For health questions: "For health concerns, please consult your veterinarian."
 - Suggest relevant actions when appropriate
 
-Available actions you can suggest:
+## AVAILABLE ACTIONS
 - product_search: Search for specific products
 - recommendation: Get personalized product recommendations  
-- care_tip: Provide pet care advice
-
-Always include a safety disclaimer for health concerns: "For health concerns, please consult your veterinarian."`;
+- care_tip: Provide pet care advice`;
 
     const messages = [
       { role: "system", content: systemPrompt },
-      ...(context.conversationHistory || []),
+      ...context.conversationHistory,
       { role: "user", content: userMessage }
     ];
 
     const response = await openai.chat.completions.create({
       model: "gpt-5", // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
       messages: messages as any,
-      max_tokens: 500,
+      max_completion_tokens: 500,
     });
 
     const aiMessage = response.choices[0].message.content || '';

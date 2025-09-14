@@ -21,6 +21,211 @@ import {
   insertActivityEventSchema
 } from "@shared/schema";
 
+// AI RAG Context Types
+interface AIProductSummary {
+  id: string;
+  slug?: string;
+  name: string;
+  brand?: string;
+  category: string;
+  petType?: string;
+  price: number;
+  rating: number;
+  inStock?: number;
+  shortDescription?: string;
+  keyFeatures?: string[];
+}
+
+interface AICategory {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string;
+}
+
+interface AIUserProfile {
+  role?: string;
+  petType?: string;
+  petAge?: string;
+  petSize?: string;
+  previousPurchases?: string[];
+  browsedProducts?: string[];
+}
+
+interface AIContext {
+  conversationHistory: Array<{ role: string; content: string }>;
+  currentProduct?: AIProductSummary;
+  categories: AICategory[];
+  productsTopK: AIProductSummary[];
+  userProfile?: AIUserProfile;
+  navigation: Record<string, string>;
+  currentPage: string;
+}
+
+// Static website navigation map
+const AI_NAVIGATION = {
+  "/": "Homepage with featured products and categories",
+  "/shop": "Product catalog with filters and search",
+  "/ai-picks": "AI-powered personalized product recommendations", 
+  "/cart": "Shopping cart and checkout process",
+  "/dashboard": "User dashboard with orders and activity",
+  "/admin": "Admin dashboard for managing products and users (admin only)",
+  "/product/[slug]": "Individual product details page with reviews and recommendations"
+};
+
+// Build comprehensive RAG context for AI assistant
+async function buildChatContext(req: any, frontendContext: any, userMessage: string): Promise<AIContext> {
+  try {
+    const userId = req.user?.claims?.sub;
+    
+    // Get categories
+    const categories = await storage.getCategories();
+    const aiCategories: AICategory[] = categories.map(cat => ({
+      id: cat.id,
+      slug: cat.slug,
+      name: cat.name,
+      description: cat.description || undefined
+    }));
+
+    // Get current product if on product page or specified
+    let currentProduct: AIProductSummary | undefined;
+    const currentProductSlug = frontendContext?.currentProductSlug;
+    if (currentProductSlug) {
+      const product = await storage.getProductBySlug(currentProductSlug);
+      if (product) {
+        currentProduct = {
+          id: product.id,
+          slug: product.slug,
+          name: product.name,
+          brand: product.brand || undefined,
+          category: product.brand || 'Premium',
+          petType: product.petType || undefined,
+          price: Number(product.price),
+          rating: Number(product.rating) || 0,
+          inStock: product.inStock || 0,
+          shortDescription: product.description?.substring(0, 200) || undefined,
+          keyFeatures: product.description ? [product.description.substring(0, 100)] : undefined
+        };
+      }
+    }
+
+    // Get relevant products - two-tier approach
+    let productsTopK: AIProductSummary[] = [];
+    
+    // Global snapshot - top rated products
+    const { products: globalProducts } = await storage.getProducts({ 
+      limit: 30, 
+      sortBy: 'rating', 
+      sortOrder: 'desc',
+      inStock: true 
+    });
+    
+    // Query-relevant products if user message contains product search intent
+    if (userMessage && (userMessage.toLowerCase().includes('find') || 
+                       userMessage.toLowerCase().includes('recommend') ||
+                       userMessage.toLowerCase().includes('suggest') ||
+                       userMessage.toLowerCase().includes('best'))) {
+      try {
+        const enhanced = await enhanceSearchQuery(userMessage);
+        const { products: relevantProducts } = await storage.getProducts({
+          search: enhanced.suggestedQuery,
+          limit: 20,
+          sortBy: 'rating',
+          sortOrder: 'desc'
+        });
+        
+        // Merge and deduplicate
+        const allProducts = [...relevantProducts, ...globalProducts];
+        const uniqueProducts = Array.from(
+          new Map(allProducts.map(p => [p.id, p])).values()
+        ).slice(0, 25);
+        
+        productsTopK = uniqueProducts.map(p => ({
+          id: p.id,
+          slug: p.slug || undefined,
+          name: p.name,
+          brand: p.brand || undefined,
+          category: p.brand || 'Premium',
+          petType: p.petType || undefined,
+          price: Number(p.price),
+          rating: Number(p.rating) || 0,
+          inStock: p.inStock || 0,
+          shortDescription: p.description?.substring(0, 150) || undefined
+        }));
+      } catch (error) {
+        // Fallback to global products on search enhancement failure
+        productsTopK = globalProducts.slice(0, 25).map(p => ({
+          id: p.id,
+          slug: p.slug || undefined,
+          name: p.name,
+          brand: p.brand || undefined,
+          category: p.brand || 'Premium',
+          petType: p.petType || undefined,
+          price: Number(p.price),
+          rating: Number(p.rating) || 0,
+          inStock: p.inStock || 0,
+          shortDescription: p.description?.substring(0, 150) || undefined
+        }));
+      }
+    } else {
+      // Use global products for general queries
+      productsTopK = globalProducts.slice(0, 25).map(p => ({
+        id: p.id,
+        slug: p.slug || undefined,
+        name: p.name,
+        brand: p.brand || undefined,
+        category: p.brand || 'Premium',
+        petType: p.petType || undefined,
+        price: Number(p.price),
+        rating: Number(p.rating) || 0,
+        inStock: p.inStock || 0,
+        shortDescription: p.description?.substring(0, 150) || undefined
+      }));
+    }
+
+    // Build user profile
+    let userProfile: AIUserProfile | undefined;
+    if (userId) {
+      try {
+        const profile = await storage.getUserById(userId);
+        const recentOrders = await storage.getUserOrders(userId, 1, 10);
+        const recentActivity = await storage.getUserActivity(userId, 1, 20);
+        
+        userProfile = {
+          role: profile?.role || 'customer',
+          previousPurchases: recentOrders.data.map(order => order.id).slice(0, 5),
+          browsedProducts: recentActivity.data
+            .filter(activity => activity.entityType === 'product')
+            .map(activity => activity.entityId)
+            .slice(0, 10)
+        };
+      } catch (error) {
+        // Continue without user profile if there's an error
+      }
+    }
+
+    return {
+      conversationHistory: frontendContext?.history || [],
+      currentProduct,
+      categories: aiCategories.slice(0, 20),
+      productsTopK,
+      userProfile,
+      navigation: AI_NAVIGATION,
+      currentPage: frontendContext?.page || '/'
+    };
+  } catch (error) {
+    console.error('Error building AI context:', error);
+    // Return minimal context on error
+    return {
+      conversationHistory: frontendContext?.history || [],
+      categories: [],
+      productsTopK: [],
+      navigation: AI_NAVIGATION,
+      currentPage: frontendContext?.page || '/'
+    };
+  }
+}
+
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
 }
@@ -590,13 +795,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { message, sessionId, context } = req.body;
       const userId = req.user?.claims?.sub;
 
-      // Generate AI response
-      const chatResponse = await generateChatResponse(message, {
-        conversationHistory: context?.history || [],
-        userProfile: context?.userProfile,
-        availableProducts: context?.products,
-        currentPage: context?.page
-      });
+      // Build comprehensive RAG context
+      const aiContext = await buildChatContext(req, context, message);
+
+      // Generate AI response with full context
+      const chatResponse = await generateChatResponse(message, aiContext);
 
       // Save interaction to database
       if (userId) {

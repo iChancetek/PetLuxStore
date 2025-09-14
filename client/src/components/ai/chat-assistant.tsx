@@ -31,12 +31,20 @@ export default function ChatAssistant() {
 
   const sendMessageMutation = useMutation({
     mutationFn: async (message: string) => {
+      // Extract product slug from URL if on product page
+      const pathname = window.location.pathname;
+      let currentProductSlug: string | undefined;
+      if (pathname.startsWith('/product/')) {
+        currentProductSlug = pathname.split('/product/')[1];
+      }
+
       const response = await apiRequest("POST", "/api/ai/chat", {
         message,
         sessionId,
         context: {
           history: messages.slice(-5).map(m => ({ role: m.role, content: m.content })),
-          page: window.location.pathname
+          page: pathname,
+          currentProductSlug
         }
       });
       return response.json();
