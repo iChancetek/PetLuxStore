@@ -115,8 +115,33 @@ export default function Home() {
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {categories && Array.isArray(categories) ? categories.map((category: any, index: number) => (
-              <Link key={category.id} href={`/shop?categoryId=${category.id}`}>
+            {(categories && Array.isArray(categories) && categories.length > 0 ? categories : [
+              {
+                id: "fallback-1",
+                name: "Premium Food",
+                imageUrl: "https://images.unsplash.com/photo-1623387641168-d9803ddd3f35?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+                description: "Nutrition-packed meals for optimal health"
+              },
+              {
+                id: "fallback-2",
+                name: "Interactive Toys",
+                imageUrl: "https://images.unsplash.com/photo-1592194996308-7b43878e84a6?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+                description: "Engaging play for mental stimulation"
+              },
+              {
+                id: "fallback-3",
+                name: "Comfort & Sleep",
+                imageUrl: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+                description: "Cozy beds and relaxation essentials"
+              },
+              {
+                id: "fallback-4",
+                name: "Health & Grooming",
+                imageUrl: "https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+                description: "Essential care for wellbeing"
+              }
+            ]).map((category: any, index: number) => (
+              <Link key={category.id} href={category.id.includes('fallback') ? "/shop" : `/shop?categoryId=${category.id}`}>
                 <Card className="group cursor-pointer overflow-hidden hover:shadow-xl transition-shadow" data-testid={`card-category-${index}`}>
                   <div className="relative">
                     <img 
@@ -135,95 +160,7 @@ export default function Home() {
                   </CardContent>
                 </Card>
               </Link>
-            )) || (
-              // Fallback categories
-              [
-                {
-                  name: "Premium Food",
-                  image: "https://images.unsplash.com/photo-1623387641168-d9803ddd3f35?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
-                  description: "Nutrition-packed meals for optimal health"
-                },
-                {
-                  name: "Interactive Toys",
-                  image: "https://images.unsplash.com/photo-1592194996308-7b43878e84a6?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
-                  description: "Engaging play for mental stimulation"
-                },
-                {
-                  name: "Comfort & Sleep",
-                  image: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
-                  description: "Cozy beds and relaxation essentials"
-                },
-                {
-                  name: "Health & Grooming",
-                  image: "https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
-                  description: "Essential care for wellbeing"
-                }
-              ].map((category, index) => (
-                <Link key={index} href="/shop">
-                  <Card className="group cursor-pointer overflow-hidden hover:shadow-xl transition-shadow" data-testid={`card-category-${index}`}>
-                    <div className="relative">
-                      <img 
-                        src={category.image}
-                        alt={category.name}
-                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                    <CardContent className="p-6">
-                      <h3 className="text-xl font-semibold mb-2">{category.name}</h3>
-                      <p className="text-muted-foreground mb-4">{category.description}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Available now</span>
-                        <Badge variant="secondary">AI Curated</Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))
-            ) : (
-              // Fallback categories
-              [
-                {
-                  name: "Premium Food",
-                  image: "https://images.unsplash.com/photo-1623387641168-d9803ddd3f35?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
-                  description: "Nutrition-packed meals for optimal health"
-                },
-                {
-                  name: "Interactive Toys",
-                  image: "https://images.unsplash.com/photo-1592194996308-7b43878e84a6?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
-                  description: "Engaging play for mental stimulation"
-                },
-                {
-                  name: "Comfort & Sleep",
-                  image: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
-                  description: "Cozy beds and relaxation essentials"
-                },
-                {
-                  name: "Health & Grooming",
-                  image: "https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
-                  description: "Essential care for wellbeing"
-                }
-              ].map((category, index) => (
-                <Link key={index} href="/shop">
-                  <Card className="group cursor-pointer overflow-hidden hover:shadow-xl transition-shadow" data-testid={`card-category-${index}`}>
-                    <div className="relative">
-                      <img 
-                        src={category.image}
-                        alt={category.name}
-                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                    <CardContent className="p-6">
-                      <h3 className="text-xl font-semibold mb-2">{category.name}</h3>
-                      <p className="text-muted-foreground mb-4">{category.description}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Available now</span>
-                        <Badge variant="secondary">AI Curated</Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))
-            )}
+            ))}
           </div>
         </div>
       </section>
