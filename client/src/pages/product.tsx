@@ -36,7 +36,7 @@ export default function Product() {
   // Fetch product details
   const { data: product, isLoading: loadingProduct } = useQuery<ProductType>({
     queryKey: ["/api/products/slug", params?.slug],
-    enabled: isAuthenticated && !!params?.slug,
+    enabled: !!params?.slug,
   });
 
   // Track product view when product is loaded
@@ -76,16 +76,16 @@ export default function Product() {
     },
     onSuccess: () => {
       // Track add to cart event
-      activityTracker.trackAddToCart(product.id, quantity, {
-        productName: product.name,
-        price: parseFloat(product.price),
-        categoryId: product.categoryId,
-        petType: product.petType
+      activityTracker.trackAddToCart(product!.id, quantity, {
+        productName: product!.name,
+        price: parseFloat(product!.price),
+        categoryId: product!.categoryId,
+        petType: product!.petType
       });
 
       toast({
         title: "Added to cart",
-        description: `${quantity} ${product.name}${quantity > 1 ? 's' : ''} added to your cart.`,
+        description: `${quantity} ${product!.name}${quantity > 1 ? 's' : ''} added to your cart.`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
     },
@@ -107,7 +107,7 @@ export default function Product() {
       });
       setReviewText("");
       setReviewRating(5);
-      queryClient.invalidateQueries({ queryKey: ["/api/products", product.id, "reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products", product!.id, "reviews"] });
     },
   });
 
@@ -123,7 +123,7 @@ export default function Product() {
     setIsWishlisted(!isWishlisted);
     toast({
       title: isWishlisted ? "Removed from wishlist" : "Added to wishlist",
-      description: `${product.name} ${isWishlisted ? "removed from" : "added to"} your wishlist.`,
+      description: `${product!.name} ${isWishlisted ? "removed from" : "added to"} your wishlist.`,
     });
   };
 
@@ -165,7 +165,7 @@ export default function Product() {
     );
   }
 
-  const images = product.images || [product.imageUrl];
+  const images = (product.images || [product.imageUrl]).filter((img): img is string => img !== null);
   const rating = parseFloat(product.rating || "0");
   const fullStars = Math.floor(rating);
   const hasHalfStar = rating % 1 >= 0.5;
@@ -195,7 +195,7 @@ export default function Product() {
             </div>
             {images.length > 1 && (
               <div className="flex space-x-2">
-                {images.map((image: string, index: number) => (
+                {images.map((image, index) => (
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
@@ -275,9 +275,9 @@ export default function Product() {
 
             {/* Stock Status */}
             <div>
-              {product.inStock > 0 ? (
+              {(product.inStock ?? 0) > 0 ? (
                 <Badge className="bg-green-100 text-green-800" data-testid="badge-in-stock">
-                  {product.inStock <= 5 ? `Only ${product.inStock} left in stock` : "In Stock"}
+                  {(product.inStock ?? 0) <= 5 ? `Only ${product.inStock} left in stock` : "In Stock"}
                 </Badge>
               ) : (
                 <Badge variant="destructive" data-testid="badge-out-of-stock">
@@ -329,7 +329,7 @@ export default function Product() {
                 size="lg" 
                 className="w-full"
                 onClick={handleAddToCart}
-                disabled={addToCartMutation.isPending || product.inStock <= 0}
+                disabled={addToCartMutation.isPending || (product.inStock ?? 0) <= 0}
                 data-testid="button-add-to-cart"
               >
                 {addToCartMutation.isPending ? (
@@ -449,7 +449,7 @@ export default function Product() {
 
                   {/* Reviews List */}
                   <div className="space-y-4">
-                    {reviews?.length > 0 ? (
+                    {reviews && reviews.length > 0 ? (
                       reviews.map((review: any) => (
                         <Card key={review.id}>
                           <CardContent className="p-4">
