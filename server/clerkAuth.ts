@@ -1,4 +1,4 @@
-import { clerkMiddleware } from '@clerk/express';
+import { clerkMiddleware, getAuth, clerkClient } from '@clerk/express';
 import type { Express, RequestHandler } from 'express';
 import { storage } from './storage';
 
@@ -10,14 +10,14 @@ export function setupClerkAuth(app: Express) {
 // Middleware to require authentication
 export const requireAuth: RequestHandler = async (req: any, res, next) => {
   try {
-    const auth = req.auth();
+    const auth = getAuth(req);
     
     if (!auth?.userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
     // Get user info from Clerk
-    const user = await auth.getUser();
+    const user = await clerkClient.users.getUser(auth.userId);
     
     if (user) {
       // Upsert user in our database
@@ -51,10 +51,10 @@ export const requireAuth: RequestHandler = async (req: any, res, next) => {
 // Middleware to get user info if authenticated (optional auth)
 export const optionalAuth: RequestHandler = async (req: any, res, next) => {
   try {
-    const auth = req.auth();
+    const auth = getAuth(req);
     
     if (auth?.userId) {
-      const user = await auth.getUser();
+      const user = await clerkClient.users.getUser(auth.userId);
       
       if (user) {
         // Upsert user in our database
@@ -89,14 +89,14 @@ export const optionalAuth: RequestHandler = async (req: any, res, next) => {
 // Middleware to require admin role
 export const requireAdmin: RequestHandler = async (req: any, res, next) => {
   try {
-    const auth = req.auth();
+    const auth = getAuth(req);
     
     if (!auth?.userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
     // Get user info from Clerk
-    const user = await auth.getUser();
+    const user = await clerkClient.users.getUser(auth.userId);
     
     if (!user) {
       return res.status(401).json({ message: 'Unauthorized' });
