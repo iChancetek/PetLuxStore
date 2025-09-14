@@ -137,15 +137,26 @@ export const aiInteractions = pgTable("ai_interactions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Audit Logs table (for tracking admin actions)
+// Audit Logs table (for tracking admin actions and user activity)
 export const auditLogs = pgTable(
   "audit_logs",
   {
     id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
     actorId: varchar("actor_id").references(() => users.id),
+    targetUserId: varchar("target_user_id").references(() => users.id),
     action: varchar("action", { length: 255 }).notNull(),
     resourceType: varchar("resource_type", { length: 100 }).notNull(),
     resourceId: varchar("resource_id", { length: 255 }),
+    route: varchar("route", { length: 255 }),
+    method: varchar("method", { length: 10 }),
+    statusCode: integer("status_code"),
+    success: boolean("success"),
+    category: varchar("category", { length: 50 }), // admin, auth, order, product, review
+    requestId: varchar("request_id", { length: 64 }),
+    sessionId: varchar("session_id"),
+    roleAtTime: varchar("role_at_time", { length: 50 }),
+    errorCode: varchar("error_code", { length: 100 }),
+    message: text("message"),
     metadata: jsonb("metadata"),
     ip: varchar("ip", { length: 45 }),
     userAgent: text("user_agent"),
@@ -155,6 +166,9 @@ export const auditLogs = pgTable(
     index("idx_audit_logs_created_at").on(table.createdAt),
     index("idx_audit_logs_resource").on(table.resourceType, table.resourceId),
     index("idx_audit_logs_actor_created").on(table.actorId, table.createdAt),
+    index("idx_audit_logs_target_user").on(table.targetUserId, table.createdAt),
+    index("idx_audit_logs_request_id").on(table.requestId),
+    index("idx_audit_logs_category").on(table.category, table.createdAt),
   ]
 );
 
@@ -170,6 +184,8 @@ export const activityEvents = pgTable(
     orderId: uuid("order_id").references(() => orders.id),
     path: varchar("path", { length: 500 }),
     referrer: varchar("referrer", { length: 500 }),
+    requestId: varchar("request_id", { length: 64 }),
+    source: varchar("source", { length: 20 }), // client, server
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at").defaultNow(),
   },
@@ -177,6 +193,7 @@ export const activityEvents = pgTable(
     index("idx_activity_events_type_created").on(table.type, table.createdAt),
     index("idx_activity_events_product_type").on(table.productId, table.type),
     index("idx_activity_events_user_created").on(table.userId, table.createdAt),
+    index("idx_activity_events_request_id").on(table.requestId),
   ]
 );
 
