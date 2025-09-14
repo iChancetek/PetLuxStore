@@ -27,8 +27,10 @@ import {
   LogOut,
   Package,
   Heart,
-  Settings
+  Settings,
+  Shield
 } from "lucide-react";
+import type { User as UserType } from "@shared/schema";
 
 export default function Navbar() {
   const [location] = useLocation();
@@ -44,7 +46,14 @@ export default function Navbar() {
     enabled: !!user,
   });
 
+  // Fetch user profile to check admin role
+  const { data: userProfile } = useQuery<UserType>({
+    queryKey: ["/api/me/profile"],
+    enabled: !!user,
+  });
+
   const cartItemCount = Array.isArray(cartItems) ? cartItems.reduce((total: number, item: any) => total + item.quantity, 0) : 0;
+  const isAdmin = userProfile?.role === 'admin';
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,6 +73,7 @@ export default function Navbar() {
     { href: "/shop", label: "Shop", active: location.startsWith("/shop") },
     { href: "/ai-picks", label: "AI Picks", active: location === "/ai-picks" },
     ...(user ? [{ href: "/dashboard", label: "Dashboard", active: location === "/dashboard" }] : []),
+    ...(user && isAdmin ? [{ href: "/admin", label: "Admin", active: location === "/admin" }] : []),
   ];
 
   return (
