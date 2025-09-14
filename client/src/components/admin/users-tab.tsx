@@ -34,7 +34,7 @@ const userFormSchema = z.object({
   email: z.string().email("Please enter a valid email"),
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
-  role: z.enum(["user", "admin"], {
+  role: z.enum(["user", "reviewer", "admin"], {
     required_error: "Please select a role",
   }),
   isActive: z.boolean().default(true),
