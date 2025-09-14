@@ -62,7 +62,7 @@ Please provide a JSON response with the following structure:
 }`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5", // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
@@ -130,7 +130,7 @@ Please recommend up to ${limit} products and provide a JSON response with:
 Match scores should be 1-100 based on relevance to the pet's needs.`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5", // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
@@ -171,7 +171,7 @@ Provide a JSON response:
 }`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5", // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
@@ -260,9 +260,9 @@ Recently Browsed: ${context.userProfile.browsedProducts?.length || 0} products
     ];
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5", // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+      model: "gpt-4o-mini",
       messages: messages as any,
-      max_completion_tokens: 500,
+      max_tokens: 500,
     });
 
     const aiMessage = response.choices[0].message.content || '';
@@ -320,7 +320,7 @@ Provide a JSON response:
 }`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5", // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
