@@ -3,11 +3,8 @@ import type { Express, RequestHandler } from 'express';
 import { storage } from './storage';
 
 export function setupClerkAuth(app: Express) {
-  // Add Clerk middleware
-  app.use(clerkMiddleware({
-    publishableKey: process.env.CLERK_PUBLISHABLE_KEY!,
-    secretKey: process.env.CLERK_SECRET_KEY!,
-  }));
+  // Add Clerk middleware - use recommended setup without explicit keys
+  app.use(clerkMiddleware());
 }
 
 // Middleware to require authentication

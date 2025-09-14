@@ -1,5 +1,12 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+// Function to get auth token (will be set by app initialization)
+let getAuthToken: (() => Promise<string | null>) | null = null;
+
+export function setAuthTokenGetter(getter: () => Promise<string | null>) {
+  getAuthToken = getter;
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
@@ -17,6 +24,18 @@ export async function apiRequest(
     ...(data ? { "Content-Type": "application/json" } : {}),
     ...(customHeaders || {}),
   };
+
+  // Add auth token for protected routes
+  if (getAuthToken) {
+    try {
+      const token = await getAuthToken();
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (error) {
+      console.warn("Failed to get auth token:", error);
+    }
+  }
 
   const res = await fetch(url, {
     method,
@@ -72,7 +91,22 @@ export const getQueryFn: <T>(options: {
       url = String(queryKey);
     }
 
+    const headers: Record<string, string> = {};
+    
+    // Add auth token for protected routes
+    if (getAuthToken) {
+      try {
+        const token = await getAuthToken();
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
+      } catch (error) {
+        console.warn("Failed to get auth token:", error);
+      }
+    }
+
     const res = await fetch(url, {
+      headers,
       credentials: "include",
     });
 
