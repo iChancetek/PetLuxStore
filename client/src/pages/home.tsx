@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { Link } from "wouter";
 import Navbar from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
 import ProductCard from "@/components/product/product-card";
@@ -111,23 +112,25 @@ export default function Home() {
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {categories?.map((category: any, index: number) => (
-              <Card key={category.id} className="group cursor-pointer overflow-hidden hover:shadow-xl transition-shadow" data-testid={`card-category-${index}`}>
-                <div className="relative">
-                  <img 
-                    src={category.imageUrl || `https://images.unsplash.com/photo-1623387641168-d9803ddd3f35?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300`}
-                    alt={category.name}
-                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold mb-2">{category.name}</h3>
-                  <p className="text-muted-foreground mb-4">{category.description || "Premium products for your pet"}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Available now</span>
-                    <Badge variant="secondary">AI Curated</Badge>
+              <Link key={category.id} href={`/shop?categoryId=${category.id}`}>
+                <Card className="group cursor-pointer overflow-hidden hover:shadow-xl transition-shadow" data-testid={`card-category-${index}`}>
+                  <div className="relative">
+                    <img 
+                      src={category.imageUrl || `https://images.unsplash.com/photo-1623387641168-d9803ddd3f35?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300`}
+                      alt={category.name}
+                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
                   </div>
-                </CardContent>
-              </Card>
+                  <CardContent className="p-6">
+                    <h3 className="text-xl font-semibold mb-2">{category.name}</h3>
+                    <p className="text-muted-foreground mb-4">{category.description || "Premium products for your pet"}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Available now</span>
+                      <Badge variant="secondary">AI Curated</Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
             )) || (
               // Fallback categories
               [
@@ -152,23 +155,25 @@ export default function Home() {
                   description: "Essential care for wellbeing"
                 }
               ].map((category, index) => (
-                <Card key={index} className="group cursor-pointer overflow-hidden hover:shadow-xl transition-shadow" data-testid={`card-category-${index}`}>
-                  <div className="relative">
-                    <img 
-                      src={category.image}
-                      alt={category.name}
-                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                  <CardContent className="p-6">
-                    <h3 className="text-xl font-semibold mb-2">{category.name}</h3>
-                    <p className="text-muted-foreground mb-4">{category.description}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Available now</span>
-                      <Badge variant="secondary">AI Curated</Badge>
+                <Link key={index} href="/shop">
+                  <Card className="group cursor-pointer overflow-hidden hover:shadow-xl transition-shadow" data-testid={`card-category-${index}`}>
+                    <div className="relative">
+                      <img 
+                        src={category.image}
+                        alt={category.name}
+                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
                     </div>
-                  </CardContent>
-                </Card>
+                    <CardContent className="p-6">
+                      <h3 className="text-xl font-semibold mb-2">{category.name}</h3>
+                      <p className="text-muted-foreground mb-4">{category.description}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Available now</span>
+                        <Badge variant="secondary">AI Curated</Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
               ))
             )}
           </div>
