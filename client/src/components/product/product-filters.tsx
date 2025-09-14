@@ -21,9 +21,10 @@ interface ProductFiltersProps {
   };
   categories: Array<{ id: string; name: string; slug: string }>;
   onFilterChange: (filters: any) => void;
+  onAskAiClick?: () => void;
 }
 
-export default function ProductFilters({ filters, categories, onFilterChange }: ProductFiltersProps) {
+export default function ProductFilters({ filters, categories, onFilterChange, onAskAiClick }: ProductFiltersProps) {
   const [priceRange, setPriceRange] = useState([filters.minPrice || 0, filters.maxPrice || 500]);
 
   const petTypes = [
@@ -223,6 +224,7 @@ export default function ProductFilters({ filters, categories, onFilterChange }: 
             <Button 
               size="sm" 
               className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
+              onClick={onAskAiClick}
               data-testid="button-ask-ai"
             >
               Ask AI for Help

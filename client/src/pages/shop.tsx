@@ -38,6 +38,7 @@ export default function Shop() {
   
   const [currentPage, setCurrentPage] = useState(1);
   const productsPerPage = 24;
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Authentication is handled by Clerk - show shop content appropriately
 
@@ -160,6 +161,7 @@ export default function Shop() {
                     filters={filters}
                     categories={categories || []}
                     onFilterChange={handleFilterChange}
+                    onAskAiClick={() => setIsChatOpen(true)}
                   />
                 </div>
                 
@@ -326,7 +328,7 @@ export default function Shop() {
       </section>
 
       <Footer />
-      <ChatAssistant />
+      <ChatAssistant forceOpen={isChatOpen} onOpenChange={setIsChatOpen} />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -15,9 +15,28 @@ interface Message {
   timestamp: Date;
 }
 
-export default function ChatAssistant() {
+interface ChatAssistantProps {
+  forceOpen?: boolean;
+  onOpenChange?: (isOpen: boolean) => void;
+}
+
+export default function ChatAssistant(props: ChatAssistantProps = {}) {
+  const { forceOpen, onOpenChange } = props;
   const { toast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(forceOpen || false);
+
+  // Update isOpen when forceOpen prop changes
+  useEffect(() => {
+    if (forceOpen !== undefined) {
+      setIsOpen(forceOpen);
+    }
+  }, [forceOpen]);
+
+  // Notify parent when open state changes
+  const handleOpenChange = (newIsOpen: boolean) => {
+    setIsOpen(newIsOpen);
+    onOpenChange?.(newIsOpen);
+  };
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -116,7 +135,7 @@ export default function ChatAssistant() {
       {/* Chat Toggle Button */}
       {!isOpen && (
         <Button
-          onClick={() => setIsOpen(true)}
+          onClick={() => handleOpenChange(true)}
           className="chat-bubble rounded-full w-14 h-14 shadow-2xl"
           data-testid="button-chat-toggle"
         >
@@ -144,7 +163,7 @@ export default function ChatAssistant() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setIsOpen(false)}
+                onClick={() => handleOpenChange(false)}
                 data-testid="button-close-chat"
               >
                 <X className="w-4 h-4" />
