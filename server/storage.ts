@@ -140,6 +140,7 @@ export interface IStorage {
   }): Promise<Array<{ product: Product; count: number }>>;
   getUserActivity(filters?: {
     userId: string;
+    type?: string;
     page?: number;
     limit?: number;
   }): Promise<{ events: ActivityEvent[]; total: number }>;
@@ -825,6 +826,7 @@ export class DatabaseStorage implements IStorage {
 
   async getUserActivity(filters?: {
     userId: string;
+    type?: string;
     page?: number;
     limit?: number;
   }): Promise<{ events: ActivityEvent[]; total: number }> {
@@ -835,15 +837,22 @@ export class DatabaseStorage implements IStorage {
     const limit = filters?.limit || 50;
     const offset = ((filters?.page || 1) - 1) * limit;
 
+    // Build where conditions
+    const conditions = [eq(activityEvents.userId, filters.userId)];
+    if (filters.type) {
+      conditions.push(eq(activityEvents.type, filters.type));
+    }
+    const whereCondition = and(...conditions);
+
     const [eventsResult, totalResult] = await Promise.all([
       db.select().from(activityEvents)
-        .where(eq(activityEvents.userId, filters.userId))
+        .where(whereCondition)
         .orderBy(desc(activityEvents.createdAt))
         .limit(limit)
         .offset(offset),
       db.select({ count: sql<number>`count(*)` })
         .from(activityEvents)
-        .where(eq(activityEvents.userId, filters.userId))
+        .where(whereCondition)
     ]);
 
     return {

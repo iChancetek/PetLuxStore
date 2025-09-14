@@ -99,6 +99,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User Dashboard Endpoints
+  app.get('/api/me/dashboard', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      const stats = await storage.getUserDashboardStats(userId);
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching user dashboard stats:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.get('/api/me/orders', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      const page = parseInt(req.query.page as string);
+      const limit = parseInt(req.query.limit as string);
+      
+      // Validate pagination parameters
+      if (req.query.page && (isNaN(page) || page < 1)) {
+        return res.status(400).json({ message: 'Page must be a positive integer' });
+      }
+      if (req.query.limit && (isNaN(limit) || limit < 1 || limit > 100)) {
+        return res.status(400).json({ message: 'Limit must be between 1 and 100' });
+      }
+      
+      const validPage = page || 1;
+      const validLimit = limit || 10;
+      
+      const result = await storage.getOrdersByUser(userId, { page: validPage, limit: validLimit });
+      res.json({
+        data: result.orders,
+        total: result.total,
+        page: validPage,
+        limit: validLimit
+      });
+    } catch (error) {
+      console.error('Error fetching user orders:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.get('/api/me/activity', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      const page = parseInt(req.query.page as string);
+      const limit = parseInt(req.query.limit as string);
+      const type = req.query.type as string;
+      
+      // Validate pagination parameters
+      if (req.query.page && (isNaN(page) || page < 1)) {
+        return res.status(400).json({ message: 'Page must be a positive integer' });
+      }
+      if (req.query.limit && (isNaN(limit) || limit < 1 || limit > 100)) {
+        return res.status(400).json({ message: 'Limit must be between 1 and 100' });
+      }
+
+      // Validate activity type if provided
+      const allowedTypes = ['page_view', 'product_view', 'add_to_cart', 'checkout_started', 'purchase_completed', 'admin_ui'];
+      if (type && !allowedTypes.includes(type)) {
+        return res.status(400).json({ 
+          message: 'Invalid activity type. Allowed types: ' + allowedTypes.join(', ') 
+        });
+      }
+      
+      const validPage = page || 1;
+      const validLimit = limit || 20;
+      
+      const filters: any = { userId, page: validPage, limit: validLimit };
+      if (type) {
+        filters.type = type;
+      }
+      
+      const result = await storage.getUserActivity(filters);
+      
+      res.json({
+        data: result.events,
+        total: result.total,
+        page: validPage,
+        limit: validLimit,
+        ...(type && { filter: { type } })
+      });
+    } catch (error) {
+      console.error('Error fetching user activity:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
   // Categories routes
   app.get('/api/categories', async (req, res) => {
     try {
