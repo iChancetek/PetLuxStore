@@ -2,11 +2,15 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
-import { isUnauthorizedError } from "@/lib/authUtils";
+import { activityTracker } from "@/lib/activityTracker";
 import Navbar from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
 import AdminStats from "@/components/admin/admin-stats";
 import ProductForm from "@/components/admin/product-form";
+import UsersTab from "@/components/admin/users-tab";
+import OrdersTab from "@/components/admin/orders-tab";
+import AnalyticsTab from "@/components/admin/analytics-tab";
+import AuditLogsTab from "@/components/admin/audit-logs-tab";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +27,11 @@ import {
   TrendingUp, 
   ShoppingCart, 
   DollarSign,
-  AlertTriangle
+  AlertTriangle,
+  Users,
+  Activity,
+  Shield,
+  BarChart3
 } from "lucide-react";
 
 export default function Admin() {
@@ -31,6 +39,29 @@ export default function Admin() {
   const { isAuthenticated, isLoading } = useAuth();
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("users");
+
+  // Track admin dashboard access
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      activityTracker.trackAdminUI({
+        action: 'dashboard_access',
+        page: 'admin',
+        initialTab: activeTab
+      });
+    }
+  }, [isAuthenticated, isLoading]);
+
+  // Track tab changes
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      activityTracker.trackAdminUI({
+        action: 'tab_change',
+        tab: activeTab,
+        page: 'admin'
+      });
+    }
+  }, [activeTab, isAuthenticated, isLoading]);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -56,12 +87,6 @@ export default function Admin() {
   // Fetch products for management
   const { data: productsData, isLoading: loadingProducts } = useQuery({
     queryKey: ["/api/products", { limit: 50 }],
-    enabled: isAuthenticated,
-  });
-
-  // Fetch recent orders
-  const { data: orders, isLoading: loadingOrders } = useQuery({
-    queryKey: ["/api/admin/orders"],
     enabled: isAuthenticated,
   });
 
@@ -99,7 +124,7 @@ export default function Admin() {
             Admin Dashboard
           </h1>
           <p className="text-muted-foreground" data-testid="text-admin-subtitle">
-            Manage your store with AI-powered insights
+            Comprehensive platform management and analytics
           </p>
           <div className="flex items-center mt-4">
             <Badge className="bg-accent/10 text-accent">
@@ -113,13 +138,53 @@ export default function Admin() {
         <AdminStats stats={stats} isLoading={loadingStats} />
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="products" className="mt-8">
-          <TabsList className="grid w-full grid-cols-4 lg:w-96">
-            <TabsTrigger value="products" data-testid="tab-products">Products</TabsTrigger>
-            <TabsTrigger value="orders" data-testid="tab-orders">Orders</TabsTrigger>
-            <TabsTrigger value="analytics" data-testid="tab-analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="ai-tools" data-testid="tab-ai-tools">AI Tools</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
+          <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:grid-cols-6">
+            <TabsTrigger value="users" data-testid="tab-users" className="flex items-center">
+              <Users className="w-4 h-4 mr-2" />
+              Users
+            </TabsTrigger>
+            <TabsTrigger value="orders" data-testid="tab-orders" className="flex items-center">
+              <ShoppingCart className="w-4 h-4 mr-2" />
+              Orders
+            </TabsTrigger>
+            <TabsTrigger value="analytics" data-testid="tab-analytics" className="flex items-center">
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Analytics
+            </TabsTrigger>
+            <TabsTrigger value="audit-logs" data-testid="tab-audit-logs" className="flex items-center">
+              <Shield className="w-4 h-4 mr-2" />
+              Audit Logs
+            </TabsTrigger>
+            <TabsTrigger value="products" data-testid="tab-products" className="flex items-center">
+              <Package className="w-4 h-4 mr-2" />
+              Products
+            </TabsTrigger>
+            <TabsTrigger value="ai-tools" data-testid="tab-ai-tools" className="flex items-center">
+              <Sparkles className="w-4 h-4 mr-2" />
+              AI Tools
+            </TabsTrigger>
           </TabsList>
+
+          {/* Users Tab */}
+          <TabsContent value="users" className="mt-6">
+            <UsersTab />
+          </TabsContent>
+
+          {/* Orders Tab */}
+          <TabsContent value="orders" className="mt-6">
+            <OrdersTab />
+          </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics" className="mt-6">
+            <AnalyticsTab />
+          </TabsContent>
+
+          {/* Audit Logs Tab */}
+          <TabsContent value="audit-logs" className="mt-6">
+            <AuditLogsTab />
+          </TabsContent>
 
           {/* Products Tab */}
           <TabsContent value="products" className="mt-6">
@@ -252,105 +317,6 @@ export default function Admin() {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
-
-          {/* Orders Tab */}
-          <TabsContent value="orders" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <ShoppingCart className="w-5 h-5 mr-2" />
-                  Recent Orders
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loadingOrders ? (
-                  <div className="space-y-4">
-                    {[...Array(5)].map((_, i) => (
-                      <div key={i} className="h-16 bg-muted animate-pulse rounded" />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Order #</TableHead>
-                          <TableHead>Customer</TableHead>
-                          <TableHead>Total</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Date</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {orders?.slice(0, 10).map((order: any) => (
-                          <TableRow key={order.id}>
-                            <TableCell className="font-medium">
-                              {order.orderNumber}
-                            </TableCell>
-                            <TableCell>
-                              <div>
-                                <div className="font-medium">Customer #{order.userId}</div>
-                                <div className="text-sm text-muted-foreground">
-                                  {order.billingAddress?.email || "No email"}
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>${order.total}</TableCell>
-                            <TableCell>
-                              <Badge 
-                                variant={
-                                  order.status === "delivered" ? "secondary" :
-                                  order.status === "shipped" ? "outline" :
-                                  order.status === "processing" ? "default" : "destructive"
-                                }
-                              >
-                                {order.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {new Date(order.createdAt).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Button variant="ghost" size="sm">
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        )) || (
-                          <TableRow>
-                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                              No orders found
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Analytics Tab */}
-          <TabsContent value="analytics" className="mt-6">
-            <div className="grid gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <TrendingUp className="w-5 h-5 mr-2" />
-                    Sales Analytics
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-12 text-muted-foreground">
-                    <TrendingUp className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>Advanced analytics dashboard coming soon</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
           </TabsContent>
 
           {/* AI Tools Tab */}

@@ -10,7 +10,16 @@ import {
   generateChatResponse,
   generateMarketingCopy 
 } from "./openai";
-import { insertProductSchema, insertCartItemSchema, insertOrderSchema, insertReviewSchema, insertAiInteractionSchema } from "@shared/schema";
+import { 
+  insertProductSchema, 
+  insertCartItemSchema, 
+  insertOrderSchema, 
+  insertReviewSchema, 
+  insertAiInteractionSchema,
+  insertUserSchema,
+  insertAuditLogSchema,
+  insertActivityEventSchema
+} from "@shared/schema";
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
@@ -19,6 +28,50 @@ if (!process.env.STRIPE_SECRET_KEY) {
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2024-06-20",
 });
+
+// Audit logging helper function
+async function logAudit(req: any, action: string, resourceType: string, resourceId?: string, metadata?: any) {
+  try {
+    const actorId = req.user?.claims?.sub;
+    if (!actorId) return; // Skip if no user (shouldn't happen for admin routes)
+
+    await storage.createAuditLog({
+      actorId,
+      action,
+      resourceType,
+      resourceId,
+      metadata,
+      ip: req.ip || req.connection?.remoteAddress || 'unknown',
+      userAgent: req.headers['user-agent'] || 'unknown'
+    });
+  } catch (error) {
+    console.error('Failed to log audit event:', error);
+    // Don't throw - audit logging shouldn't break the main operation
+  }
+}
+
+// Rate limiting helper for activity events
+const activityEventCounts = new Map<string, { count: number; resetTime: number }>();
+const ACTIVITY_RATE_LIMIT = 100; // events per minute per IP
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+
+function checkActivityRateLimit(req: any): boolean {
+  const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+  const now = Date.now();
+  const record = activityEventCounts.get(ip);
+
+  if (!record || now > record.resetTime) {
+    activityEventCounts.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    return true;
+  }
+
+  if (record.count >= ACTIVITY_RATE_LIMIT) {
+    return false;
+  }
+
+  record.count++;
+  return true;
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -469,6 +522,260 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to generate marketing copy" });
     }
   });
+
+  // Enhanced Admin User Management Routes
+  app.get('/api/admin/users', isAdmin, async (req: any, res) => {
+    try {
+      const { search, role, page = 1, limit = 20 } = req.query;
+      
+      const result = await storage.listUsers({
+        search: search as string,
+        role: role as string,
+        page: Number(page),
+        limit: Number(limit)
+      });
+
+      await logAudit(req, 'list_users', 'user', undefined, { 
+        filters: { search, role, page, limit },
+        resultCount: result.users.length 
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error listing users:", error);
+      res.status(500).json({ message: "Failed to list users" });
+    }
+  });
+
+  app.post('/api/admin/users', isAdmin, async (req: any, res) => {
+    try {
+      const userData = insertUserSchema.parse(req.body);
+      const user = await storage.createUser(userData);
+
+      await logAudit(req, 'create_user', 'user', user.id, { 
+        email: user.email,
+        role: user.role 
+      });
+
+      res.json(user);
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
+  app.patch('/api/admin/users/:id', isAdmin, async (req: any, res) => {
+    try {
+      const userData = req.body;
+      const originalUser = await storage.getUser(req.params.id);
+      const user = await storage.updateUser(req.params.id, userData);
+
+      await logAudit(req, 'update_user', 'user', user.id, { 
+        changes: userData,
+        originalRole: originalUser?.role,
+        newRole: user.role
+      });
+
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  app.delete('/api/admin/users/:id', isAdmin, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.params.id);
+      await storage.deleteUser(req.params.id);
+
+      await logAudit(req, 'delete_user', 'user', req.params.id, { 
+        email: user?.email,
+        role: user?.role 
+      });
+
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
+  // Enhanced Order Management Routes
+  app.get('/api/admin/orders', isAdmin, async (req: any, res) => {
+    try {
+      const { status, dateFrom, dateTo, userId, page = 1, limit = 20 } = req.query;
+      
+      const filters: any = {
+        status: status as string,
+        userId: userId as string,
+        page: Number(page),
+        limit: Number(limit)
+      };
+
+      if (dateFrom) filters.dateFrom = new Date(dateFrom as string);
+      if (dateTo) filters.dateTo = new Date(dateTo as string);
+
+      const result = await storage.getOrdersAdmin(filters);
+
+      await logAudit(req, 'list_orders_admin', 'order', undefined, { 
+        filters,
+        resultCount: result.orders.length 
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching admin orders:", error);
+      res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+
+  app.get('/api/admin/orders/:id', isAdmin, async (req: any, res) => {
+    try {
+      const order = await storage.getOrderById(req.params.id);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      await logAudit(req, 'view_order_details', 'order', req.params.id);
+
+      res.json(order);
+    } catch (error) {
+      console.error("Error fetching order details:", error);
+      res.status(500).json({ message: "Failed to fetch order details" });
+    }
+  });
+
+  // Audit Logs Routes
+  app.get('/api/admin/audit-logs', isAdmin, async (req: any, res) => {
+    try {
+      const { userId, action, resourceType, dateFrom, dateTo, page = 1, limit = 50 } = req.query;
+      
+      const filters: any = {
+        userId: userId as string,
+        action: action as string,
+        resourceType: resourceType as string,
+        page: Number(page),
+        limit: Number(limit)
+      };
+
+      if (dateFrom) filters.dateFrom = new Date(dateFrom as string);
+      if (dateTo) filters.dateTo = new Date(dateTo as string);
+
+      const result = await storage.getAuditLogs(filters);
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching audit logs:", error);
+      res.status(500).json({ message: "Failed to fetch audit logs" });
+    }
+  });
+
+  // Activity Analytics Routes
+  app.get('/api/admin/activity/summary', isAdmin, async (req: any, res) => {
+    try {
+      const { range = '30d' } = req.query;
+      
+      const summary = await storage.getActivitySummary({
+        range: range as 'today' | '7d' | '30d' | '90d'
+      });
+
+      await logAudit(req, 'view_activity_summary', 'analytics', undefined, { range });
+
+      res.json(summary);
+    } catch (error) {
+      console.error("Error fetching activity summary:", error);
+      res.status(500).json({ message: "Failed to fetch activity summary" });
+    }
+  });
+
+  app.get('/api/admin/activity/top-products', isAdmin, async (req: any, res) => {
+    try {
+      const { metric = 'views', range = '30d', limit = 10 } = req.query;
+      
+      const topProducts = await storage.getTopProducts({
+        metric: metric as 'views' | 'purchases',
+        range: range as 'today' | '7d' | '30d' | '90d',
+        limit: Number(limit)
+      });
+
+      await logAudit(req, 'view_top_products', 'analytics', undefined, { metric, range, limit });
+
+      res.json(topProducts);
+    } catch (error) {
+      console.error("Error fetching top products:", error);
+      res.status(500).json({ message: "Failed to fetch top products" });
+    }
+  });
+
+  app.get('/api/admin/activity/user/:userId', isAdmin, async (req: any, res) => {
+    try {
+      const { page = 1, limit = 50 } = req.query;
+      
+      const result = await storage.getUserActivity({
+        userId: req.params.userId,
+        page: Number(page),
+        limit: Number(limit)
+      });
+
+      await logAudit(req, 'view_user_activity', 'user', req.params.userId, { 
+        page, 
+        limit,
+        resultCount: result.events.length 
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching user activity:", error);
+      res.status(500).json({ message: "Failed to fetch user activity" });
+    }
+  });
+
+  // Public Activity Tracking Endpoint (Rate Limited)
+  app.post('/api/activity/events', async (req: any, res) => {
+    try {
+      // Check rate limit
+      if (!checkActivityRateLimit(req)) {
+        return res.status(429).json({ message: "Rate limit exceeded" });
+      }
+
+      const { type, productId, orderId, path, referrer, metadata } = req.body;
+      const userId = req.user?.claims?.sub; // Optional - can track anonymous users too
+
+      const eventData = insertActivityEventSchema.parse({
+        userId: userId || null,
+        sessionId: req.headers['x-session-id'] as string || `anon-${Date.now()}`,
+        type,
+        productId,
+        orderId,
+        path,
+        referrer,
+        metadata
+      });
+
+      const event = await storage.recordActivityEvent(eventData);
+      res.json({ success: true, eventId: event.id });
+    } catch (error) {
+      console.error("Error recording activity event:", error);
+      res.status(500).json({ message: "Failed to record activity event" });
+    }
+  });
+
+  // Add audit logging to existing admin routes
+  const originalAdminStatsHandler = app._router.stack.find((layer: any) => 
+    layer.route?.path === '/api/admin/stats'
+  )?.route?.stack[1]?.handle;
+
+  if (originalAdminStatsHandler) {
+    app.get('/api/admin/stats', isAdmin, async (req: any, res) => {
+      try {
+        const stats = await storage.getDashboardStats();
+        await logAudit(req, 'view_dashboard_stats', 'analytics');
+        res.json(stats);
+      } catch (error) {
+        console.error("Error fetching admin stats:", error);
+        res.status(500).json({ message: "Failed to fetch admin stats" });
+      }
+    });
+  }
 
   const httpServer = createServer(app);
   return httpServer;

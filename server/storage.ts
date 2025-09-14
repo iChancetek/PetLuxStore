@@ -7,6 +7,8 @@ import {
   orderItems,
   reviews,
   aiInteractions,
+  auditLogs,
+  activityEvents,
   type User,
   type UpsertUser,
   type Product,
@@ -23,6 +25,10 @@ import {
   type InsertReview,
   type AiInteraction,
   type InsertAiInteraction,
+  type AuditLog,
+  type InsertAuditLog,
+  type ActivityEvent,
+  type InsertActivityEvent,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, ilike, inArray, sql } from "drizzle-orm";
@@ -92,6 +98,61 @@ export interface IStorage {
     totalProducts: number;
     lowStockProducts: number;
   }>;
+
+  // Admin User Management
+  listUsers(filters?: {
+    search?: string;
+    role?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ users: User[]; total: number }>;
+  createUser(userData: UpsertUser): Promise<User>;
+  updateUser(id: string, userData: Partial<UpsertUser>): Promise<User>;
+  deleteUser(id: string): Promise<void>;
+
+  // Audit Logging
+  createAuditLog(entry: InsertAuditLog): Promise<AuditLog>;
+  getAuditLogs(filters?: {
+    userId?: string;
+    action?: string;
+    resourceType?: string;
+    dateFrom?: Date;
+    dateTo?: Date;
+    page?: number;
+    limit?: number;
+  }): Promise<{ logs: AuditLog[]; total: number }>;
+
+  // Activity Tracking
+  recordActivityEvent(event: InsertActivityEvent): Promise<ActivityEvent>;
+  getActivitySummary(filters?: {
+    range?: 'today' | '7d' | '30d' | '90d';
+  }): Promise<{
+    pageViews: number;
+    productViews: number;
+    cartAdditions: number;
+    purchases: number;
+    chartData: Array<{ date: string; pageViews: number; productViews: number; purchases: number }>;
+  }>;
+  getTopProducts(filters?: {
+    metric?: 'views' | 'purchases';
+    range?: 'today' | '7d' | '30d' | '90d';
+    limit?: number;
+  }): Promise<Array<{ product: Product; count: number }>>;
+  getUserActivity(filters?: {
+    userId: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ events: ActivityEvent[]; total: number }>;
+
+  // Enhanced Order Management
+  getOrdersAdmin(filters?: {
+    status?: string;
+    dateFrom?: Date;
+    dateTo?: Date;
+    userId?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ orders: (Order & { user: User; itemCount: number })[]; total: number }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -516,6 +577,330 @@ export class DatabaseStorage implements IStorage {
       ordersToday: ordersTodayResult?.count || 0,
       totalProducts: productsResult?.count || 0,
       lowStockProducts: lowStockResult?.count || 0,
+    };
+  }
+
+  // Admin User Management
+  async listUsers(filters?: {
+    search?: string;
+    role?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ users: User[]; total: number }> {
+    const conditions = [];
+    const limit = filters?.limit || 20;
+    const offset = ((filters?.page || 1) - 1) * limit;
+
+    if (filters?.search) {
+      conditions.push(
+        sql`(${ilike(users.email, `%${filters.search}%`)} OR ${ilike(users.firstName, `%${filters.search}%`)} OR ${ilike(users.lastName, `%${filters.search}%`)})`
+      );
+    }
+
+    if (filters?.role) {
+      conditions.push(eq(users.role, filters.role));
+    }
+
+    const whereCondition = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const [usersResult, totalResult] = await Promise.all([
+      db.select().from(users)
+        .where(whereCondition)
+        .orderBy(desc(users.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db.select({ count: sql<number>`count(*)` }).from(users).where(whereCondition)
+    ]);
+
+    return {
+      users: usersResult,
+      total: totalResult[0]?.count || 0
+    };
+  }
+
+  async createUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(userData).returning();
+    return user;
+  }
+
+  async updateUser(id: string, userData: Partial<UpsertUser>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ ...userData, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(users.id, id));
+  }
+
+  // Audit Logging
+  async createAuditLog(entry: InsertAuditLog): Promise<AuditLog> {
+    const [log] = await db.insert(auditLogs).values(entry).returning();
+    return log;
+  }
+
+  async getAuditLogs(filters?: {
+    userId?: string;
+    action?: string;
+    resourceType?: string;
+    dateFrom?: Date;
+    dateTo?: Date;
+    page?: number;
+    limit?: number;
+  }): Promise<{ logs: AuditLog[]; total: number }> {
+    const conditions = [];
+    const limit = filters?.limit || 50;
+    const offset = ((filters?.page || 1) - 1) * limit;
+
+    if (filters?.userId) {
+      conditions.push(eq(auditLogs.actorId, filters.userId));
+    }
+
+    if (filters?.action) {
+      conditions.push(ilike(auditLogs.action, `%${filters.action}%`));
+    }
+
+    if (filters?.resourceType) {
+      conditions.push(eq(auditLogs.resourceType, filters.resourceType));
+    }
+
+    if (filters?.dateFrom) {
+      conditions.push(sql`${auditLogs.createdAt} >= ${filters.dateFrom}`);
+    }
+
+    if (filters?.dateTo) {
+      conditions.push(sql`${auditLogs.createdAt} <= ${filters.dateTo}`);
+    }
+
+    const whereCondition = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const [logsResult, totalResult] = await Promise.all([
+      db.select().from(auditLogs)
+        .where(whereCondition)
+        .orderBy(desc(auditLogs.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db.select({ count: sql<number>`count(*)` }).from(auditLogs).where(whereCondition)
+    ]);
+
+    return {
+      logs: logsResult,
+      total: totalResult[0]?.count || 0
+    };
+  }
+
+  // Activity Tracking
+  async recordActivityEvent(event: InsertActivityEvent): Promise<ActivityEvent> {
+    const [activityEvent] = await db.insert(activityEvents).values(event).returning();
+    return activityEvent;
+  }
+
+  async getActivitySummary(filters?: {
+    range?: 'today' | '7d' | '30d' | '90d';
+  }): Promise<{
+    pageViews: number;
+    productViews: number;
+    cartAdditions: number;
+    purchases: number;
+    chartData: Array<{ date: string; pageViews: number; productViews: number; purchases: number }>;
+  }> {
+    const range = filters?.range || '30d';
+    
+    // Calculate date range
+    const endDate = new Date();
+    const startDate = new Date();
+    
+    switch (range) {
+      case 'today':
+        startDate.setHours(0, 0, 0, 0);
+        break;
+      case '7d':
+        startDate.setDate(startDate.getDate() - 7);
+        break;
+      case '30d':
+        startDate.setDate(startDate.getDate() - 30);
+        break;
+      case '90d':
+        startDate.setDate(startDate.getDate() - 90);
+        break;
+    }
+
+    const [summaryResult] = await db.select({
+      pageViews: sql<number>`COUNT(CASE WHEN ${activityEvents.type} = 'page_view' THEN 1 END)`,
+      productViews: sql<number>`COUNT(CASE WHEN ${activityEvents.type} = 'product_view' THEN 1 END)`,
+      cartAdditions: sql<number>`COUNT(CASE WHEN ${activityEvents.type} = 'add_to_cart' THEN 1 END)`,
+      purchases: sql<number>`COUNT(CASE WHEN ${activityEvents.type} = 'purchase_completed' THEN 1 END)`,
+    })
+    .from(activityEvents)
+    .where(sql`${activityEvents.createdAt} >= ${startDate} AND ${activityEvents.createdAt} <= ${endDate}`);
+
+    // Get chart data grouped by date
+    const chartData = await db.select({
+      date: sql<string>`DATE(${activityEvents.createdAt})`,
+      pageViews: sql<number>`COUNT(CASE WHEN ${activityEvents.type} = 'page_view' THEN 1 END)`,
+      productViews: sql<number>`COUNT(CASE WHEN ${activityEvents.type} = 'product_view' THEN 1 END)`,
+      purchases: sql<number>`COUNT(CASE WHEN ${activityEvents.type} = 'purchase_completed' THEN 1 END)`,
+    })
+    .from(activityEvents)
+    .where(sql`${activityEvents.createdAt} >= ${startDate} AND ${activityEvents.createdAt} <= ${endDate}`)
+    .groupBy(sql`DATE(${activityEvents.createdAt})`)
+    .orderBy(sql`DATE(${activityEvents.createdAt})`);
+
+    return {
+      pageViews: summaryResult?.pageViews || 0,
+      productViews: summaryResult?.productViews || 0,
+      cartAdditions: summaryResult?.cartAdditions || 0,
+      purchases: summaryResult?.purchases || 0,
+      chartData: chartData || []
+    };
+  }
+
+  async getTopProducts(filters?: {
+    metric?: 'views' | 'purchases';
+    range?: 'today' | '7d' | '30d' | '90d';
+    limit?: number;
+  }): Promise<Array<{ product: Product; count: number }>> {
+    const metric = filters?.metric || 'views';
+    const range = filters?.range || '30d';
+    const limit = filters?.limit || 10;
+
+    // Calculate date range
+    const endDate = new Date();
+    const startDate = new Date();
+    
+    switch (range) {
+      case 'today':
+        startDate.setHours(0, 0, 0, 0);
+        break;
+      case '7d':
+        startDate.setDate(startDate.getDate() - 7);
+        break;
+      case '30d':
+        startDate.setDate(startDate.getDate() - 30);
+        break;
+      case '90d':
+        startDate.setDate(startDate.getDate() - 90);
+        break;
+    }
+
+    const eventType = metric === 'views' ? 'product_view' : 'purchase_completed';
+
+    const result = await db.select({
+      product: products,
+      count: sql<number>`COUNT(*)`
+    })
+    .from(activityEvents)
+    .innerJoin(products, eq(activityEvents.productId, products.id))
+    .where(and(
+      eq(activityEvents.type, eventType),
+      sql`${activityEvents.createdAt} >= ${startDate} AND ${activityEvents.createdAt} <= ${endDate}`,
+      eq(products.isActive, true)
+    ))
+    .groupBy(products.id)
+    .orderBy(desc(sql`COUNT(*)`))
+    .limit(limit);
+
+    return result;
+  }
+
+  async getUserActivity(filters?: {
+    userId: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ events: ActivityEvent[]; total: number }> {
+    if (!filters?.userId) {
+      throw new Error('userId is required for getUserActivity');
+    }
+
+    const limit = filters?.limit || 50;
+    const offset = ((filters?.page || 1) - 1) * limit;
+
+    const [eventsResult, totalResult] = await Promise.all([
+      db.select().from(activityEvents)
+        .where(eq(activityEvents.userId, filters.userId))
+        .orderBy(desc(activityEvents.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db.select({ count: sql<number>`count(*)` })
+        .from(activityEvents)
+        .where(eq(activityEvents.userId, filters.userId))
+    ]);
+
+    return {
+      events: eventsResult,
+      total: totalResult[0]?.count || 0
+    };
+  }
+
+  // Enhanced Order Management
+  async getOrdersAdmin(filters?: {
+    status?: string;
+    dateFrom?: Date;
+    dateTo?: Date;
+    userId?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ orders: (Order & { user: User; itemCount: number })[]; total: number }> {
+    const conditions = [];
+    const limit = filters?.limit || 20;
+    const offset = ((filters?.page || 1) - 1) * limit;
+
+    if (filters?.status) {
+      conditions.push(eq(orders.status, filters.status));
+    }
+
+    if (filters?.userId) {
+      conditions.push(eq(orders.userId, filters.userId));
+    }
+
+    if (filters?.dateFrom) {
+      conditions.push(sql`${orders.createdAt} >= ${filters.dateFrom}`);
+    }
+
+    if (filters?.dateTo) {
+      conditions.push(sql`${orders.createdAt} <= ${filters.dateTo}`);
+    }
+
+    const whereCondition = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const [ordersResult, totalResult] = await Promise.all([
+      db.select({
+        id: orders.id,
+        userId: orders.userId,
+        orderNumber: orders.orderNumber,
+        status: orders.status,
+        subtotal: orders.subtotal,
+        tax: orders.tax,
+        shipping: orders.shipping,
+        total: orders.total,
+        stripePaymentIntentId: orders.stripePaymentIntentId,
+        shippingAddress: orders.shippingAddress,
+        billingAddress: orders.billingAddress,
+        createdAt: orders.createdAt,
+        updatedAt: orders.updatedAt,
+        user: users,
+        itemCount: sql<number>`COUNT(${orderItems.id})`
+      })
+      .from(orders)
+      .innerJoin(users, eq(orders.userId, users.id))
+      .leftJoin(orderItems, eq(orders.id, orderItems.orderId))
+      .where(whereCondition)
+      .groupBy(orders.id, users.id)
+      .orderBy(desc(orders.createdAt))
+      .limit(limit)
+      .offset(offset),
+      db.select({ count: sql<number>`count(*)` }).from(orders).where(whereCondition)
+    ]);
+
+    return {
+      orders: ordersResult,
+      total: totalResult[0]?.count || 0
     };
   }
 }

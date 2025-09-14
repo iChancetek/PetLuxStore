@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { activityTracker } from "@/lib/activityTracker";
+import { CartItem, Product as ProductType } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -17,18 +19,34 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Define cart item type with product relation
+  type CartItemWithProduct = CartItem & {
+    product: ProductType;
+  };
+
   // Fetch cart items
-  const { data: cartItems, isLoading: loadingCart } = useQuery({
+  const { data: cartItems, isLoading: loadingCart } = useQuery<CartItemWithProduct[]>({
     queryKey: ["/api/cart"],
     enabled: isOpen,
   });
 
   // Update cart item quantity
   const updateQuantityMutation = useMutation({
-    mutationFn: async ({ id, quantity }: { id: string; quantity: number }) => {
+    mutationFn: async ({ id, quantity, item }: { id: string; quantity: number; item?: CartItemWithProduct }) => {
       await apiRequest("PATCH", `/api/cart/${id}`, { quantity });
+      return { id, quantity, item };
     },
-    onSuccess: () => {
+    onSuccess: ({ id, quantity, item }) => {
+      // Track cart update event
+      if (item) {
+        const oldQuantity = item.quantity;
+        activityTracker.trackCartUpdate(item.product.id, oldQuantity, quantity, {
+          productName: item.product.name,
+          price: parseFloat(item.product.price),
+          action: quantity > oldQuantity ? 'increase' : quantity < oldQuantity ? 'decrease' : 'update'
+        });
+      }
+
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
     },
     onError: () => {
@@ -42,10 +60,20 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
   // Remove cart item
   const removeItemMutation = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async ({ id, item }: { id: string; item?: CartItemWithProduct }) => {
       await apiRequest("DELETE", `/api/cart/${id}`);
+      return { id, item };
     },
-    onSuccess: () => {
+    onSuccess: ({ id, item }) => {
+      // Track cart item removal
+      if (item) {
+        activityTracker.trackCartUpdate(item.product.id, item.quantity, 0, {
+          productName: item.product.name,
+          price: parseFloat(item.product.price),
+          action: 'remove'
+        });
+      }
+
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       toast({
         title: "Item removed",
@@ -61,15 +89,15 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     },
   });
 
-  const handleQuantityChange = (id: string, currentQuantity: number, delta: number) => {
+  const handleQuantityChange = (id: string, currentQuantity: number, delta: number, item: any) => {
     const newQuantity = Math.max(1, Math.min(10, currentQuantity + delta));
     if (newQuantity !== currentQuantity) {
-      updateQuantityMutation.mutate({ id, quantity: newQuantity });
+      updateQuantityMutation.mutate({ id, quantity: newQuantity, item });
     }
   };
 
-  const handleRemoveItem = (id: string) => {
-    removeItemMutation.mutate(id);
+  const handleRemoveItem = (id: string, item: any) => {
+    removeItemMutation.mutate({ id, item });
   };
 
   const items = cartItems || [];
@@ -161,7 +189,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                             variant="ghost"
                             size="sm"
                             className="h-6 w-6 p-0"
-                            onClick={() => handleQuantityChange(item.id, item.quantity, -1)}
+                            onClick={() => handleQuantityChange(item.id, item.quantity, -1, item)}
                             disabled={item.quantity <= 1 || updateQuantityMutation.isPending}
                             data-testid={`button-drawer-decrease-${item.id}`}
                           >
@@ -174,7 +202,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                             variant="ghost"
                             size="sm"
                             className="h-6 w-6 p-0"
-                            onClick={() => handleQuantityChange(item.id, item.quantity, 1)}
+                            onClick={() => handleQuantityChange(item.id, item.quantity, 1, item)}
                             disabled={item.quantity >= 10 || updateQuantityMutation.isPending}
                             data-testid={`button-drawer-increase-${item.id}`}
                           >
@@ -185,7 +213,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleRemoveItem(item.id)}
+                          onClick={() => handleRemoveItem(item.id, item)}
                           disabled={removeItemMutation.isPending}
                           className="text-destructive hover:text-destructive h-6 text-xs"
                           data-testid={`button-drawer-remove-${item.id}`}

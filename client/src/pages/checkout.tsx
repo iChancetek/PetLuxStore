@@ -6,6 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { activityTracker } from "@/lib/activityTracker";
+import { CartItem, Product as ProductType } from "@shared/schema";
 import Navbar from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
@@ -23,7 +25,12 @@ if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
 }
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
-const CheckoutForm = ({ total }: { total: number }) => {
+// Define cart item type with product relation
+type CartItemWithProduct = CartItem & {
+  product: ProductType;
+};
+
+const CheckoutForm = ({ total, items }: { total: number; items: CartItemWithProduct[] }) => {
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
@@ -52,6 +59,22 @@ const CheckoutForm = ({ total }: { total: number }) => {
         variant: "destructive",
       });
     } else {
+      // Track purchase completion
+      const orderValue = total;
+      const itemCount = items.length;
+      
+      activityTracker.trackPurchaseCompleted(`order-${Date.now()}`, {
+        orderValue,
+        itemCount,
+        paymentMethod: 'stripe',
+        items: items.map((item: any) => ({
+          productId: item.product.id,
+          productName: item.product.name,
+          quantity: item.quantity,
+          price: parseFloat(item.product.price)
+        }))
+      });
+
       toast({
         title: "Payment Successful",
         description: "Thank you for your purchase!",
@@ -125,7 +148,7 @@ export default function Checkout() {
   }, [isAuthenticated, isLoading, toast]);
 
   // Fetch cart items
-  const { data: cartItems, isLoading: loadingCart } = useQuery({
+  const { data: cartItems, isLoading: loadingCart } = useQuery<CartItemWithProduct[]>({
     queryKey: ["/api/cart"],
     enabled: isAuthenticated,
   });
@@ -135,6 +158,25 @@ export default function Checkout() {
   const tax = subtotal * 0.08;
   const shipping = subtotal >= 50 ? 0 : 9.99;
   const total = subtotal + tax + shipping;
+
+  // Track checkout started when cart items are loaded
+  useEffect(() => {
+    if (items.length > 0 && !loadingCart) {
+      activityTracker.trackCheckoutStarted({
+        cartValue: total,
+        itemCount: items.length,
+        subtotal,
+        tax,
+        shipping,
+        items: items.map((item: any) => ({
+          productId: item.product.id,
+          productName: item.product.name,
+          quantity: item.quantity,
+          price: parseFloat(item.product.price)
+        }))
+      });
+    }
+  }, [items.length, loadingCart, total, subtotal, tax, shipping]);
 
   useEffect(() => {
     if (items.length > 0 && total > 0) {
@@ -331,7 +373,7 @@ export default function Checkout() {
                   </h3>
                   
                   <Elements stripe={stripePromise} options={{ clientSecret }}>
-                    <CheckoutForm total={total} />
+                    <CheckoutForm total={total} items={items} />
                   </Elements>
                 </div>
               </CardContent>

@@ -4,6 +4,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { activityTracker } from "@/lib/activityTracker";
+import { Product as ProductType, Category } from "@shared/schema";
 import Navbar from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
 import ProductCard from "@/components/product/product-card";
@@ -53,7 +55,10 @@ export default function Shop() {
   }, [isAuthenticated, isLoading, toast]);
 
   // Fetch products with filters
-  const { data: productsData, isLoading: loadingProducts } = useQuery({
+  const { data: productsData, isLoading: loadingProducts } = useQuery<{
+    products: ProductType[];
+    total: number;
+  }>({
     queryKey: ["/api/products", { 
       ...filters, 
       page: currentPage, 
@@ -63,24 +68,51 @@ export default function Shop() {
   });
 
   // Fetch categories for filters
-  const { data: categories } = useQuery({
+  const { data: categories } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
     enabled: isAuthenticated,
   });
 
   const handleFilterChange = (newFilters: any) => {
+    const prevFilters = filters;
     setFilters(prev => ({ ...prev, ...newFilters }));
     setCurrentPage(1); // Reset to first page when filters change
+
+    // Track filter changes
+    Object.entries(newFilters).forEach(([key, value]) => {
+      if (prevFilters[key as keyof typeof prevFilters] !== value) {
+        if (key === 'search' && value) {
+          activityTracker.trackSearch(value as string, {
+            previousSearch: prevFilters.search,
+            filters: { ...prevFilters, ...newFilters }
+          });
+        } else if (value !== undefined && value !== '' && value !== null) {
+          activityTracker.trackFilterApplied(key, String(value), {
+            allFilters: { ...prevFilters, ...newFilters }
+          });
+        }
+      }
+    });
   };
 
   const handleSortChange = (value: string) => {
     const [sortBy, sortOrder] = value.split('-');
-    setFilters(prev => ({ 
-      ...prev, 
+    const newFilters = { 
+      ...filters, 
       sortBy: sortBy as 'price' | 'rating' | 'created' | 'ai_match',
       sortOrder: sortOrder as 'asc' | 'desc'
-    }));
+    };
+    
+    setFilters(newFilters);
     setCurrentPage(1);
+
+    // Track sort change
+    activityTracker.trackFilterApplied('sort', value, {
+      sortBy,
+      sortOrder,
+      allFilters: newFilters,
+      resultCount: totalProducts
+    });
   };
 
   const totalProducts = productsData?.total || 0;

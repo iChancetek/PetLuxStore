@@ -35,6 +35,7 @@ export const users = pgTable("users", {
   role: varchar("role", { length: 50 }).notNull().default("user"), // user, admin
   stripeCustomerId: varchar("stripe_customer_id"),
   stripeSubscriptionId: varchar("stripe_subscription_id"),
+  isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -136,12 +137,57 @@ export const aiInteractions = pgTable("ai_interactions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Audit Logs table (for tracking admin actions)
+export const auditLogs = pgTable(
+  "audit_logs",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    actorId: varchar("actor_id").references(() => users.id),
+    action: varchar("action", { length: 255 }).notNull(),
+    resourceType: varchar("resource_type", { length: 100 }).notNull(),
+    resourceId: varchar("resource_id", { length: 255 }),
+    metadata: jsonb("metadata"),
+    ip: varchar("ip", { length: 45 }),
+    userAgent: text("user_agent"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    index("idx_audit_logs_created_at").on(table.createdAt),
+    index("idx_audit_logs_resource").on(table.resourceType, table.resourceId),
+    index("idx_audit_logs_actor_created").on(table.actorId, table.createdAt),
+  ]
+);
+
+// Activity Events table (for tracking user activity)
+export const activityEvents = pgTable(
+  "activity_events",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    userId: varchar("user_id").references(() => users.id),
+    sessionId: varchar("session_id"),
+    type: varchar("type", { length: 50 }).notNull(), // page_view, product_view, add_to_cart, checkout_started, purchase_completed, admin_ui
+    productId: uuid("product_id").references(() => products.id),
+    orderId: uuid("order_id").references(() => orders.id),
+    path: varchar("path", { length: 500 }),
+    referrer: varchar("referrer", { length: 500 }),
+    metadata: jsonb("metadata"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    index("idx_activity_events_type_created").on(table.type, table.createdAt),
+    index("idx_activity_events_product_type").on(table.productId, table.type),
+    index("idx_activity_events_user_created").on(table.userId, table.createdAt),
+  ]
+);
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   cartItems: many(cartItems),
   orders: many(orders),
   reviews: many(reviews),
   aiInteractions: many(aiInteractions),
+  auditLogs: many(auditLogs),
+  activityEvents: many(activityEvents),
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
@@ -156,6 +202,7 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   cartItems: many(cartItems),
   orderItems: many(orderItems),
   reviews: many(reviews),
+  activityEvents: many(activityEvents),
 }));
 
 export const cartItemsRelations = relations(cartItems, ({ one }) => ({
@@ -175,6 +222,7 @@ export const ordersRelations = relations(orders, ({ one, many }) => ({
     references: [users.id],
   }),
   orderItems: many(orderItems),
+  activityEvents: many(activityEvents),
 }));
 
 export const orderItemsRelations = relations(orderItems, ({ one }) => ({
@@ -203,6 +251,28 @@ export const aiInteractionsRelations = relations(aiInteractions, ({ one }) => ({
   user: one(users, {
     fields: [aiInteractions.userId],
     references: [users.id],
+  }),
+}));
+
+export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
+  actor: one(users, {
+    fields: [auditLogs.actorId],
+    references: [users.id],
+  }),
+}));
+
+export const activityEventsRelations = relations(activityEvents, ({ one }) => ({
+  user: one(users, {
+    fields: [activityEvents.userId],
+    references: [users.id],
+  }),
+  product: one(products, {
+    fields: [activityEvents.productId],
+    references: [products.id],
+  }),
+  order: one(orders, {
+    fields: [activityEvents.orderId],
+    references: [orders.id],
   }),
 }));
 
@@ -252,6 +322,16 @@ export const insertAiInteractionSchema = createInsertSchema(aiInteractions).omit
   createdAt: true,
 });
 
+export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertActivityEventSchema = createInsertSchema(activityEvents).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type UpsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -269,3 +349,7 @@ export type Review = typeof reviews.$inferSelect;
 export type InsertReview = z.infer<typeof insertReviewSchema>;
 export type AiInteraction = typeof aiInteractions.$inferSelect;
 export type InsertAiInteraction = z.infer<typeof insertAiInteractionSchema>;
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
+export type ActivityEvent = typeof activityEvents.$inferSelect;
+export type InsertActivityEvent = z.infer<typeof insertActivityEventSchema>;

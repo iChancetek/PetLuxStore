@@ -5,6 +5,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRoute } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { activityTracker } from "@/lib/activityTracker";
+import { Product as ProductType, Review, InsertReview, InsertCartItem } from "@shared/schema";
 import Navbar from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
 import ProductCard from "@/components/product/product-card";
@@ -45,19 +47,33 @@ export default function Product() {
   }, [isAuthenticated, isLoading, toast]);
 
   // Fetch product details
-  const { data: product, isLoading: loadingProduct } = useQuery({
+  const { data: product, isLoading: loadingProduct } = useQuery<ProductType>({
     queryKey: ["/api/products/slug", params?.slug],
     enabled: isAuthenticated && !!params?.slug,
   });
 
+  // Track product view when product is loaded
+  useEffect(() => {
+    if (product && !loadingProduct) {
+      activityTracker.trackProductView(product.id, {
+        productSlug: product.slug,
+        productName: product.name,
+        categoryId: product.categoryId,
+        price: parseFloat(product.price),
+        petType: product.petType,
+        aiMatch: product.aiMatch
+      });
+    }
+  }, [product, loadingProduct]);
+
   // Fetch product reviews
-  const { data: reviews } = useQuery({
+  const { data: reviews } = useQuery<Review[]>({
     queryKey: ["/api/products", product?.id, "reviews"],
     enabled: !!product?.id,
   });
 
   // Fetch recommendations
-  const { data: recommendations } = useQuery({
+  const { data: recommendations } = useQuery<ProductType[]>({
     queryKey: ["/api/products", product?.id, "recommendations"],
     enabled: !!product?.id,
   });
@@ -65,12 +81,21 @@ export default function Product() {
   // Add to cart mutation
   const addToCartMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/cart", {
-        productId: product.id,
+      const cartData: Pick<InsertCartItem, 'productId' | 'quantity'> = {
+        productId: product!.id,
         quantity,
-      });
+      };
+      await apiRequest("POST", "/api/cart", cartData);
     },
     onSuccess: () => {
+      // Track add to cart event
+      activityTracker.trackAddToCart(product.id, quantity, {
+        productName: product.name,
+        price: parseFloat(product.price),
+        categoryId: product.categoryId,
+        petType: product.petType
+      });
+
       toast({
         title: "Added to cart",
         description: `${quantity} ${product.name}${quantity > 1 ? 's' : ''} added to your cart.`,
@@ -82,10 +107,11 @@ export default function Product() {
   // Add review mutation
   const addReviewMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", `/api/products/${product.id}/reviews`, {
+      const reviewData: Pick<InsertReview, 'rating' | 'comment'> = {
         rating: reviewRating,
         comment: reviewText,
-      });
+      };
+      await apiRequest("POST", `/api/products/${product!.id}/reviews`, reviewData);
     },
     onSuccess: () => {
       toast({
