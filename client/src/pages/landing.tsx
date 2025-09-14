@@ -1,21 +1,34 @@
 import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth, useSignIn } from "@clerk/clerk-react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, Sparkles, Brain, ShoppingBag, Heart } from "lucide-react";
+import type { Category } from "@shared/schema";
 
 export default function Landing() {
   const { toast } = useToast();
-  const { openSignIn } = useAuth();
+  const { signIn } = useSignIn();
+
+  // Fetch categories from API
+  const { data: categories } = useQuery<Category[]>({
+    queryKey: ["/api/categories"],
+  });
 
   const handleLogin = () => {
     toast({
-      title: "Opening sign in",
+      title: "Opening sign in", 
       description: "Please sign in to continue...",
     });
-    openSignIn();
+    if (signIn) {
+      signIn.authenticateWithRedirect({
+        strategy: "oauth_google",
+        redirectUrl: "/shop",
+        redirectUrlComplete: "/shop"
+      });
+    }
   };
 
   return (
@@ -163,36 +176,48 @@ export default function Landing() {
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
+            {(categories && categories.length > 0 ? categories : [
               {
+                id: "1",
                 name: "Premium Food",
-                image: "https://images.unsplash.com/photo-1623387641168-d9803ddd3f35?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+                slug: "premium-food", 
                 description: "Nutrition-packed meals for optimal health",
-                count: "1,240 products"
+                imageUrl: "https://images.unsplash.com/photo-1623387641168-d9803ddd3f35?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+                createdAt: new Date(),
+                updatedAt: new Date()
               },
               {
+                id: "2",
                 name: "Interactive Toys",
-                image: "https://images.unsplash.com/photo-1592194996308-7b43878e84a6?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
-                description: "Engaging play for mental stimulation",
-                count: "856 products"
+                slug: "interactive-toys",
+                description: "Engaging play for mental stimulation", 
+                imageUrl: "https://images.unsplash.com/photo-1592194996308-7b43878e84a6?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+                createdAt: new Date(),
+                updatedAt: new Date()
               },
               {
+                id: "3",
                 name: "Comfort & Sleep",
-                image: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+                slug: "comfort-sleep",
                 description: "Cozy beds and relaxation essentials",
-                count: "432 products"
+                imageUrl: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+                createdAt: new Date(),
+                updatedAt: new Date()
               },
               {
+                id: "4",
                 name: "Health & Grooming",
-                image: "https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+                slug: "health-grooming",
                 description: "Essential care for wellbeing",
-                count: "678 products"
+                imageUrl: "https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+                createdAt: new Date(),
+                updatedAt: new Date()
               }
-            ].map((category, index) => (
-              <Card key={index} className="group cursor-pointer overflow-hidden hover:shadow-xl transition-shadow" data-testid={`card-category-${index}`}>
+            ]).map((category, index) => (
+              <Card key={category.id || index} className="group cursor-pointer overflow-hidden hover:shadow-xl transition-shadow" data-testid={`card-category-${category.slug || index}`}>
                 <div className="relative">
                   <img 
-                    src={category.image}
+                    src={category.imageUrl || `https://images.unsplash.com/photo-1623387641168-d9803ddd3f35?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300`}
                     alt={category.name}
                     className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                   />
@@ -201,7 +226,7 @@ export default function Landing() {
                   <h3 className="text-xl font-semibold mb-2">{category.name}</h3>
                   <p className="text-muted-foreground mb-4">{category.description}</p>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">{category.count}</span>
+                    <span className="text-sm text-muted-foreground">Browse Collection</span>
                     <Badge variant="secondary">AI Curated</Badge>
                   </div>
                 </CardContent>
