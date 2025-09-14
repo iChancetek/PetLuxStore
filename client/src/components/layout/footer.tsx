@@ -81,7 +81,7 @@ export default function Footer() {
         
         <div className="border-t border-background/20 pt-8 text-center text-background/60">
           <p data-testid="text-footer-copyright">
-            &copy; 2024 The PotLuxE. All rights reserved. Powered by AI technology.
+            &copy; 2025 The PotLuxE. All rights reserved. Powered by AI technology. Developed by ChanceTEK LLC I iSynera LLC
           </p>
         </div>
       </div>
