@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { activityTracker } from "@/lib/activityTracker";
 import { SignIn } from "@clerk/clerk-react";
-import type { AdminStats as AdminStatsType, ProductsResponse, Product } from "@shared/schema";
+import type { AdminStats as AdminStatsType, ProductsResponse, Product, User } from "@shared/schema";
 import Navbar from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
 import AdminStats from "@/components/admin/admin-stats";
@@ -43,42 +43,63 @@ export default function Admin() {
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("users");
 
+  // Fetch user profile to check admin role - MUST be called before any early returns
+  const { data: userProfile, isLoading: loadingProfile, error: profileError } = useQuery<User>({
+    queryKey: ["/api/me/profile"],
+    enabled: isAuthenticated,
+  });
+
+  // Check if user is admin
+  const isAdmin = userProfile?.role === 'admin';
+
   // Fetch admin stats - MUST be called before any early returns
   const { data: stats, isLoading: loadingStats } = useQuery<AdminStatsType>({
     queryKey: ["/api/admin/stats"],
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && isAdmin,
   });
 
   // Fetch products for management - MUST be called before any early returns
   const { data: productsData, isLoading: loadingProducts } = useQuery<ProductsResponse>({
     queryKey: ["/api/products", { limit: 50 }],
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && isAdmin,
   });
 
   // Track admin dashboard access
   useEffect(() => {
-    if (isAuthenticated && !isLoading) {
+    if (isAuthenticated && !isLoading && isAdmin) {
       activityTracker.trackAdminUI({
         action: 'dashboard_access',
         page: 'admin',
         initialTab: activeTab
       });
     }
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated, isLoading, isAdmin]);
 
   // Track tab changes
   useEffect(() => {
-    if (isAuthenticated && !isLoading) {
+    if (isAuthenticated && !isLoading && isAdmin) {
       activityTracker.trackAdminUI({
         action: 'tab_change',
         tab: activeTab,
         page: 'admin'
       });
     }
-  }, [activeTab, isAuthenticated, isLoading]);
+  }, [activeTab, isAuthenticated, isLoading, isAdmin]);
+
+  // Show loading state while checking authentication and role
+  if (isLoading || loadingProfile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+          <p className="text-muted-foreground">Checking permissions...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Show sign in if not authenticated - AFTER all hooks are called
-  if (!isLoading && !isAuthenticated) {
+  if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-full max-w-md">
@@ -92,6 +113,92 @@ export default function Admin() {
             signUpUrl={undefined}
           />
         </div>
+      </div>
+    );
+  }
+
+  // Show access denied if authenticated but not admin role
+  if (isAuthenticated && userProfile && !isAdmin) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        
+        <div className="container mx-auto px-4 py-16">
+          <div className="max-w-md mx-auto text-center">
+            <div className="mb-8">
+              <Shield className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <h1 className="text-3xl font-serif font-bold mb-2" data-testid="text-access-denied-title">
+                Access Denied
+              </h1>
+              <p className="text-muted-foreground mb-4" data-testid="text-access-denied-message">
+                You don't have permission to access the admin dashboard.
+              </p>
+            </div>
+            
+            <Card>
+              <CardContent className="pt-6">
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Your Role:</span>
+                    <Badge variant={userProfile.role === 'admin' ? 'default' : 'secondary'} data-testid="badge-current-role">
+                      {userProfile.role || 'customer'}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Required Role:</span>
+                    <Badge variant="default">admin</Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <p className="text-sm text-muted-foreground mt-6" data-testid="text-contact-admin">
+              If you believe this is an error, please contact an administrator.
+            </p>
+            
+            <Button 
+              onClick={() => window.location.href = '/'}
+              className="mt-4"
+              data-testid="button-return-home"
+            >
+              Return to Home
+            </Button>
+          </div>
+        </div>
+        
+        <Footer />
+      </div>
+    );
+  }
+
+  // Show error if profile failed to load
+  if (profileError) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        
+        <div className="container mx-auto px-4 py-16">
+          <div className="max-w-md mx-auto text-center">
+            <div className="mb-8">
+              <AlertTriangle className="w-16 h-16 text-destructive mx-auto mb-4" />
+              <h1 className="text-3xl font-serif font-bold mb-2" data-testid="text-profile-error-title">
+                Profile Error
+              </h1>
+              <p className="text-muted-foreground mb-4" data-testid="text-profile-error-message">
+                Unable to verify your permissions. Please try again.
+              </p>
+            </div>
+            
+            <Button 
+              onClick={() => window.location.reload()}
+              data-testid="button-retry"
+            >
+              Try Again
+            </Button>
+          </div>
+        </div>
+        
+        <Footer />
       </div>
     );
   }

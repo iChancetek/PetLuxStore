@@ -99,6 +99,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Profile endpoint for frontend role checking
+  app.get('/api/me/profile', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Return user profile with role information
+      res.json({
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        profileImageUrl: user.profileImageUrl,
+        role: user.role || 'customer', // Default to customer role
+        stripeCustomerId: user.stripeCustomerId,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      });
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      res.status(500).json({ message: 'Failed to fetch user profile' });
+    }
+  });
+
   // User Dashboard Endpoints
   app.get('/api/me/dashboard', isAuthenticated, async (req: any, res) => {
     try {
