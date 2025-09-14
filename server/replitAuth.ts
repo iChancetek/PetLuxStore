@@ -155,3 +155,42 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     return;
   }
 };
+
+export const isAdmin: RequestHandler = async (req, res, next) => {
+  const user = req.user as any;
+
+  if (!req.isAuthenticated() || !user.expires_at) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  try {
+    // First ensure token is valid
+    const now = Math.floor(Date.now() / 1000);
+    if (now > user.expires_at) {
+      const refreshToken = user.refresh_token;
+      if (!refreshToken) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const config = await getOidcConfig();
+      const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
+      updateUserSession(user, tokenResponse);
+    }
+
+    // Get user from database to check role
+    const userId = user.claims?.sub;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const dbUser = await storage.getUser(userId);
+    if (!dbUser || dbUser.role !== 'admin') {
+      return res.status(403).json({ message: "Access denied. Admin role required." });
+    }
+
+    return next();
+  } catch (error) {
+    console.error("Error in admin middleware:", error);
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+};
