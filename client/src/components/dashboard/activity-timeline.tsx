@@ -98,17 +98,17 @@ const formatActivityDescription = (type: string, metadata?: any) => {
 
 export default function ActivityTimeline({ className = "" }: ActivityTimelineProps) {
   const [currentPage, setCurrentPage] = useState(1);
-  const [activityType, setActivityType] = useState<string>('');
+  const [activityType, setActivityType] = useState<string>('all');
   const itemsPerPage = 20;
 
   const { data: activitiesData, isLoading, error, refetch } = useQuery({
-    queryKey: ["/api/me/activity", { page: currentPage, limit: itemsPerPage, ...(activityType && { type: activityType }) }],
+    queryKey: ["/api/me/activity", { page: currentPage, limit: itemsPerPage, ...(activityType !== 'all' && { type: activityType }) }],
   });
 
   const totalPages = activitiesData ? Math.ceil(activitiesData.total / itemsPerPage) : 1;
 
   const activityTypes = [
-    { value: '', label: 'All Activities' },
+    { value: 'all', label: 'All Activities' },
     { value: 'page_view', label: 'Page Views' },
     { value: 'product_view', label: 'Product Views' },
     { value: 'add_to_cart', label: 'Cart Additions' },
@@ -187,10 +187,10 @@ export default function ActivityTimeline({ className = "" }: ActivityTimelinePro
           <div className="text-center py-12">
             <Clock className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium mb-2" data-testid="text-no-activity-title">
-              {activityType ? 'No activities found' : 'No activity yet'}
+              {activityType !== 'all' ? 'No activities found' : 'No activity yet'}
             </h3>
             <p className="text-muted-foreground" data-testid="text-no-activity-description">
-              {activityType 
+              {activityType !== 'all'
                 ? `No ${activityTypes.find(t => t.value === activityType)?.label.toLowerCase()} activities found`
                 : 'Start browsing and shopping to see your activity here'
               }
