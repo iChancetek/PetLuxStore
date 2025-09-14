@@ -77,19 +77,67 @@ export default function ProductCard({ product }: ProductCardProps) {
   const fullStars = Math.floor(rating);
   const hasHalfStar = rating % 1 >= 0.5;
 
+  // Smart image URL determination
+  const getImageUrl = (product: any) => {
+    // If imageUrl exists and looks like a direct image URL (ends with image extension)
+    if (product.imageUrl && /\.(jpg|jpeg|png|webp|gif)$/i.test(product.imageUrl)) {
+      return product.imageUrl;
+    }
+    
+    // If imageUrl is a spocket.co URL or not a direct image, use fallback
+    if (!product.imageUrl || product.imageUrl.includes('spocket.co') || !product.imageUrl.startsWith('http')) {
+      // Use product name to create a simple hash for consistent image mapping
+      const hash = product.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+      const imageIndex = (hash % 8) + 1; // Maps to product-1.jpg through product-8.jpg
+      return `/images/products/product-${imageIndex}.jpg`;
+    }
+    
+    return product.imageUrl;
+  };
+
+  const imageUrl = getImageUrl(product);
+
+  const handleImageLoad = () => {
+    setImageLoading(false);
+    setImageError(false);
+  };
+
+  const handleImageError = () => {
+    setImageLoading(false);
+    setImageError(true);
+  };
+
   return (
     <Link href={productUrl}>
       <Card className="product-card cursor-pointer group hover:shadow-xl transition-all duration-300" data-testid={`card-product-${product.id}`}>
         <CardContent className="p-0">
           {/* Product Image */}
           <div className="relative aspect-square overflow-hidden rounded-t-lg bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20" data-testid={`image-container-${product.id}`}>
-            <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-              <div className="w-16 h-16 mb-3 rounded-full bg-primary/10 flex items-center justify-center">
-                <Heart className="w-8 h-8 text-primary" />
+            {imageLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-muted animate-pulse">
+                <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
               </div>
-              <h4 className="font-medium text-sm text-foreground/80 mb-1">Premium Pet Product</h4>
-              <p className="text-xs text-muted-foreground">Professional photo coming soon</p>
-            </div>
+            )}
+            
+            {imageError ? (
+              <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+                <div className="w-16 h-16 mb-3 rounded-full bg-muted flex items-center justify-center">
+                  <ImageOff className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <p className="text-xs text-muted-foreground">Image unavailable</p>
+              </div>
+            ) : (
+              <img
+                src={imageUrl}
+                alt={product.name}
+                className={`w-full h-full object-cover transition-all duration-300 group-hover:scale-105 ${
+                  imageLoading ? 'opacity-0' : 'opacity-100'
+                }`}
+                onLoad={handleImageLoad}
+                onError={handleImageError}
+                data-testid={`img-product-${product.id}`}
+              />
+            )}
           </div>
           
           <div className="p-6">
