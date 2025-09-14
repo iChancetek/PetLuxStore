@@ -27,7 +27,6 @@ export default function Home() {
   // Fetch categories
   const { data: categories } = useQuery({
     queryKey: ["/api/categories"],
-    enabled: isAuthenticated,
   });
 
   if (isLoading) {
