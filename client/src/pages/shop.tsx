@@ -51,13 +51,11 @@ export default function Shop() {
       page: currentPage, 
       limit: productsPerPage 
     }],
-    enabled: isAuthenticated,
   });
 
   // Fetch categories for filters
   const { data: categories } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
-    enabled: isAuthenticated,
   });
 
   const handleFilterChange = (newFilters: any) => {
