@@ -74,7 +74,7 @@ export default function Home() {
                   <Button 
                     size="lg" 
                     variant="outline" 
-                    className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10"
+                    className="border-white/30 text-white bg-transparent hover:bg-white/10 hover:text-white"
                     data-testid="button-ai-picks"
                   >
                     <Brain className="w-4 h-4 mr-2" />
