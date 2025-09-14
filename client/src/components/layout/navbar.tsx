@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
-import { useClerk } from "@clerk/clerk-react";
+import { useClerk, SignInButton, SignUpButton, UserButton } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -118,50 +118,32 @@ export default function Navbar() {
             
             {/* Desktop Actions */}
             <div className="hidden md:flex items-center space-x-4">
-              {/* User Menu */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" data-testid="button-user-menu">
-                    {user?.profileImageUrl ? (
-                      <img 
-                        src={user.profileImageUrl} 
-                        alt="Profile" 
-                        className="w-6 h-6 rounded-full object-cover"
-                      />
-                    ) : (
-                      <User className="h-5 w-5" />
-                    )}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem className="flex-col items-start">
-                    <div className="font-medium">{user?.firstName || "User"}</div>
-                    <div className="text-sm text-muted-foreground">{user?.email}</div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/orders">
-                      <Package className="w-4 h-4 mr-2" />
-                      Orders
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/wishlist">
-                      <Heart className="w-4 h-4 mr-2" />
-                      Wishlist
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/settings">
-                      <Settings className="w-4 h-4 mr-2" />
-                      Settings
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleLogout} data-testid="button-logout">
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Sign Out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {/* Authentication Buttons */}
+              {user ? (
+                /* Authenticated User Menu */
+                <UserButton 
+                  afterSignOutUrl="/"
+                  appearance={{
+                    elements: {
+                      userButtonAvatarBox: "w-8 h-8",
+                    }
+                  }}
+                />
+              ) : (
+                /* Login/Signup Buttons */
+                <div className="flex items-center space-x-2">
+                  <SignInButton mode="modal">
+                    <Button variant="ghost" data-testid="button-login">
+                      Sign In
+                    </Button>
+                  </SignInButton>
+                  <SignUpButton mode="modal">
+                    <Button data-testid="button-signup">
+                      Sign Up
+                    </Button>
+                  </SignUpButton>
+                </div>
+              )}
 
               {/* Cart Button */}
               <Button 
@@ -225,48 +207,70 @@ export default function Navbar() {
                   </div>
 
                   {/* Mobile User Info */}
-                  {user && (
-                    <div className="border-t pt-6">
-                      <div className="flex items-center space-x-3 mb-4">
-                        {user.profileImageUrl ? (
-                          <img 
-                            src={user.profileImageUrl} 
-                            alt="Profile" 
-                            className="w-10 h-10 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
-                            <User className="h-5 w-5" />
+                  <div className="border-t pt-6">
+                    {user ? (
+                      <div>
+                        <div className="flex items-center space-x-3 mb-4">
+                          {user.profileImageUrl ? (
+                            <img 
+                              src={user.profileImageUrl} 
+                              alt="Profile" 
+                              className="w-10 h-10 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
+                              <User className="h-5 w-5" />
+                            </div>
+                          )}
+                          <div>
+                            <div className="font-medium">{user.firstName || "User"}</div>
+                            <div className="text-sm text-muted-foreground">{user.email}</div>
                           </div>
-                        )}
-                        <div>
-                          <div className="font-medium">{user.firstName || "User"}</div>
-                          <div className="text-sm text-muted-foreground">{user.email}</div>
+                        </div>
+                        
+                        <div className="flex flex-col space-y-2">
+                          <Button 
+                            variant="outline" 
+                            className="w-full justify-start"
+                            onClick={() => setIsCartOpen(true)}
+                            data-testid="button-mobile-cart"
+                          >
+                            <ShoppingBag className="w-4 h-4 mr-2" />
+                            Cart ({cartItemCount})
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            className="w-full justify-start"
+                            onClick={handleLogout}
+                            data-testid="button-mobile-logout"
+                          >
+                            <LogOut className="w-4 h-4 mr-2" />
+                            Sign Out
+                          </Button>
                         </div>
                       </div>
-                      
+                    ) : (
                       <div className="flex flex-col space-y-2">
-                        <Button 
-                          variant="outline" 
-                          className="w-full justify-start"
-                          onClick={() => setIsCartOpen(true)}
-                          data-testid="button-mobile-cart"
-                        >
-                          <ShoppingBag className="w-4 h-4 mr-2" />
-                          Cart ({cartItemCount})
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          className="w-full justify-start"
-                          onClick={handleLogout}
-                          data-testid="button-mobile-logout"
-                        >
-                          <LogOut className="w-4 h-4 mr-2" />
-                          Sign Out
-                        </Button>
+                        <SignInButton mode="modal">
+                          <Button 
+                            variant="outline" 
+                            className="w-full"
+                            data-testid="button-mobile-login"
+                          >
+                            Sign In
+                          </Button>
+                        </SignInButton>
+                        <SignUpButton mode="modal">
+                          <Button 
+                            className="w-full"
+                            data-testid="button-mobile-signup"
+                          >
+                            Sign Up
+                          </Button>
+                        </SignUpButton>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </SheetContent>
             </Sheet>
