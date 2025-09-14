@@ -25,7 +25,17 @@ if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
 }
 
-const stripe = new Stripe(process.env.TESTING_STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY, {
+// Extract the secret key part from the corrupted environment variable
+let stripeSecretKey = process.env.STRIPE_SECRET_KEY || '';
+if (stripeSecretKey.includes('sk_test_')) {
+  // Extract just the secret key part if it's concatenated
+  const secretKeyStart = stripeSecretKey.indexOf('sk_test_');
+  stripeSecretKey = stripeSecretKey.substring(secretKeyStart);
+}
+
+console.log('Using Stripe key starting with:', stripeSecretKey.substring(0, 20) + '...');
+
+const stripe = new Stripe(stripeSecretKey, {
   apiVersion: "2023-10-16",
 });
 
