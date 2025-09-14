@@ -45,7 +45,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
   // Fetch product details for guest cart items
   useEffect(() => {
-    if (!isAuthenticated && isOpen && guestCart.items.length > 0) {
+    if (!isAuthenticated && guestCart.items.length > 0) {
       const fetchGuestProductDetails = async () => {
         setLoadingGuestProducts(true);
         try {
@@ -79,7 +79,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
       };
 
       fetchGuestProductDetails();
-    } else if (isAuthenticated || !isOpen) {
+    } else if (isAuthenticated) {
       setGuestCartItems([]);
     }
   }, [isAuthenticated, isOpen, guestCart.items]);
