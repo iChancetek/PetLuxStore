@@ -220,7 +220,7 @@ export default function AuditLogsTab() {
                 <SelectValue placeholder="All Actions" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Actions</SelectItem>
+                <SelectItem value="all">All Actions</SelectItem>
                 <SelectItem value="create">Create Actions</SelectItem>
                 <SelectItem value="update">Update Actions</SelectItem>
                 <SelectItem value="delete">Delete Actions</SelectItem>
@@ -233,7 +233,7 @@ export default function AuditLogsTab() {
                 <SelectValue placeholder="All Resources" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Resources</SelectItem>
+                <SelectItem value="all">All Resources</SelectItem>
                 <SelectItem value="user">User</SelectItem>
                 <SelectItem value="product">Product</SelectItem>
                 <SelectItem value="order">Order</SelectItem>
