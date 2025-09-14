@@ -60,23 +60,27 @@ export default function Home() {
                 Discover new arrivals and personalized recommendations curated just for your pets' unique needs.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button 
-                  size="lg" 
-                  className="bg-accent text-accent-foreground hover:bg-accent/90"
-                  data-testid="button-explore-products"
-                >
-                  <ShoppingBag className="w-4 h-4 mr-2" />
-                  Explore Products
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10"
-                  data-testid="button-ai-picks"
-                >
-                  <Brain className="w-4 h-4 mr-2" />
-                  View AI Picks
-                </Button>
+                <Link href="/shop">
+                  <Button 
+                    size="lg" 
+                    className="bg-accent text-accent-foreground hover:bg-accent/90"
+                    data-testid="button-explore-products"
+                  >
+                    <ShoppingBag className="w-4 h-4 mr-2" />
+                    Explore Products
+                  </Button>
+                </Link>
+                <Link href="/ai-picks">
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10"
+                    data-testid="button-ai-picks"
+                  >
+                    <Brain className="w-4 h-4 mr-2" />
+                    View AI Picks
+                  </Button>
+                </Link>
               </div>
             </div>
             <div className="relative">
@@ -111,7 +115,7 @@ export default function Home() {
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {categories?.map((category: any, index: number) => (
+            {categories && Array.isArray(categories) ? categories.map((category: any, index: number) => (
               <Link key={category.id} href={`/shop?categoryId=${category.id}`}>
                 <Card className="group cursor-pointer overflow-hidden hover:shadow-xl transition-shadow" data-testid={`card-category-${index}`}>
                   <div className="relative">
@@ -132,6 +136,50 @@ export default function Home() {
                 </Card>
               </Link>
             )) || (
+              // Fallback categories
+              [
+                {
+                  name: "Premium Food",
+                  image: "https://images.unsplash.com/photo-1623387641168-d9803ddd3f35?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+                  description: "Nutrition-packed meals for optimal health"
+                },
+                {
+                  name: "Interactive Toys",
+                  image: "https://images.unsplash.com/photo-1592194996308-7b43878e84a6?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+                  description: "Engaging play for mental stimulation"
+                },
+                {
+                  name: "Comfort & Sleep",
+                  image: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+                  description: "Cozy beds and relaxation essentials"
+                },
+                {
+                  name: "Health & Grooming",
+                  image: "https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
+                  description: "Essential care for wellbeing"
+                }
+              ].map((category, index) => (
+                <Link key={index} href="/shop">
+                  <Card className="group cursor-pointer overflow-hidden hover:shadow-xl transition-shadow" data-testid={`card-category-${index}`}>
+                    <div className="relative">
+                      <img 
+                        src={category.image}
+                        alt={category.name}
+                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                    <CardContent className="p-6">
+                      <h3 className="text-xl font-semibold mb-2">{category.name}</h3>
+                      <p className="text-muted-foreground mb-4">{category.description}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Available now</span>
+                        <Badge variant="secondary">AI Curated</Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))
+            ) : (
               // Fallback categories
               [
                 {
@@ -209,9 +257,9 @@ export default function Home() {
             </div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {recommendations?.products?.slice(0, 8).map((product: any) => (
+              {recommendations?.products && Array.isArray(recommendations.products) ? recommendations.products.slice(0, 8).map((product: any) => (
                 <ProductCard key={product.id} product={product} />
-              )) || (
+              )) : (
                 // Fallback products
                 [
                   {
