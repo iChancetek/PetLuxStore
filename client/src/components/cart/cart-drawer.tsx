@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useGuestCart, GuestCartItem } from "@/hooks/useGuestCart";
 import { activityTracker } from "@/lib/activityTracker";
 import { CartItem, Product as ProductType } from "@shared/schema";
 import { Button } from "@/components/ui/button";
@@ -9,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { X, Plus, Minus, ShoppingBag, Truck, Sparkles } from "lucide-react";
 import { Link } from "wouter";
+import { useState, useEffect } from "react";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -18,22 +21,79 @@ interface CartDrawerProps {
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const guestCart = useGuestCart();
+  
   // Define cart item type with product relation
   type CartItemWithProduct = CartItem & {
     product: ProductType;
   };
 
-  // Fetch cart items
-  const { data: cartItems, isLoading: loadingCart } = useQuery<CartItemWithProduct[]>({
+  // Enhanced cart item type that includes guest items
+  type EnhancedCartItem = CartItemWithProduct & {
+    isGuestItem?: boolean;
+  };
+
+  const [guestCartItems, setGuestCartItems] = useState<EnhancedCartItem[]>([]);
+  const [loadingGuestProducts, setLoadingGuestProducts] = useState(false);
+
+  // Fetch authenticated cart items (only if authenticated)
+  const { data: authCartItems, isLoading: loadingAuthCart } = useQuery<CartItemWithProduct[]>({
     queryKey: ["/api/cart"],
-    enabled: isOpen,
+    enabled: isOpen && isAuthenticated,
   });
 
-  // Update cart item quantity
+  // Fetch product details for guest cart items
+  useEffect(() => {
+    if (!isAuthenticated && isOpen && guestCart.items.length > 0) {
+      const fetchGuestProductDetails = async () => {
+        setLoadingGuestProducts(true);
+        try {
+          const productPromises = guestCart.items.map(async (guestItem) => {
+            try {
+              const product = await apiRequest("GET", `/api/products/${guestItem.productId}`) as unknown as ProductType;
+              return {
+                id: guestItem.id,
+                userId: guestItem.userId,
+                productId: guestItem.productId,
+                quantity: guestItem.quantity,
+                createdAt: guestItem.createdAt ? new Date(guestItem.createdAt) : null,
+                updatedAt: guestItem.updatedAt ? new Date(guestItem.updatedAt) : null,
+                product,
+                isGuestItem: true,
+              } as EnhancedCartItem;
+            } catch (error) {
+              console.error(`Failed to fetch product ${guestItem.productId}:`, error);
+              return null;
+            }
+          });
+          
+          const resolvedProducts = await Promise.all(productPromises);
+          const validProducts = resolvedProducts.filter(item => item !== null) as EnhancedCartItem[];
+          setGuestCartItems(validProducts);
+        } catch (error) {
+          console.error('Error fetching guest cart product details:', error);
+        } finally {
+          setLoadingGuestProducts(false);
+        }
+      };
+
+      fetchGuestProductDetails();
+    } else if (isAuthenticated || !isOpen) {
+      setGuestCartItems([]);
+    }
+  }, [isAuthenticated, isOpen, guestCart.items]);
+
+  // Update cart item quantity (handles both authenticated and guest)
   const updateQuantityMutation = useMutation({
-    mutationFn: async ({ id, quantity, item }: { id: string; quantity: number; item?: CartItemWithProduct }) => {
-      await apiRequest("PATCH", `/api/cart/${id}`, { quantity });
+    mutationFn: async ({ id, quantity, item }: { id: string; quantity: number; item?: EnhancedCartItem }) => {
+      if (item?.isGuestItem) {
+        // Handle guest cart update
+        await guestCart.updateQuantity(id, quantity);
+      } else {
+        // Handle authenticated cart update
+        await apiRequest("PATCH", `/api/cart/${id}`, { quantity });
+      }
       return { id, quantity, item };
     },
     onSuccess: ({ id, quantity, item }) => {
@@ -47,7 +107,9 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         });
       }
 
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      if (!item?.isGuestItem) {
+        queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      }
     },
     onError: () => {
       toast({
@@ -58,10 +120,16 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     },
   });
 
-  // Remove cart item
+  // Remove cart item (handles both authenticated and guest)
   const removeItemMutation = useMutation({
-    mutationFn: async ({ id, item }: { id: string; item?: CartItemWithProduct }) => {
-      await apiRequest("DELETE", `/api/cart/${id}`);
+    mutationFn: async ({ id, item }: { id: string; item?: EnhancedCartItem }) => {
+      if (item?.isGuestItem) {
+        // Handle guest cart removal
+        await guestCart.removeItem(id);
+      } else {
+        // Handle authenticated cart removal
+        await apiRequest("DELETE", `/api/cart/${id}`);
+      }
       return { id, item };
     },
     onSuccess: ({ id, item }) => {
@@ -74,7 +142,10 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         });
       }
 
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      if (!item?.isGuestItem) {
+        queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      }
+      
       toast({
         title: "Item removed",
         description: "Item has been removed from your cart.",
@@ -89,19 +160,29 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     },
   });
 
-  const handleQuantityChange = (id: string, currentQuantity: number, delta: number, item: any) => {
+  const handleQuantityChange = (id: string, currentQuantity: number, delta: number, item: EnhancedCartItem) => {
     const newQuantity = Math.max(1, Math.min(10, currentQuantity + delta));
     if (newQuantity !== currentQuantity) {
       updateQuantityMutation.mutate({ id, quantity: newQuantity, item });
     }
   };
 
-  const handleRemoveItem = (id: string, item: any) => {
+  const handleRemoveItem = (id: string, item: EnhancedCartItem) => {
     removeItemMutation.mutate({ id, item });
   };
 
-  const items = cartItems || [];
-  const subtotal = items.reduce((total: number, item: any) => total + (parseFloat(item.product.price) * item.quantity), 0);
+  // Combine both authenticated and guest cart items
+  const allItems: EnhancedCartItem[] = [
+    ...(authCartItems || []).map(item => ({ ...item, isGuestItem: false })),
+    ...guestCartItems
+  ];
+
+  const items = allItems;
+  const isLoadingItems = loadingAuthCart || loadingGuestProducts || authLoading;
+  
+  const subtotal = items.reduce((total: number, item: EnhancedCartItem) => 
+    total + (parseFloat(item.product.price) * item.quantity), 0
+  );
   const tax = subtotal * 0.08;
   const shipping = subtotal >= 50 ? 0 : 9.99;
   const total = subtotal + tax + shipping;
@@ -123,7 +204,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           </SheetHeader>
 
           {/* Content */}
-          {loadingCart ? (
+          {isLoadingItems ? (
             <div className="flex-1 space-y-4">
               {[...Array(3)].map((_, i) => (
                 <div key={i} className="flex items-center space-x-3 p-3 bg-muted/30 rounded-lg animate-pulse">

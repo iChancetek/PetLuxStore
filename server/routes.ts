@@ -76,7 +76,7 @@ const AI_NAVIGATION = {
 // Build comprehensive RAG context for AI assistant
 async function buildChatContext(req: any, frontendContext: any, userMessage: string): Promise<AIContext> {
   try {
-    const userId = req.user?.claims?.sub;
+    const userId = (req.user as any)?.sub || (req.user as any)?.claims?.sub;
     
     // Get categories
     const categories = await storage.getCategories();
@@ -248,7 +248,7 @@ const stripe = new Stripe(stripeSecretKey, {
 // Audit logging helper function
 async function logAudit(req: any, action: string, resourceType: string, resourceId?: string, metadata?: any) {
   try {
-    const actorId = req.user?.claims?.sub;
+    const actorId = (req.user as any)?.sub || (req.user as any)?.claims?.sub;
     if (!actorId) return; // Skip if no user (shouldn't happen for admin routes)
 
     await storage.createAuditLog({
@@ -296,7 +296,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.sub || (req.user as any)?.claims?.sub;
       const user = await storage.getUser(userId);
       res.json(user);
     } catch (error) {
@@ -308,7 +308,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Profile endpoint for frontend role checking
   app.get('/api/me/profile', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.sub || (req.user as any)?.claims?.sub;
       if (!userId) {
         return res.status(401).json({ message: 'User not authenticated' });
       }
@@ -339,7 +339,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User Dashboard Endpoints
   app.get('/api/me/dashboard', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.sub || (req.user as any)?.claims?.sub;
       if (!userId) {
         return res.status(401).json({ message: 'User not authenticated' });
       }
@@ -354,7 +354,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/me/orders', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.sub || (req.user as any)?.claims?.sub;
       if (!userId) {
         return res.status(401).json({ message: 'User not authenticated' });
       }
@@ -388,7 +388,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/me/orders/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.sub || (req.user as any)?.claims?.sub;
       if (!userId) {
         return res.status(401).json({ message: 'User not authenticated' });
       }
@@ -426,7 +426,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/me/activity', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.sub || (req.user as any)?.claims?.sub;
       if (!userId) {
         return res.status(401).json({ message: 'User not authenticated' });
       }
@@ -565,7 +565,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/products/:id/recommendations', async (req, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.sub || (req.user as any)?.claims?.sub;
       const products = await storage.getRecommendedProducts(userId, 4);
       res.json(products);
     } catch (error) {
@@ -631,7 +631,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Cart routes
   app.get('/api/cart', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.sub || (req.user as any)?.claims?.sub;
       const cartItems = await storage.getCartItems(userId);
       res.json(cartItems);
     } catch (error) {
@@ -642,7 +642,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/cart', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.sub || (req.user as any)?.claims?.sub;
       const cartItemData = insertCartItemSchema.parse({
         ...req.body,
         userId
@@ -679,7 +679,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/cart', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.sub || (req.user as any)?.claims?.sub;
       await storage.clearCart(userId);
       res.json({ message: "Cart cleared" });
     } catch (error) {
@@ -702,7 +702,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         amount: Math.round(amount * 100), // Convert to cents
         currency: "usd",
         metadata: {
-          userId: req.user?.claims?.sub || '',
+          userId: (req.user as any)?.sub || (req.user as any)?.claims?.sub || '',
         },
       });
       
@@ -717,7 +717,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Orders routes
   app.get('/api/orders', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.sub || (req.user as any)?.claims?.sub;
       const orders = await storage.getOrders(userId);
       res.json(orders);
     } catch (error) {
@@ -741,7 +741,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/orders', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.sub || (req.user as any)?.claims?.sub;
       const { orderData, orderItems } = req.body;
 
       // Generate order number
@@ -775,7 +775,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/products/:id/reviews', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.sub || (req.user as any)?.claims?.sub;
       const reviewData = insertReviewSchema.parse({
         ...req.body,
         userId,
@@ -794,7 +794,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/ai/chat', async (req, res) => {
     try {
       const { message, sessionId, context } = req.body;
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.sub || (req.user as any)?.claims?.sub;
 
       // Build comprehensive RAG context
       const aiContext = await buildChatContext(req, context, message);
@@ -1136,7 +1136,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { type, productId, orderId, path, referrer, metadata } = req.body;
-      const userId = req.user?.claims?.sub; // Optional - can track anonymous users too
+      const userId = (req.user as any)?.sub || (req.user as any)?.claims?.sub; // Optional - can track anonymous users too
 
       const eventData = insertActivityEventSchema.parse({
         userId: userId || null,

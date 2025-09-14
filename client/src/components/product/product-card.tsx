@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useGuestCart } from "@/hooks/useGuestCart";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,10 +31,14 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const guestCart = useGuestCart();
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
+  // Authenticated cart mutation (existing logic)
   const addToCartMutation = useMutation({
     mutationFn: async () => {
       await apiRequest("POST", "/api/cart", {
@@ -56,10 +62,37 @@ export default function ProductCard({ product }: ProductCardProps) {
     },
   });
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCartMutation.mutate();
+    
+    // Don't proceed if auth is still loading
+    if (authLoading) return;
+    
+    setIsAddingToCart(true);
+
+    try {
+      if (isAuthenticated) {
+        // User is authenticated - use API
+        addToCartMutation.mutate();
+      } else {
+        // User is guest - use localStorage
+        await guestCart.addItem(product.id, 1);
+        toast({
+          title: "Added to cart",
+          description: `${product.name} has been added to your cart.`,
+        });
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add item to cart. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
@@ -93,7 +126,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     if (product.imageUrl.includes('spocket.co') || !product.imageUrl.startsWith('http')) {
       // Use product id or name to create a simple hash for consistent image mapping
       const hashString = product.id || product.name || 'default';
-      const hash = hashString.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+      const hash = hashString.split('').reduce((a: number, b: string) => a + b.charCodeAt(0), 0);
       const imageIndex = (hash % 8) + 1; // Maps to product-1.jpg through product-8.jpg
       return `/images/products/product-${imageIndex}.jpg`;
     }
@@ -274,10 +307,16 @@ export default function ProductCard({ product }: ProductCardProps) {
             <Button 
               size="sm"
               onClick={handleAddToCart}
-              disabled={addToCartMutation.isPending || (product.inStock !== undefined && product.inStock <= 0)}
+              disabled={
+                authLoading ||
+                isAddingToCart ||
+                addToCartMutation.isPending || 
+                guestCart.isLoading ||
+                (product.inStock !== undefined && product.inStock <= 0)
+              }
               data-testid={`button-add-to-cart-${product.id}`}
             >
-              {addToCartMutation.isPending ? (
+              {(isAddingToCart || addToCartMutation.isPending || guestCart.isLoading) ? (
                 <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>

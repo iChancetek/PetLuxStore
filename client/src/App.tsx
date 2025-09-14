@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import ClerkProviderWrapper from "@/providers/clerk-provider";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuth as useClerkAuth } from "@clerk/clerk-react";
+import { useCartMerge } from "@/hooks/useCartMerge";
 import { useEffect } from "react";
 import Landing from "@/pages/landing";
 import Home from "@/pages/home";
@@ -37,6 +38,13 @@ function AuthSetup({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// Component to handle cart merge logic (inside QueryClientProvider)
+function CartMergeSetup() {
+  // Initialize cart merge functionality - this must be inside QueryClientProvider
+  const cartMerge = useCartMerge();
+  return null; // This component only handles side effects
+}
+
 function Router() {
   return (
     <Switch>
@@ -58,6 +66,7 @@ function App() {
     <ClerkProviderWrapper>
       <AuthSetup>
         <QueryClientProvider client={queryClient}>
+          <CartMergeSetup />
           <TooltipProvider>
             <Toaster />
             <Router />
