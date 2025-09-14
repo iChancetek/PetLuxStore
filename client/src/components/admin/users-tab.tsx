@@ -267,6 +267,7 @@ export default function UsersTab() {
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="user">User</SelectItem>
+                          <SelectItem value="reviewer">Reviewer</SelectItem>
                           <SelectItem value="admin">Admin</SelectItem>
                         </SelectContent>
                       </Select>
@@ -326,6 +327,7 @@ export default function UsersTab() {
               <SelectContent>
                 <SelectItem value="all">All Roles</SelectItem>
                 <SelectItem value="user">User</SelectItem>
+                <SelectItem value="reviewer">Reviewer</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
               </SelectContent>
             </Select>
@@ -568,6 +570,7 @@ export default function UsersTab() {
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="user">User</SelectItem>
+                        <SelectItem value="reviewer">Reviewer</SelectItem>
                         <SelectItem value="admin">Admin</SelectItem>
                       </SelectContent>
                     </Select>

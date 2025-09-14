@@ -32,7 +32,7 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
-  role: varchar("role", { length: 50 }).notNull().default("user"), // user, admin
+  role: varchar("role", { length: 50 }).notNull().default("user"), // user, reviewer, admin
   stripeCustomerId: varchar("stripe_customer_id"),
   stripeSubscriptionId: varchar("stripe_subscription_id"),
   isActive: boolean("is_active").default(true),

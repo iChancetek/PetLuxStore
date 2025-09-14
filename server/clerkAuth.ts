@@ -135,6 +135,56 @@ export const requireAdmin: RequestHandler = async (req: any, res, next) => {
   }
 };
 
+// Middleware to require reviewer or admin role
+export const requireReviewer: RequestHandler = async (req: any, res, next) => {
+  try {
+    const auth = getAuth(req);
+    
+    if (!auth?.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    // Get user info from Clerk
+    const user = await clerkClient.users.getUser(auth.userId);
+    
+    if (!user) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    // Upsert user in our database
+    await storage.upsertUser({
+      id: user.id,
+      email: user.emailAddresses[0]?.emailAddress || '',
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      profileImageUrl: user.imageUrl || '',
+    });
+
+    // Check if user has reviewer or admin role in our database
+    const dbUser = await storage.getUser(user.id);
+    if (!dbUser || (dbUser.role !== 'reviewer' && dbUser.role !== 'admin')) {
+      return res.status(403).json({ message: 'Access denied. Reviewer or Admin role required.' });
+    }
+
+    // Add user info to request
+    req.user = {
+      claims: {
+        sub: user.id,
+        email: user.emailAddresses[0]?.emailAddress || '',
+        first_name: user.firstName || '',
+        last_name: user.lastName || '',
+        profile_image_url: user.imageUrl || '',
+      }
+    };
+
+    next();
+  } catch (error) {
+    console.error('Reviewer auth middleware error:', error);
+    res.status(401).json({ message: 'Unauthorized' });
+  }
+};
+
 // Legacy compatibility aliases
 export const isAuthenticated = requireAuth;
 export const isAdmin = requireAdmin;
+export const isReviewer = requireReviewer;
