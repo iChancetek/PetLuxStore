@@ -36,7 +36,7 @@ if (stripeSecretKey.includes('sk_test_')) {
 console.log('Using Stripe key starting with:', stripeSecretKey.substring(0, 20) + '...');
 
 const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: "2023-10-16",
+  apiVersion: "2025-08-27.basil",
 });
 
 // Audit logging helper function
@@ -145,6 +145,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Error fetching user orders:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.get('/api/me/orders/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      const orderId = req.params.id;
+      if (!orderId) {
+        return res.status(400).json({ message: 'Order ID is required' });
+      }
+
+      // Get the order by ID
+      const order = await storage.getOrderById(orderId);
+      
+      // Check if order exists
+      if (!order) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+
+      // Verify the order belongs to the requesting user
+      if (order.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied: Order does not belong to user' });
+      }
+
+      // Transform orderItems to match expected format (items)
+      const transformedOrder = {
+        ...order,
+        items: order.orderItems || []
+      };
+
+      res.json(transformedOrder);
+    } catch (error) {
+      console.error('Error fetching user order details:', error);
       res.status(500).json({ message: 'Internal server error' });
     }
   });

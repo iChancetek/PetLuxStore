@@ -15,6 +15,7 @@ import Cart from "@/pages/cart";
 import Checkout from "@/pages/checkout";
 import Admin from "@/pages/admin";
 import AIPicks from "@/pages/ai-picks";
+import Dashboard from "@/pages/dashboard";
 import NotFound from "@/pages/not-found";
 
 // Component to setup auth token getter
@@ -42,6 +43,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/shop" component={Shop} />
       <Route path="/ai-picks" component={AIPicks} />
+      <Route path="/dashboard" component={Dashboard} />
       <Route path="/product/:slug" component={Product} />
       <Route path="/cart" component={Cart} />
       <Route path="/checkout" component={Checkout} />

@@ -63,6 +63,7 @@ export default function Navbar() {
   const navLinks = [
     { href: "/shop", label: "Shop", active: location.startsWith("/shop") },
     { href: "/ai-picks", label: "AI Picks", active: location === "/ai-picks" },
+    ...(user ? [{ href: "/dashboard", label: "Dashboard", active: location === "/dashboard" }] : []),
   ];
 
   return (
