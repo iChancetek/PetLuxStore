@@ -27,21 +27,6 @@ export default function Footer() {
             <h4 className="font-semibold mb-4" data-testid="text-footer-shop-title">Shop</h4>
             <ul className="space-y-2 text-background/80">
               <li>
-                <Link href="/shop?petType=dog">
-                  <a className="hover:text-background transition-colors" data-testid="link-footer-dogs">Dogs</a>
-                </Link>
-              </li>
-              <li>
-                <Link href="/shop?petType=cat">
-                  <a className="hover:text-background transition-colors" data-testid="link-footer-cats">Cats</a>
-                </Link>
-              </li>
-              <li>
-                <Link href="/shop?petType=bird">
-                  <a className="hover:text-background transition-colors" data-testid="link-footer-birds">Birds</a>
-                </Link>
-              </li>
-              <li>
                 <Link href="/shop?petType=fish">
                   <a className="hover:text-background transition-colors" data-testid="link-footer-fish">Fish</a>
                 </Link>

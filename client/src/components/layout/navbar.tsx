@@ -62,9 +62,6 @@ export default function Navbar() {
 
   const navLinks = [
     { href: "/shop", label: "Shop", active: location.startsWith("/shop") },
-    { href: "/shop?petType=dog", label: "Dogs", active: false },
-    { href: "/shop?petType=cat", label: "Cats", active: false },
-    { href: "/shop?petType=bird", label: "Birds", active: false },
     { href: "/admin", label: "AI Picks", active: location === "/admin" },
   ];
 
