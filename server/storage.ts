@@ -153,6 +153,19 @@ export interface IStorage {
     page?: number;
     limit?: number;
   }): Promise<{ orders: (Order & { user: User; itemCount: number })[]; total: number }>;
+
+  // User Dashboard Methods
+  getOrdersByUser(userId: string, filters?: {
+    page?: number;
+    limit?: number;
+  }): Promise<{ orders: (Order & { orderItems: (OrderItem & { product: Product })[] })[], total: number }>;
+
+  getUserDashboardStats(userId: string): Promise<{
+    totalOrders: number;
+    totalSpent: number;
+    lastPurchaseAt: Date | null;
+    recentProducts: Product[];
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -270,15 +283,13 @@ export class DatabaseStorage implements IStorage {
     const sortDirection = filters?.sortOrder === 'desc' ? desc : asc;
     const orderBy = filters?.sortBy ? sortDirection(sortColumn) : desc(products.createdAt);
 
-    // Build queries
-    let productsQuery = db.select().from(products).where(whereCondition).orderBy(orderBy);
+    // Build the complete query
+    const baseQuery = db.select().from(products).where(whereCondition).orderBy(orderBy);
     
-    if (filters?.limit) {
-      productsQuery = productsQuery.limit(filters.limit);
-    }
-    if (filters?.offset) {
-      productsQuery = productsQuery.offset(filters.offset);
-    }
+    // Build the products query with limit and offset if provided
+    const productsQuery = filters?.limit || filters?.offset
+      ? baseQuery.limit(filters?.limit || 1000).offset(filters?.offset || 0)
+      : baseQuery;
 
     const countQuery = db.select({ count: sql<number>`count(*)` }).from(products).where(whereCondition);
 
@@ -413,13 +424,14 @@ export class DatabaseStorage implements IStorage {
 
   // Order operations
   async getOrders(userId?: string): Promise<Order[]> {
-    let query = db.select().from(orders);
-    
     if (userId) {
-      query = query.where(eq(orders.userId, userId));
+      return db.select().from(orders)
+        .where(eq(orders.userId, userId))
+        .orderBy(desc(orders.createdAt));
     }
     
-    return query.orderBy(desc(orders.createdAt));
+    return db.select().from(orders)
+      .orderBy(desc(orders.createdAt));
   }
 
   async getOrderById(id: string): Promise<(Order & { orderItems: (OrderItem & { product: Product })[] }) | undefined> {
@@ -531,16 +543,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAiInteractions(userId: string, sessionId?: string): Promise<AiInteraction[]> {
-    let query = db.select().from(aiInteractions).where(eq(aiInteractions.userId, userId));
-    
     if (sessionId) {
-      query = query.where(and(
-        eq(aiInteractions.userId, userId),
-        eq(aiInteractions.sessionId, sessionId)
-      ));
+      return db.select().from(aiInteractions)
+        .where(and(
+          eq(aiInteractions.userId, userId),
+          eq(aiInteractions.sessionId, sessionId)
+        ))
+        .orderBy(asc(aiInteractions.createdAt));
     }
     
-    return query.orderBy(asc(aiInteractions.createdAt));
+    return db.select().from(aiInteractions)
+      .where(eq(aiInteractions.userId, userId))
+      .orderBy(asc(aiInteractions.createdAt));
   }
 
   // Analytics
@@ -901,6 +915,119 @@ export class DatabaseStorage implements IStorage {
     return {
       orders: ordersResult,
       total: totalResult[0]?.count || 0
+    };
+  }
+
+  // User Dashboard Methods
+  async getOrdersByUser(userId: string, filters?: {
+    page?: number;
+    limit?: number;
+  }): Promise<{ orders: (Order & { orderItems: (OrderItem & { product: Product })[] })[], total: number }> {
+    const limit = filters?.limit || 10;
+    const offset = ((filters?.page || 1) - 1) * limit;
+
+    const [ordersResult, totalResult] = await Promise.all([
+      db.select()
+        .from(orders)
+        .where(eq(orders.userId, userId))
+        .orderBy(desc(orders.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db.select({ count: sql<number>`count(*)` })
+        .from(orders)
+        .where(eq(orders.userId, userId))
+    ]);
+
+    // Get order items with products for each order
+    const ordersWithItems = await Promise.all(
+      ordersResult.map(async (order) => {
+        const items = await db.select({
+          id: orderItems.id,
+          orderId: orderItems.orderId,
+          productId: orderItems.productId,
+          quantity: orderItems.quantity,
+          price: orderItems.price,
+          createdAt: orderItems.createdAt,
+          product: products,
+        })
+        .from(orderItems)
+        .innerJoin(products, eq(orderItems.productId, products.id))
+        .where(eq(orderItems.orderId, order.id));
+        
+        return {
+          ...order,
+          orderItems: items
+        };
+      })
+    );
+
+    return {
+      orders: ordersWithItems,
+      total: totalResult[0]?.count || 0
+    };
+  }
+
+  async getUserDashboardStats(userId: string): Promise<{
+    totalOrders: number;
+    totalSpent: number;
+    lastPurchaseAt: Date | null;
+    recentProducts: Product[];
+  }> {
+    // Get total orders count
+    const [totalOrdersResult] = await db.select({ count: sql<number>`count(*)` })
+      .from(orders)
+      .where(eq(orders.userId, userId));
+
+    // Get total spent
+    const [totalSpentResult] = await db.select({ 
+      total: sql<number>`COALESCE(SUM(${orders.total}), 0)` 
+    })
+    .from(orders)
+    .where(and(eq(orders.userId, userId), eq(orders.status, 'delivered')));
+
+    // Get last purchase date
+    const [lastPurchaseResult] = await db.select({ createdAt: orders.createdAt })
+      .from(orders)
+      .where(eq(orders.userId, userId))
+      .orderBy(desc(orders.createdAt))
+      .limit(1);
+
+    // Get recent products from user's orders
+    const recentProductsResult = await db.selectDistinct({
+      id: products.id,
+      name: products.name,
+      slug: products.slug,
+      description: products.description,
+      shortDescription: products.shortDescription,
+      aiDescription: products.aiDescription,
+      price: products.price,
+      originalPrice: products.originalPrice,
+      categoryId: products.categoryId,
+      brand: products.brand,
+      imageUrl: products.imageUrl,
+      images: products.images,
+      inStock: products.inStock,
+      isActive: products.isActive,
+      rating: products.rating,
+      reviewCount: products.reviewCount,
+      petType: products.petType,
+      tags: products.tags,
+      aiMatch: products.aiMatch,
+      createdAt: products.createdAt,
+      updatedAt: products.updatedAt,
+    })
+    .from(products)
+    .innerJoin(orderItems, eq(products.id, orderItems.productId))
+    .innerJoin(orders, eq(orderItems.orderId, orders.id))
+    .where(eq(orders.userId, userId))
+    .orderBy(desc(orders.createdAt))
+    .limit(5);
+
+    return {
+      totalOrders: totalOrdersResult?.count || 0,
+      totalSpent: Number(totalSpentResult?.total || 0),
+      lastPurchaseAt: lastPurchaseResult?.createdAt || null,
+      recentProducts: recentProductsResult
     };
   }
 }
