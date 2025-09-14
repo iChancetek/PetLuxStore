@@ -102,7 +102,19 @@ export default function Shop() {
 
   const totalProducts = productsData?.total || 0;
   const totalPages = Math.ceil(totalProducts / productsPerPage);
-  const products = productsData?.products || [];
+  
+  // Sort products to show items with photos first
+  const products = (productsData?.products || []).sort((a, b) => {
+    const aHasImage = a.imageUrl && a.imageUrl.trim() !== '';
+    const bHasImage = b.imageUrl && b.imageUrl.trim() !== '';
+    
+    // Items with images first
+    if (aHasImage && !bHasImage) return -1;
+    if (!aHasImage && bHasImage) return 1;
+    
+    // If both have images or both don't have images, maintain original order
+    return 0;
+  });
 
   if (isLoading) {
     return (
