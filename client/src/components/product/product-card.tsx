@@ -86,8 +86,9 @@ export default function ProductCard({ product }: ProductCardProps) {
     
     // If imageUrl is a spocket.co URL or not a direct image, use fallback
     if (!product.imageUrl || product.imageUrl.includes('spocket.co') || !product.imageUrl.startsWith('http')) {
-      // Use product name to create a simple hash for consistent image mapping
-      const hash = product.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+      // Use product id or name to create a simple hash for consistent image mapping
+      const hashString = product.id || product.name || 'default';
+      const hash = hashString.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
       const imageIndex = (hash % 8) + 1; // Maps to product-1.jpg through product-8.jpg
       return `/images/products/product-${imageIndex}.jpg`;
     }
