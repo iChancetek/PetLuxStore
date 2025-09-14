@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,15 +8,14 @@ import { Star, Sparkles, Brain, ShoppingBag, Heart } from "lucide-react";
 
 export default function Landing() {
   const { toast } = useToast();
+  const { openSignIn } = useAuth();
 
   const handleLogin = () => {
     toast({
-      title: "Redirecting to login",
-      description: "Taking you to the login page...",
+      title: "Opening sign in",
+      description: "Please sign in to continue...",
     });
-    setTimeout(() => {
-      window.location.href = "/api/login";
-    }, 500);
+    openSignIn();
   };
 
   return (

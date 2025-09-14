@@ -3,6 +3,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { activityTracker } from "@/lib/activityTracker";
+import { SignIn } from "@clerk/clerk-react";
+import type { AdminStats as AdminStatsType, ProductsResponse, Product } from "@shared/schema";
 import Navbar from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
 import AdminStats from "@/components/admin/admin-stats";
@@ -37,9 +39,21 @@ import {
 export default function Admin() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("users");
+
+  // Fetch admin stats - MUST be called before any early returns
+  const { data: stats, isLoading: loadingStats } = useQuery<AdminStatsType>({
+    queryKey: ["/api/admin/stats"],
+    enabled: isAuthenticated,
+  });
+
+  // Fetch products for management - MUST be called before any early returns
+  const { data: productsData, isLoading: loadingProducts } = useQuery<ProductsResponse>({
+    queryKey: ["/api/products", { limit: 50 }],
+    enabled: isAuthenticated,
+  });
 
   // Track admin dashboard access
   useEffect(() => {
@@ -63,34 +77,26 @@ export default function Admin() {
     }
   }, [activeTab, isAuthenticated, isLoading]);
 
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, isLoading, toast]);
+  // Show sign in if not authenticated - AFTER all hooks are called
+  if (!isLoading && !isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-serif font-bold mb-2">Admin Access Required</h1>
+            <p className="text-muted-foreground">Please sign in to access the admin dashboard</p>
+          </div>
+          <SignIn 
+            routing="hash"
+            afterSignInUrl="/admin"
+            signUpUrl={undefined}
+          />
+        </div>
+      </div>
+    );
+  }
 
-  // Fetch admin stats
-  const { data: stats, isLoading: loadingStats } = useQuery({
-    queryKey: ["/api/admin/stats"],
-    enabled: isAuthenticated,
-  });
-
-  // Fetch products for management
-  const { data: productsData, isLoading: loadingProducts } = useQuery({
-    queryKey: ["/api/products", { limit: 50 }],
-    enabled: isAuthenticated,
-  });
-
-  const handleEditProduct = (product: any) => {
+  const handleEditProduct = (product: Product) => {
     setSelectedProduct(product);
     setIsProductDialogOpen(true);
   };
@@ -237,7 +243,7 @@ export default function Admin() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {productsData?.products?.slice(0, 10).map((product: any) => (
+                        {productsData?.products?.slice(0, 10).map((product: Product) => (
                           <TableRow key={product.id}>
                             <TableCell>
                               <div className="flex items-center space-x-3">
@@ -260,7 +266,7 @@ export default function Admin() {
                             <TableCell>${product.price}</TableCell>
                             <TableCell>
                               <Badge 
-                                variant={product.inStock > 10 ? "secondary" : product.inStock > 0 ? "outline" : "destructive"}
+                                variant={(product.inStock || 0) > 10 ? "secondary" : (product.inStock || 0) > 0 ? "outline" : "destructive"}
                                 data-testid={`badge-stock-${product.id}`}
                               >
                                 {product.inStock || 0} in stock
@@ -359,7 +365,7 @@ export default function Admin() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {stats?.lowStockProducts > 0 ? (
+                    {stats?.lowStockProducts && stats.lowStockProducts > 0 ? (
                       <div className="flex items-center justify-between p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
                         <div className="flex items-center space-x-2">
                           <AlertTriangle className="w-4 h-4 text-destructive" />

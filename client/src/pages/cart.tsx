@@ -19,20 +19,7 @@ export default function Cart() {
   const { isAuthenticated, isLoading } = useAuth();
   const queryClient = useQueryClient();
 
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, isLoading, toast]);
+  // Authentication is handled by Clerk - show cart content appropriately
 
   // Fetch cart items
   const { data: cartItems, isLoading: loadingCart } = useQuery({

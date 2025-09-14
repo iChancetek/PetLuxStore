@@ -39,20 +39,7 @@ export default function Shop() {
   const [currentPage, setCurrentPage] = useState(1);
   const productsPerPage = 24;
 
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, isLoading, toast]);
+  // Authentication is handled by Clerk - show shop content appropriately
 
   // Fetch products with filters
   const { data: productsData, isLoading: loadingProducts } = useQuery<{

@@ -1,15 +1,20 @@
-import { useQuery } from "@tanstack/react-query";
+import { useUser } from "@clerk/clerk-react";
 
 export function useAuth() {
-  // Temporarily using the old auth system until Clerk is properly configured
-  const { data: user, isLoading } = useQuery({
-    queryKey: ["/api/auth/user"],
-    retry: false,
-  });
+  const { user, isLoaded, isSignedIn } = useUser();
+
+  // Transform Clerk user data to match our expected format
+  const transformedUser = user ? {
+    id: user.id,
+    email: user.emailAddresses[0]?.emailAddress || '',
+    firstName: user.firstName || '',
+    lastName: user.lastName || '',
+    profileImageUrl: user.imageUrl || '',
+  } : null;
 
   return {
-    user,
-    isLoading,
-    isAuthenticated: !!user,
+    user: transformedUser,
+    isLoading: !isLoaded,
+    isAuthenticated: isLoaded && isSignedIn,
   };
 }

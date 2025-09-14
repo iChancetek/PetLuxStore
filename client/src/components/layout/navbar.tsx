@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
+import { useClerk } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,7 @@ import {
 export default function Navbar() {
   const [location] = useLocation();
   const { user } = useAuth();
+  const { signOut } = useClerk();
   const [searchQuery, setSearchQuery] = useState("");
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -53,7 +55,9 @@ export default function Navbar() {
   };
 
   const handleLogout = () => {
-    window.location.href = "/api/logout";
+    signOut(() => {
+      window.location.href = "/";
+    });
   };
 
   const navLinks = [

@@ -353,3 +353,16 @@ export type AuditLog = typeof auditLogs.$inferSelect;
 export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 export type ActivityEvent = typeof activityEvents.$inferSelect;
 export type InsertActivityEvent = z.infer<typeof insertActivityEventSchema>;
+
+// Admin types
+export interface AdminStats {
+  totalRevenue: number;
+  ordersToday: number;
+  totalProducts: number;
+  lowStockProducts: number;
+}
+
+export interface ProductsResponse {
+  products: Product[];
+  total: number;
+}
