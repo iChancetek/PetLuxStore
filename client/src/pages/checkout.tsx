@@ -2,6 +2,7 @@ import { useStripe, Elements, PaymentElement, useElements } from '@stripe/react-
 import { loadStripe } from '@stripe/stripe-js';
 import { useEffect, useState } from 'react';
 import { useAuth } from "@/hooks/useAuth";
+import { useGuestCart } from "@/hooks/useGuestCart";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -120,7 +121,10 @@ const CheckoutForm = ({ total, items }: { total: number; items: CartItemWithProd
 export default function Checkout() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
+  const guestCart = useGuestCart();
   const [clientSecret, setClientSecret] = useState("");
+  const [guestCartItems, setGuestCartItems] = useState<CartItemWithProduct[]>([]);
+  const [loadingGuestProducts, setLoadingGuestProducts] = useState(false);
   const [shippingInfo, setShippingInfo] = useState({
     firstName: "",
     lastName: "",
@@ -132,15 +136,55 @@ export default function Checkout() {
     country: "US"
   });
 
-  // Authentication is handled by Clerk - show checkout form if authenticated
-
-  // Fetch cart items
-  const { data: cartItems, isLoading: loadingCart } = useQuery<CartItemWithProduct[]>({
+  // Fetch authenticated cart items
+  const { data: authCartItems, isLoading: loadingAuthCart } = useQuery<CartItemWithProduct[]>({
     queryKey: ["/api/cart"],
     enabled: isAuthenticated,
   });
 
-  const items = cartItems || [];
+  // Fetch product details for guest cart items
+  useEffect(() => {
+    if (!isAuthenticated && guestCart.items.length > 0) {
+      const fetchGuestProductDetails = async () => {
+        setLoadingGuestProducts(true);
+        try {
+          const productPromises = guestCart.items.map(async (guestItem) => {
+            try {
+              const product = await apiRequest("GET", `/api/products/${guestItem.productId}`) as unknown as ProductType;
+              return {
+                id: guestItem.id,
+                userId: guestItem.userId,
+                productId: guestItem.productId,
+                quantity: guestItem.quantity,
+                createdAt: guestItem.createdAt ? new Date(guestItem.createdAt) : null,
+                updatedAt: guestItem.updatedAt ? new Date(guestItem.updatedAt) : null,
+                product,
+              } as CartItemWithProduct;
+            } catch (error) {
+              console.error(`Failed to fetch product ${guestItem.productId}:`, error);
+              return null;
+            }
+          });
+          
+          const resolvedProducts = await Promise.all(productPromises);
+          const validProducts = resolvedProducts.filter(item => item !== null) as CartItemWithProduct[];
+          setGuestCartItems(validProducts);
+        } catch (error) {
+          console.error('Error fetching guest cart product details:', error);
+        } finally {
+          setLoadingGuestProducts(false);
+        }
+      };
+
+      fetchGuestProductDetails();
+    } else if (isAuthenticated) {
+      setGuestCartItems([]);
+    }
+  }, [isAuthenticated, guestCart.items]);
+
+  // Use appropriate cart items based on authentication status
+  const items = isAuthenticated ? (authCartItems || []) : guestCartItems;
+  const loadingCart = isAuthenticated ? loadingAuthCart : loadingGuestProducts;
   const subtotal = items.reduce((total: number, item: any) => total + (parseFloat(item.product.price) * item.quantity), 0);
   const tax = subtotal * 0.08;
   const shipping = subtotal >= 50 ? 0 : 9.99;

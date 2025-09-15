@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useGuestCart } from "@/hooks/useGuestCart";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -13,19 +14,66 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Plus, Minus, X, ShoppingBag, Sparkles, Truck } from "lucide-react";
 import { Link } from "wouter";
+import { CartItem, Product as ProductType } from "@shared/schema";
+
+// Define cart item type with product relation
+type CartItemWithProduct = CartItem & {
+  product: ProductType;
+};
 
 export default function Cart() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
   const queryClient = useQueryClient();
+  const guestCart = useGuestCart();
+  const [guestCartItems, setGuestCartItems] = useState<CartItemWithProduct[]>([]);
+  const [loadingGuestProducts, setLoadingGuestProducts] = useState(false);
 
-  // Authentication is handled by Clerk - show cart content appropriately
-
-  // Fetch cart items
-  const { data: cartItems, isLoading: loadingCart } = useQuery({
+  // Fetch authenticated cart items
+  const { data: authCartItems, isLoading: loadingAuthCart } = useQuery<CartItemWithProduct[]>({
     queryKey: ["/api/cart"],
     enabled: isAuthenticated,
   });
+
+  // Fetch product details for guest cart items
+  useEffect(() => {
+    if (!isAuthenticated && guestCart.items.length > 0) {
+      const fetchGuestProductDetails = async () => {
+        setLoadingGuestProducts(true);
+        try {
+          const productPromises = guestCart.items.map(async (guestItem) => {
+            try {
+              const product = await apiRequest("GET", `/api/products/${guestItem.productId}`) as unknown as ProductType;
+              return {
+                id: guestItem.id,
+                userId: guestItem.userId,
+                productId: guestItem.productId,
+                quantity: guestItem.quantity,
+                createdAt: guestItem.createdAt ? new Date(guestItem.createdAt) : null,
+                updatedAt: guestItem.updatedAt ? new Date(guestItem.updatedAt) : null,
+                product,
+              } as CartItemWithProduct;
+            } catch (error) {
+              console.error(`Failed to fetch product ${guestItem.productId}:`, error);
+              return null;
+            }
+          });
+          
+          const resolvedProducts = await Promise.all(productPromises);
+          const validProducts = resolvedProducts.filter(item => item !== null) as CartItemWithProduct[];
+          setGuestCartItems(validProducts);
+        } catch (error) {
+          console.error('Error fetching guest cart product details:', error);
+        } finally {
+          setLoadingGuestProducts(false);
+        }
+      };
+
+      fetchGuestProductDetails();
+    } else if (isAuthenticated) {
+      setGuestCartItems([]);
+    }
+  }, [isAuthenticated, guestCart.items]);
 
   // Update cart item quantity
   const updateQuantityMutation = useMutation({
@@ -65,20 +113,75 @@ export default function Cart() {
     },
   });
 
-  const handleQuantityChange = (id: string, currentQuantity: number, delta: number) => {
+  const handleQuantityChange = async (id: string, currentQuantity: number, delta: number) => {
     const newQuantity = Math.max(1, Math.min(10, currentQuantity + delta));
     if (newQuantity !== currentQuantity) {
-      updateQuantityMutation.mutate({ id, quantity: newQuantity });
+      if (isAuthenticated) {
+        updateQuantityMutation.mutate({ id, quantity: newQuantity });
+      } else {
+        // For guest cart, update localStorage
+        try {
+          await guestCart.updateQuantity(id, newQuantity);
+          toast({
+            title: "Quantity updated",
+            description: "Item quantity has been updated.",
+          });
+        } catch (error) {
+          toast({
+            title: "Error",
+            description: "Failed to update quantity. Please try again.",
+            variant: "destructive",
+          });
+        }
+      }
     }
   };
 
-  const handleRemoveItem = (id: string) => {
-    removeItemMutation.mutate(id);
+  const handleRemoveItem = async (id: string) => {
+    if (isAuthenticated) {
+      removeItemMutation.mutate(id);
+    } else {
+      // For guest cart, remove from localStorage
+      try {
+        await guestCart.removeItem(id);
+        toast({
+          title: "Item removed",
+          description: "Item has been removed from your cart.",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to remove item. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
-  const handleClearCart = () => {
-    clearCartMutation.mutate();
+  const handleClearCart = async () => {
+    if (isAuthenticated) {
+      clearCartMutation.mutate();
+    } else {
+      // For guest cart, clear localStorage
+      try {
+        await guestCart.clearCart();
+        toast({
+          title: "Cart cleared",
+          description: "All items have been removed from your cart.",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to clear cart. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
   };
+
+  // Use appropriate cart items and loading state based on authentication status
+  const items = isAuthenticated ? (authCartItems || []) : guestCartItems;
+  const loadingCart = isAuthenticated ? loadingAuthCart : loadingGuestProducts;
 
   if (isLoading || loadingCart) {
     return (
@@ -87,8 +190,6 @@ export default function Cart() {
       </div>
     );
   }
-
-  const items = cartItems || [];
   const subtotal = items.reduce((total: number, item: any) => total + (parseFloat(item.product.price) * item.quantity), 0);
   const tax = subtotal * 0.08; // 8% tax
   const shipping = subtotal >= 50 ? 0 : 9.99;
