@@ -1,15 +1,22 @@
 import { ClerkProvider } from '@clerk/clerk-react';
+import { useEffect } from 'react';
 
 export default function ClerkProviderWrapper({ children }: { children: React.ReactNode }) {
-  const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+  // Temporarily use development key directly to work around environment variable sync issue
+  const clerkPubKey = "pk_test_cmlnaHQtb3dsLTQ0LmNsZXJrLmFjY291bnRzLmRldiQ";
   
-  // Always provide ClerkProvider context, but log if key is missing
-  if (!clerkPubKey) {
-    console.error("VITE_CLERK_PUBLISHABLE_KEY not found. Authentication may not work properly.");
-  }
+  useEffect(() => {
+    // Clear any cached Clerk session data
+    localStorage.removeItem('__clerk_session');
+    sessionStorage.clear();
+    console.log("Cleared Clerk session cache, using development key:", clerkPubKey);
+  }, []);
 
   return (
-    <ClerkProvider publishableKey={clerkPubKey || ""}>
+    <ClerkProvider 
+      publishableKey={clerkPubKey}
+      afterSignOutUrl="/"
+    >
       {children}
     </ClerkProvider>
   );
