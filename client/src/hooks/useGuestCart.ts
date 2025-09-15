@@ -76,6 +76,7 @@ export function useGuestCart() {
           updatedAt: now
         };
         saveToStorage(updatedItems);
+        setItems(updatedItems);  // Update React state
         return updatedItems[existingItemIndex];
       } else {
         // Create new item
@@ -89,6 +90,7 @@ export function useGuestCart() {
         };
         const updatedItems = [...items, newItem];
         saveToStorage(updatedItems);
+        setItems(updatedItems);  // Update React state
         return newItem;
       }
     } catch (error) {
@@ -120,6 +122,7 @@ export function useGuestCart() {
       };
       
       saveToStorage(updatedItems);
+      setItems(updatedItems);  // Update React state
       return updatedItems[itemIndex];
     } catch (error) {
       console.error('Error updating guest cart item:', error);
@@ -135,6 +138,7 @@ export function useGuestCart() {
     try {
       const updatedItems = items.filter(item => item.id !== id);
       saveToStorage(updatedItems);
+      setItems(updatedItems);  // Update React state
     } catch (error) {
       console.error('Error removing item from guest cart:', error);
       throw error;
@@ -149,6 +153,7 @@ export function useGuestCart() {
     try {
       const updatedItems = items.filter(item => item.productId !== productId);
       saveToStorage(updatedItems);
+      setItems(updatedItems);  // Update React state
     } catch (error) {
       console.error('Error removing item by product ID from guest cart:', error);
       throw error;
