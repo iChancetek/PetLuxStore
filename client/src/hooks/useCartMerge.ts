@@ -112,15 +112,23 @@ export function useCartMerge() {
     if (isMergingRef.current) return;
 
     // Detect sign-in: previous state was false/null, current is true
-    const wasSignedOut = prevAuthenticatedRef.current === false;
+    const wasSignedOut = prevAuthenticatedRef.current === false || prevAuthenticatedRef.current === null;
     const isNowSignedIn = isAuthenticated === true;
     
     if (wasSignedOut && isNowSignedIn) {
       // User just signed in, check if they have guest cart items to merge
       const guestItems = guestCart.exportCartData();
       
+      console.log('🔄 Cart merge triggered:', {
+        wasSignedOut,
+        isNowSignedIn,
+        prevAuth: prevAuthenticatedRef.current,
+        currentAuth: isAuthenticated,
+        guestItemsCount: guestItems.length
+      });
+      
       if (guestItems.length > 0) {
-        console.log(`Auto-merging ${guestItems.length} guest cart items...`);
+        console.log(`🛒 Auto-merging ${guestItems.length} guest cart items...`);
         isMergingRef.current = true;
         
         mergeCartMutation.mutate(guestItems);
@@ -129,6 +137,8 @@ export function useCartMerge() {
         setTimeout(() => {
           isMergingRef.current = false;
         }, 1000);
+      } else {
+        console.log('🛒 No guest cart items to merge');
       }
     }
 
