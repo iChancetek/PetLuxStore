@@ -689,7 +689,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Stripe payment routes
-  app.post("/api/create-payment-intent", isAuthenticated, async (req, res) => {
+  app.post("/api/create-payment-intent", async (req, res) => {
     try {
       console.log('Creating payment intent with amount:', req.body.amount);
       const { amount } = req.body;
@@ -698,15 +698,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid amount provided" });
       }
       
+      // Get user ID if authenticated, otherwise use 'guest'
+      const userId = (req.user as any)?.sub || (req.user as any)?.claims?.sub || 'guest';
+      const isGuest = userId === 'guest';
+      
       const paymentIntent = await stripe.paymentIntents.create({
         amount: Math.round(amount * 100), // Convert to cents
         currency: "usd",
         metadata: {
-          userId: (req.user as any)?.sub || (req.user as any)?.claims?.sub || '',
+          userId: userId,
+          isGuest: isGuest.toString(),
+          sessionId: req.sessionID || 'unknown', // Track guest sessions
         },
       });
       
-      console.log('Payment intent created successfully:', paymentIntent.id);
+      console.log('Payment intent created successfully:', paymentIntent.id, isGuest ? '(guest)' : '(authenticated)');
       res.json({ clientSecret: paymentIntent.client_secret });
     } catch (error: any) {
       console.error('Stripe payment intent error:', error);

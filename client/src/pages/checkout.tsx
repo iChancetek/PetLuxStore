@@ -144,13 +144,14 @@ export default function Checkout() {
 
   // Fetch product details for guest cart items
   useEffect(() => {
-    if (!isAuthenticated && guestCart.items.length > 0) {
+      if (!isAuthenticated && guestCart.items.length > 0) {
       const fetchGuestProductDetails = async () => {
         setLoadingGuestProducts(true);
         try {
           const productPromises = guestCart.items.map(async (guestItem) => {
             try {
-              const product = await apiRequest("GET", `/api/products/${guestItem.productId}`) as unknown as ProductType;
+              const response = await apiRequest("GET", `/api/products/${guestItem.productId}`);
+              const product = await response.json() as ProductType;
               return {
                 id: guestItem.id,
                 userId: guestItem.userId,
@@ -189,10 +190,11 @@ export default function Checkout() {
   const tax = subtotal * 0.08;
   const shipping = subtotal >= 50 ? 0 : 9.99;
   const total = subtotal + tax + shipping;
+  
 
-  // Track checkout started when cart items are loaded
+  // Track checkout started when cart items are loaded  
   useEffect(() => {
-    if (items.length > 0 && !loadingCart) {
+    if (items.length > 0 && !loadingCart && subtotal > 0) {
       activityTracker.trackCheckoutStarted({
         cartValue: total,
         itemCount: items.length,
