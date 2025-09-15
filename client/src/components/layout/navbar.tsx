@@ -31,6 +31,7 @@ import {
   Shield
 } from "lucide-react";
 import type { User as UserType } from "@shared/schema";
+import { useGuestCart } from "@/hooks/useGuestCart";
 
 export default function Navbar() {
   const [location] = useLocation();
@@ -39,6 +40,7 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const guestCart = useGuestCart();
 
   // Fetch cart items count
   const { data: cartItems } = useQuery({
@@ -52,7 +54,10 @@ export default function Navbar() {
     enabled: !!user,
   });
 
-  const cartItemCount = Array.isArray(cartItems) ? cartItems.reduce((total: number, item: any) => total + item.quantity, 0) : 0;
+  // Calculate total cart count from both authenticated and guest carts
+  const authCartCount = Array.isArray(cartItems) ? cartItems.reduce((total: number, item: any) => total + item.quantity, 0) : 0;
+  const guestCartCount = guestCart.getItemCount();
+  const cartItemCount = user ? authCartCount : guestCartCount;
   const isAdmin = userProfile?.role === 'admin';
 
   const handleSearch = (e: React.FormEvent) => {

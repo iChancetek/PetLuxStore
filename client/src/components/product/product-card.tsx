@@ -66,17 +66,8 @@ export default function ProductCard({ product }: ProductCardProps) {
     e.preventDefault();
     e.stopPropagation();
     
-    console.log('🔵 Add to Cart button clicked!', {
-      productId: product.id,
-      productName: product.name,
-      isAuthenticated,
-      authLoading,
-      guestCartItems: guestCart.items.length
-    });
-    
     // Don't proceed if auth is still loading
     if (authLoading) {
-      console.log('❌ Auth still loading, skipping add to cart');
       return;
     }
     
@@ -84,21 +75,18 @@ export default function ProductCard({ product }: ProductCardProps) {
 
     try {
       if (isAuthenticated) {
-        console.log('🔐 User authenticated - using API cart');
         // User is authenticated - use API
         addToCartMutation.mutate();
       } else {
-        console.log('👤 User is guest - using localStorage cart');
         // User is guest - use localStorage
         await guestCart.addItem(product.id, 1);
-        console.log('✅ Item added to guest cart successfully');
         toast({
           title: "Added to cart",
           description: `${product.name} has been added to your cart.`,
         });
       }
     } catch (error) {
-      console.error('❌ Error adding to cart:', error);
+      console.error('Error adding to cart:', error);
       toast({
         title: "Error",
         description: "Failed to add item to cart. Please try again.",
