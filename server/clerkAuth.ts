@@ -3,7 +3,24 @@ import type { Express, RequestHandler } from 'express';
 import { storage } from './storage';
 
 export function setupClerkAuth(app: Express) {
-  // Add Clerk middleware - use recommended setup without explicit keys
+  // Determine which Clerk secret key to use based on environment
+  const isProduction = process.env.NODE_ENV === 'production';
+  let clerkSecretKey = '';
+
+  if (isProduction && process.env.CLERK_LIVE_SECRET_KEY) {
+    clerkSecretKey = process.env.CLERK_LIVE_SECRET_KEY;
+    console.log('Using LIVE Clerk secret key');
+  } else if (process.env.CLERK_SECRET_KEY) {
+    clerkSecretKey = process.env.CLERK_SECRET_KEY;
+    console.log('Using TEST Clerk secret key');
+  } else {
+    throw new Error('Missing required Clerk secret: CLERK_SECRET_KEY or CLERK_LIVE_SECRET_KEY');
+  }
+
+  // Set the secret key for Clerk
+  process.env.CLERK_SECRET_KEY = clerkSecretKey;
+  
+  // Add Clerk middleware
   app.use(clerkMiddleware());
 }
 
