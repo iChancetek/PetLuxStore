@@ -6,16 +6,21 @@ export default function ClerkProviderWrapper({ children }: { children: React.Rea
   const getClerkPublishableKey = () => {
     const isProduction = import.meta.env.MODE === 'production';
     
-    if (isProduction && import.meta.env.VITE_CLERK_LIVE_PUBLISHABLE_KEY) {
+    // Force test keys in development mode - use hardcoded key to avoid environment variable issues
+    if (!isProduction) {
+      console.log('Using hardcoded TEST Clerk publishable key for development');
+      return "pk_test_cmlnaHQtb3dsLTQ0LmNsZXJrLmFjY291bnRzLmRldiQ";
+    }
+    
+    // Only use live keys in production
+    if (import.meta.env.VITE_CLERK_LIVE_PUBLISHABLE_KEY) {
       console.log('Using LIVE Clerk publishable key');
       return import.meta.env.VITE_CLERK_LIVE_PUBLISHABLE_KEY;
     } else if (import.meta.env.VITE_CLERK_PUBLISHABLE_KEY) {
-      console.log('Using TEST Clerk publishable key');
+      console.log('Using TEST Clerk publishable key as fallback in production');
       return import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
     } else {
-      // Fallback to development key if environment variables are not available
-      console.log('Using fallback TEST Clerk publishable key');
-      return "pk_test_cmlnaHQtb3dsLTQ0LmNsZXJrLmFjY291bnRzLmRldiQ";
+      throw new Error('Missing required Clerk key: VITE_CLERK_PUBLISHABLE_KEY or VITE_CLERK_LIVE_PUBLISHABLE_KEY');
     }
   };
   
