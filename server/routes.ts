@@ -227,11 +227,10 @@ async function buildChatContext(req: any, frontendContext: any, userMessage: str
   }
 }
 
-// Determine which Stripe key to use based on environment
-const isProduction = process.env.NODE_ENV === 'production';
+// Use live Stripe keys for production site
 let stripeSecretKey = '';
 
-if (isProduction && process.env.STRIPE_LIVE_SECRET_KEY) {
+if (process.env.STRIPE_LIVE_SECRET_KEY) {
   stripeSecretKey = process.env.STRIPE_LIVE_SECRET_KEY;
   console.log('Using LIVE Stripe key starting with:', stripeSecretKey.substring(0, 20) + '...');
 } else if (process.env.STRIPE_SECRET_KEY) {

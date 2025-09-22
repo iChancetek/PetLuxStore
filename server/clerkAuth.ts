@@ -3,11 +3,10 @@ import type { Express, RequestHandler } from 'express';
 import { storage } from './storage';
 
 export function setupClerkAuth(app: Express) {
-  // Determine which Clerk secret key to use based on environment
-  const isProduction = process.env.NODE_ENV === 'production';
+  // Use live Clerk keys for production site
   let clerkSecretKey = '';
 
-  if (isProduction && process.env.CLERK_LIVE_SECRET_KEY) {
+  if (process.env.CLERK_LIVE_SECRET_KEY) {
     clerkSecretKey = process.env.CLERK_LIVE_SECRET_KEY;
     console.log('Using LIVE Clerk secret key');
   } else if (process.env.CLERK_SECRET_KEY) {

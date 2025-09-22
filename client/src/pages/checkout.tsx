@@ -21,11 +21,9 @@ import { Lock, CreditCard } from "lucide-react";
 
 // Make sure to call `loadStripe` outside of a component's render to avoid
 // recreating the `Stripe` object on every render.
-// Determine which Stripe publishable key to use based on environment
+// Use live Stripe keys for production site
 const getStripePublishableKey = () => {
-  const isProduction = import.meta.env.MODE === 'production';
-  
-  if (isProduction && import.meta.env.VITE_STRIPE_LIVE_PUBLISHABLE_KEY) {
+  if (import.meta.env.VITE_STRIPE_LIVE_PUBLISHABLE_KEY) {
     console.log('Using LIVE Stripe publishable key');
     return import.meta.env.VITE_STRIPE_LIVE_PUBLISHABLE_KEY;
   } else if (import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
