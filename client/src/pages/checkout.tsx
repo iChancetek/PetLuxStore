@@ -21,10 +21,22 @@ import { Lock, CreditCard } from "lucide-react";
 
 // Make sure to call `loadStripe` outside of a component's render to avoid
 // recreating the `Stripe` object on every render.
-if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-  throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
-}
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+// Determine which Stripe publishable key to use based on environment
+const getStripePublishableKey = () => {
+  const isProduction = import.meta.env.MODE === 'production';
+  
+  if (isProduction && import.meta.env.VITE_STRIPE_LIVE_PUBLISHABLE_KEY) {
+    console.log('Using LIVE Stripe publishable key');
+    return import.meta.env.VITE_STRIPE_LIVE_PUBLISHABLE_KEY;
+  } else if (import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
+    console.log('Using TEST Stripe publishable key');
+    return import.meta.env.VITE_STRIPE_PUBLIC_KEY;
+  } else {
+    throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY or VITE_STRIPE_LIVE_PUBLISHABLE_KEY');
+  }
+};
+
+const stripePromise = loadStripe(getStripePublishableKey());
 
 // Define cart item type with product relation
 type CartItemWithProduct = CartItem & {

@@ -227,19 +227,25 @@ async function buildChatContext(req: any, frontendContext: any, userMessage: str
   }
 }
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
-}
+// Determine which Stripe key to use based on environment
+const isProduction = process.env.NODE_ENV === 'production';
+let stripeSecretKey = '';
 
-// Extract the secret key part from the corrupted environment variable
-let stripeSecretKey = process.env.STRIPE_SECRET_KEY || '';
-if (stripeSecretKey.includes('sk_test_')) {
-  // Extract just the secret key part if it's concatenated
-  const secretKeyStart = stripeSecretKey.indexOf('sk_test_');
-  stripeSecretKey = stripeSecretKey.substring(secretKeyStart);
+if (isProduction && process.env.STRIPE_LIVE_SECRET_KEY) {
+  stripeSecretKey = process.env.STRIPE_LIVE_SECRET_KEY;
+  console.log('Using LIVE Stripe key starting with:', stripeSecretKey.substring(0, 20) + '...');
+} else if (process.env.STRIPE_SECRET_KEY) {
+  stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+  // Extract the secret key part from the corrupted environment variable
+  if (stripeSecretKey.includes('sk_test_')) {
+    // Extract just the secret key part if it's concatenated
+    const secretKeyStart = stripeSecretKey.indexOf('sk_test_');
+    stripeSecretKey = stripeSecretKey.substring(secretKeyStart);
+  }
+  console.log('Using TEST Stripe key starting with:', stripeSecretKey.substring(0, 20) + '...');
+} else {
+  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY or STRIPE_LIVE_SECRET_KEY');
 }
-
-console.log('Using Stripe key starting with:', stripeSecretKey.substring(0, 20) + '...');
 
 const stripe = new Stripe(stripeSecretKey, {
   apiVersion: "2025-08-27.basil",
