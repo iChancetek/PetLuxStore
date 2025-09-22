@@ -319,30 +319,6 @@ export default function Cart() {
                       </div>
                     ))}
 
-                    {/* AI Recommendation */}
-                    <div className="bg-accent/10 border-2 border-accent/20 p-4 rounded-lg">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <Sparkles className="w-4 h-4 text-accent" />
-                        <span className="text-sm font-medium">AI Suggestion</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        Customers who bought these items also added:
-                      </p>
-                      <div className="flex items-center space-x-3">
-                        <img 
-                          src="https://images.unsplash.com/photo-1601758228041-f3b2795255f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=60&h=60"
-                          alt="Memory Foam Pet Bed"
-                          className="w-12 h-12 object-cover rounded-lg"
-                        />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">Memory Foam Pet Bed</p>
-                          <p className="text-xs text-muted-foreground">$129.99</p>
-                        </div>
-                        <Button size="sm" variant="outline" data-testid="button-add-suggestion">
-                          Add
-                        </Button>
-                      </div>
-                    </div>
                   </div>
                 </CardContent>
               </Card>

@@ -315,30 +315,6 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   </div>
                 ))}
 
-                {/* AI Suggestion */}
-                <div className="bg-accent/10 border-2 border-accent/20 p-3 rounded-lg">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Sparkles className="w-3 h-3 text-accent" />
-                    <span className="text-xs font-medium">AI Suggestion</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-2">
-                    Customers also added:
-                  </p>
-                  <div className="flex items-center space-x-2">
-                    <img 
-                      src="https://images.unsplash.com/photo-1601758228041-f3b2795255f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=40&h=40"
-                      alt="Memory Foam Pet Bed"
-                      className="w-8 h-8 object-cover rounded"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium truncate">Memory Foam Pet Bed</p>
-                      <p className="text-xs text-muted-foreground">$129.99</p>
-                    </div>
-                    <Button size="sm" variant="outline" className="text-xs h-6 px-2" data-testid="button-drawer-add-suggestion">
-                      Add
-                    </Button>
-                  </div>
-                </div>
               </div>
 
               {/* Footer */}
