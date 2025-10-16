@@ -152,6 +152,28 @@ export default function UsersTab() {
     },
   });
 
+  // Toggle user active status mutation
+  const toggleUserStatusMutation = useMutation({
+    mutationFn: async ({ userId, isActive }: { userId: string; isActive: boolean }) => {
+      const response = await apiRequest("PATCH", `/api/admin/users/${userId}`, { isActive });
+      return response.json();
+    },
+    onSuccess: (_, variables) => {
+      toast({
+        title: "Success",
+        description: `User ${variables.isActive ? 'enabled' : 'disabled'} successfully.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to update user status: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCreateUser = (data: UserFormData) => {
     createUserMutation.mutate(data);
   };
@@ -176,6 +198,10 @@ export default function UsersTab() {
 
   const handleDeleteUser = (userId: string) => {
     deleteUserMutation.mutate(userId);
+  };
+
+  const handleToggleUserStatus = (userId: string, currentStatus: boolean) => {
+    toggleUserStatusMutation.mutate({ userId, isActive: !currentStatus });
   };
 
   const users = (usersData as any)?.users || [];
@@ -424,6 +450,40 @@ export default function UsersTab() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end space-x-2">
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className={user.isActive ? "text-orange-600 hover:text-orange-700" : "text-green-600 hover:text-green-700"}
+                                data-testid={`button-toggle-status-${user.id}`}
+                              >
+                                {user.isActive ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  {user.isActive ? 'Disable' : 'Enable'} User
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to {user.isActive ? 'disable' : 'enable'} {user.firstName} {user.lastName}? 
+                                  {user.isActive 
+                                    ? ' They will no longer be able to access their account.' 
+                                    : ' They will be able to access their account again.'}
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleToggleUserStatus(user.id, user.isActive)}
+                                  className={user.isActive ? "bg-orange-600 hover:bg-orange-700" : "bg-green-600 hover:bg-green-700"}
+                                >
+                                  {user.isActive ? 'Disable' : 'Enable'}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                           <Button
                             variant="ghost"
                             size="sm"
