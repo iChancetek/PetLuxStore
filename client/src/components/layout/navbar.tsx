@@ -95,17 +95,17 @@ export default function Navbar() {
               </Link>
               <div className="hidden md:flex space-x-6">
                 {navLinks.map((link) => (
-                  <Link key={link.href} href={link.href}>
-                    <a 
-                      className={`transition-colors ${
-                        link.active 
-                          ? "text-primary font-medium" 
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                      data-testid={`link-nav-${link.label.toLowerCase()}`}
-                    >
-                      {link.label}
-                    </a>
+                  <Link 
+                    key={link.href} 
+                    href={link.href}
+                    className={`transition-colors ${
+                      link.active 
+                        ? "text-primary font-medium" 
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                    data-testid={`link-nav-${link.label.toLowerCase()}`}
+                  >
+                    {link.label}
                   </Link>
                 ))}
               </div>
@@ -206,18 +206,18 @@ export default function Navbar() {
                   {/* Mobile Navigation */}
                   <div className="flex flex-col space-y-3">
                     {navLinks.map((link) => (
-                      <Link key={link.href} href={link.href}>
-                        <a 
-                          className={`block py-2 px-3 rounded-lg transition-colors ${
-                            link.active 
-                              ? "bg-primary text-primary-foreground" 
-                              : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                          }`}
-                          onClick={() => setIsMobileMenuOpen(false)}
-                          data-testid={`link-mobile-${link.label.toLowerCase()}`}
-                        >
-                          {link.label}
-                        </a>
+                      <Link 
+                        key={link.href} 
+                        href={link.href}
+                        className={`block py-2 px-3 rounded-lg transition-colors ${
+                          link.active 
+                            ? "bg-primary text-primary-foreground" 
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                        }`}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        data-testid={`link-mobile-${link.label.toLowerCase()}`}
+                      >
+                        {link.label}
                       </Link>
                     ))}
                   </div>
