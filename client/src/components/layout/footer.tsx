@@ -27,13 +27,21 @@ export default function Footer() {
             <h4 className="font-semibold mb-4" data-testid="text-footer-shop-title">Shop</h4>
             <ul className="space-y-2 text-background/80">
               <li>
-                <Link href="/shop?petType=fish">
-                  <a className="hover:text-background transition-colors" data-testid="link-footer-fish">Fish</a>
+                <Link 
+                  href="/shop?petType=fish"
+                  className="hover:text-background transition-colors" 
+                  data-testid="link-footer-fish"
+                >
+                  Fish
                 </Link>
               </li>
               <li>
-                <Link href="/shop">
-                  <a className="hover:text-background transition-colors" data-testid="link-footer-all-products">All Products</a>
+                <Link 
+                  href="/shop"
+                  className="hover:text-background transition-colors" 
+                  data-testid="link-footer-all-products"
+                >
+                  All Products
                 </Link>
               </li>
             </ul>
