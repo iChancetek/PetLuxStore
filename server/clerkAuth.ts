@@ -3,13 +3,21 @@ import type { Express, RequestHandler } from 'express';
 import { storage } from './storage';
 
 export function setupClerkAuth(app: Express) {
-  // Use test keys for Replit development environment (live keys only work on thepotluxe.com domain)  
+  // Use LIVE keys in production, TEST keys in development
   let clerkSecretKey = '';
 
-  if (process.env.CLERK_SECRET_KEY) {
+  // In production (published deployment), always use LIVE keys
+  if (process.env.NODE_ENV === 'production' && process.env.CLERK_LIVE_SECRET_KEY) {
+    clerkSecretKey = process.env.CLERK_LIVE_SECRET_KEY;
+    console.log('Using LIVE Clerk secret key for production');
+  } 
+  // In development, use TEST keys
+  else if (process.env.CLERK_SECRET_KEY) {
     clerkSecretKey = process.env.CLERK_SECRET_KEY;
     console.log('Using TEST Clerk secret key for development');
-  } else if (process.env.CLERK_LIVE_SECRET_KEY) {
+  } 
+  // Fallback to LIVE key if TEST key not available
+  else if (process.env.CLERK_LIVE_SECRET_KEY) {
     clerkSecretKey = process.env.CLERK_LIVE_SECRET_KEY;
     console.log('Using LIVE Clerk secret key');
   } else {
