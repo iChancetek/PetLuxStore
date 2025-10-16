@@ -19,10 +19,9 @@ export default function Home() {
 
   // Authentication is handled by Clerk - no redirect needed
 
-  // Fetch recommended products
+  // Fetch recommended products from database
   const { data: recommendations, isLoading: loadingRecommendations } = useQuery({
-    queryKey: ["/api/products", { limit: 8, sortBy: "ai_match", sortOrder: "desc" }],
-    enabled: isAuthenticated,
+    queryKey: ["/api/products", { limit: 8, sortBy: "rating", sortOrder: "desc" }],
   });
 
   // Fetch categories
@@ -192,59 +191,20 @@ export default function Home() {
                 </div>
               ))}
             </div>
-          ) : (
+          ) : recommendations?.products && Array.isArray(recommendations.products) && recommendations.products.length > 0 ? (
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {recommendations?.products && Array.isArray(recommendations.products) ? recommendations.products.slice(0, 8).map((product: any) => (
+              {recommendations.products.slice(0, 8).map((product: any) => (
                 <ProductCard key={product.id} product={product} />
-              )) : (
-                // Fallback products
-                [
-                  {
-                    id: "1",
-                    name: "Organic Grain-Free Dog Food",
-                    price: "89.99",
-                    originalPrice: "99.99",
-                    imageUrl: "https://images.unsplash.com/photo-1589941013453-ec89f33b5e95?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
-                    aiMatch: 98,
-                    rating: "5.0",
-                    reviewCount: 247,
-                    aiDescription: "Perfect for dogs with sensitive stomachs and active lifestyles"
-                  },
-                  {
-                    id: "2",
-                    name: "Interactive Puzzle Feeder",
-                    price: "34.99",
-                    imageUrl: "https://images.unsplash.com/photo-1571566882372-1598d88abd90?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
-                    aiMatch: 95,
-                    rating: "4.5",
-                    reviewCount: 156,
-                    aiDescription: "Stimulates hunting instincts while slowing down eating"
-                  },
-                  {
-                    id: "3",
-                    name: "Orthopedic Memory Foam Bed",
-                    price: "129.99",
-                    originalPrice: "149.99",
-                    imageUrl: "https://images.unsplash.com/photo-1601758228041-f3b2795255f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
-                    aiMatch: 92,
-                    rating: "5.0",
-                    reviewCount: 89,
-                    aiDescription: "Perfect for senior pets or those with joint issues"
-                  },
-                  {
-                    id: "4",
-                    name: "Professional Grooming Kit",
-                    price: "79.99",
-                    imageUrl: "https://images.unsplash.com/photo-1560743173-567a3b5658b1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300",
-                    aiMatch: 88,
-                    rating: "4.0",
-                    reviewCount: 203,
-                    aiDescription: "Complete kit for at-home grooming sessions"
-                  }
-                ].map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))
-              )}
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <ShoppingBag className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">No products available yet</h3>
+              <p className="text-muted-foreground mb-6">Check back soon for new arrivals!</p>
+              <Link href="/shop">
+                <Button variant="outline">Browse Shop</Button>
+              </Link>
             </div>
           )}
         </div>
