@@ -860,7 +860,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         limit
       );
 
-      res.json(recommendations);
+      // Enrich recommendations with full product data
+      const enrichedRecommendations = recommendations.map(rec => {
+        const product = products.find(p => p.id === rec.productId);
+        if (!product) return null;
+        
+        return {
+          id: product.id,
+          name: product.name,
+          slug: product.slug,
+          price: product.price,
+          originalPrice: product.originalPrice,
+          imageUrl: product.imageUrl,
+          shortDescription: product.shortDescription,
+          rating: product.rating,
+          reviewCount: product.reviewCount,
+          inStock: product.inStock,
+          aiMatch: rec.matchScore,
+          reason: rec.reason,
+          category: product.brand || 'Premium'
+        };
+      }).filter(Boolean);
+
+      res.json(enrichedRecommendations);
     } catch (error) {
       console.error("Error generating recommendations:", error);
       res.status(500).json({ message: "Failed to generate recommendations" });
