@@ -2,10 +2,23 @@ import { clerkMiddleware, getAuth, clerkClient } from '@clerk/express';
 import type { Express, RequestHandler } from 'express';
 import { storage } from './storage';
 
+// Determine if we're in production based on environment
+const isProduction = process.env.REPLIT_DEPLOYMENT === '1' || process.env.NODE_ENV === 'production';
+
+// Select the appropriate Clerk secret key based on environment
+const clerkSecretKey = isProduction 
+  ? (process.env.CLERK_LIVE_SECRET_KEY || process.env.CLERK_SECRET_KEY)
+  : process.env.CLERK_SECRET_KEY;
+
 export function setupClerkAuth(app: Express) {
-  if (!process.env.CLERK_SECRET_KEY) {
-    throw new Error('Missing CLERK_SECRET_KEY environment variable');
+  if (!clerkSecretKey) {
+    throw new Error('Missing Clerk secret key environment variable');
   }
+  
+  // Set the CLERK_SECRET_KEY for the SDK to use
+  process.env.CLERK_SECRET_KEY = clerkSecretKey;
+  
+  console.log(`Using ${isProduction ? 'LIVE' : 'TEST'} Clerk key starting with: ${clerkSecretKey.substring(0, 15)}...`);
   
   // Add Clerk middleware
   app.use(clerkMiddleware());

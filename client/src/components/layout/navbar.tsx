@@ -56,7 +56,8 @@ export default function Navbar() {
 
   // Calculate total cart count from both authenticated and guest carts
   const authCartCount = Array.isArray(cartItems) ? cartItems.reduce((total: number, item: any) => total + item.quantity, 0) : 0;
-  const guestCartCount = guestCart.getItemCount();
+  // Use guestCart.items directly instead of getItemCount() to ensure reactivity
+  const guestCartCount = guestCart.items.reduce((total, item) => total + item.quantity, 0);
   const cartItemCount = user ? authCartCount : guestCartCount;
   const isAdmin = userProfile?.role === 'admin';
 
