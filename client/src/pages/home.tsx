@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import Navbar from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
 import ProductCard from "@/components/product/product-card";
@@ -16,11 +16,15 @@ import { Sparkles, Brain, ShoppingBag, TrendingUp, Star } from "lucide-react";
 export default function Home() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
 
   // Authentication is handled by Clerk - no redirect needed
 
   // Fetch recommended products from database
-  const { data: recommendations, isLoading: loadingRecommendations } = useQuery({
+  const { data: recommendations, isLoading: loadingRecommendations } = useQuery<{
+    products: any[];
+    total: number;
+  }>({
     queryKey: ["/api/products", { limit: 8, sortBy: "rating", sortOrder: "desc" }],
   });
 
@@ -116,25 +120,28 @@ export default function Home() {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {categories && Array.isArray(categories) && categories.length > 0 ? (
               categories.map((category: any, index: number) => (
-                <Link key={category.id} href={`/shop?categoryId=${category.id}`}>
-                  <Card className="group cursor-pointer overflow-hidden hover:shadow-xl transition-shadow" data-testid={`card-category-${index}`}>
-                    <div className="relative">
-                      <img 
-                        src={category.imageUrl}
-                        alt={category.name}
-                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
+                <Card 
+                  key={category.id}
+                  className="group cursor-pointer overflow-hidden hover:shadow-xl transition-shadow" 
+                  data-testid={`card-category-${index}`}
+                  onClick={() => setLocation(`/shop?categoryId=${category.id}`)}
+                >
+                  <div className="relative">
+                    <img 
+                      src={category.imageUrl}
+                      alt={category.name}
+                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                  <CardContent className="p-6">
+                    <h3 className="text-xl font-semibold mb-2">{category.name}</h3>
+                    <p className="text-muted-foreground mb-4">{category.description || "Premium products for your pet"}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Available now</span>
+                      <Badge variant="secondary">AI Curated</Badge>
                     </div>
-                    <CardContent className="p-6">
-                      <h3 className="text-xl font-semibold mb-2">{category.name}</h3>
-                      <p className="text-muted-foreground mb-4">{category.description || "Premium products for your pet"}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Available now</span>
-                        <Badge variant="secondary">AI Curated</Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
+                  </CardContent>
+                </Card>
               ))
             ) : (
               <div className="col-span-4 text-center py-8">
