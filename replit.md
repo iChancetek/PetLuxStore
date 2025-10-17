@@ -12,7 +12,13 @@ The PotLuxE is a production-ready pet e-commerce platform built as a full-stack 
 
 ## User Preferences
 
-Preferred communication style: Simple, everyday language.
+**Communication Style:**
+- Use simple, everyday language
+- Format responses with bullet points and bold headings
+- Add spacing between sections for readability
+- Keep responses concise and scannable
+- Avoid filler content - deliver value quickly
+- Use consistent, professional formatting
 
 ## System Architecture
 
