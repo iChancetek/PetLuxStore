@@ -3,15 +3,16 @@ import { useEffect } from 'react';
 
 export default function ClerkProviderWrapper({ children }: { children: React.ReactNode }) {
   const getClerkPublishableKey = () => {
-    // In production (NODE_ENV=production), use LIVE keys
-    // In development, use TEST keys to match backend configuration
+    // Production uses LIVE keys, Development uses TEST keys
+    // LIVE keys are domain-locked to thepotluxe.com
     if (import.meta.env.PROD && import.meta.env.VITE_CLERK_LIVE_PUBLISHABLE_KEY) {
       console.log('Using LIVE Clerk publishable key for production');
       return import.meta.env.VITE_CLERK_LIVE_PUBLISHABLE_KEY;
-    } else {
-      // Development: use CLERK_PUBLISHABLE_KEY which matches CLERK_SECRET_KEY on backend
+    } else if (import.meta.env.VITE_CLERK_PUBLISHABLE_KEY) {
       console.log('Using TEST Clerk publishable key for development');
-      return import.meta.env.CLERK_PUBLISHABLE_KEY || import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || '';
+      return import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+    } else {
+      throw new Error('Missing required Clerk publishable key');
     }
   };
   
