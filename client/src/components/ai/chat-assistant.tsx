@@ -23,6 +23,17 @@ function formatMessage(content: string) {
       continue;
     }
 
+    // Markdown headers (## Heading)
+    if (line.match(/^#{1,3}\s+/)) {
+      const text = line.replace(/^#{1,3}\s+/, '');
+      elements.push(
+        <div key={`heading-${key++}`} className="font-bold text-sm mb-1 mt-2">
+          {text}
+        </div>
+      );
+      continue;
+    }
+
     // Bold section headings (lines with **text**)
     if (line.match(/^\*\*(.+?)\*\*:?$/)) {
       const text = line.replace(/^\*\*(.+?)\*\*:?$/, '$1');
