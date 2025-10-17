@@ -3,14 +3,9 @@ import type { Express, RequestHandler } from 'express';
 import { storage } from './storage';
 
 export function setupClerkAuth(app: Express) {
-  const clerkSecretKey = process.env.CLERK_LIVE_SECRET_KEY;
-
-  if (!clerkSecretKey) {
-    throw new Error('Missing CLERK_LIVE_SECRET_KEY environment variable');
+  if (!process.env.CLERK_SECRET_KEY) {
+    throw new Error('Missing CLERK_SECRET_KEY environment variable');
   }
-
-  // Set the key for Clerk to use
-  process.env.CLERK_SECRET_KEY = clerkSecretKey;
   
   // Add Clerk middleware
   app.use(clerkMiddleware());
