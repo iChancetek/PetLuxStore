@@ -8,6 +8,69 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MessageCircle, X, Send, Sparkles, Search, Heart, List, Star, User, Bot } from "lucide-react";
 
+// Format markdown-like text to React elements with proper spacing
+function formatMessage(content: string) {
+  const lines = content.split('\n');
+  const elements: JSX.Element[] = [];
+  let key = 0;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    
+    // Skip empty lines but add spacing
+    if (!line) {
+      elements.push(<div key={`space-${key++}`} className="h-2" />);
+      continue;
+    }
+
+    // Bold section headings (lines with **text**)
+    if (line.match(/^\*\*(.+?)\*\*:?$/)) {
+      const text = line.replace(/^\*\*(.+?)\*\*:?$/, '$1');
+      elements.push(
+        <div key={`heading-${key++}`} className="font-bold text-sm mb-1 mt-2">
+          {text}
+        </div>
+      );
+      continue;
+    }
+
+    // Bullet points
+    if (line.match(/^[-•*]\s+/)) {
+      const text = line.replace(/^[-•*]\s+/, '');
+      const formattedText = formatInlineMarkdown(text);
+      elements.push(
+        <div key={`bullet-${key++}`} className="flex items-start ml-2 mb-1">
+          <span className="mr-2 text-muted-foreground">•</span>
+          <span className="flex-1">{formattedText}</span>
+        </div>
+      );
+      continue;
+    }
+
+    // Regular text with inline formatting
+    const formattedText = formatInlineMarkdown(line);
+    elements.push(
+      <div key={`text-${key++}`} className="mb-1">
+        {formattedText}
+      </div>
+    );
+  }
+
+  return <div className="space-y-0">{elements}</div>;
+}
+
+// Format inline markdown (bold text within lines)
+function formatInlineMarkdown(text: string) {
+  const parts = text.split(/(\*\*.+?\*\*)/g);
+  return parts.map((part, index) => {
+    if (part.match(/^\*\*.+?\*\*$/)) {
+      const boldText = part.replace(/^\*\*(.+?)\*\*$/, '$1');
+      return <strong key={index} className="font-semibold">{boldText}</strong>;
+    }
+    return <span key={index}>{part}</span>;
+  });
+}
+
 interface Message {
   id: string;
   role: "user" | "assistant";
@@ -190,7 +253,7 @@ export default function ChatAssistant(props: ChatAssistantProps = {}) {
                       ? 'bg-muted text-foreground' 
                       : 'bg-primary text-primary-foreground'
                   }`} data-testid={`message-${message.role}-${message.id}`}>
-                    {message.content}
+                    {message.role === 'assistant' ? formatMessage(message.content) : message.content}
                   </div>
                 </div>
               ))}
