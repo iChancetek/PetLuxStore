@@ -2,18 +2,16 @@ import { ClerkProvider } from '@clerk/clerk-react';
 import { useEffect } from 'react';
 
 export default function ClerkProviderWrapper({ children }: { children: React.ReactNode }) {
-  // Force test key for Replit development environment to avoid domain issues
   const getClerkPublishableKey = () => {
-    // Check if we're on the production domain
-    const isProductionDomain = window.location.hostname === 'thepotluxe.com' || window.location.hostname.endsWith('.thepotluxe.com');
-    
-    if (isProductionDomain && import.meta.env.VITE_CLERK_LIVE_PUBLISHABLE_KEY) {
-      console.log('Using LIVE Clerk publishable key for production domain');
+    // In production (NODE_ENV=production), use LIVE keys
+    // In development, use TEST keys to match backend configuration
+    if (import.meta.env.PROD && import.meta.env.VITE_CLERK_LIVE_PUBLISHABLE_KEY) {
+      console.log('Using LIVE Clerk publishable key for production');
       return import.meta.env.VITE_CLERK_LIVE_PUBLISHABLE_KEY;
     } else {
-      // Force test key for development to avoid domain issues with live keys
-      console.log('Using hardcoded TEST Clerk publishable key for development');
-      return "pk_test_cmlnaHQtb3dsLTQ0LmNsZXJrLmFjY291bnRzLmRldiQ";
+      // Development: use CLERK_PUBLISHABLE_KEY which matches CLERK_SECRET_KEY on backend
+      console.log('Using TEST Clerk publishable key for development');
+      return import.meta.env.CLERK_PUBLISHABLE_KEY || import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || '';
     }
   };
   
