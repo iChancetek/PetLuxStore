@@ -3,13 +3,10 @@ import type { Express, RequestHandler } from 'express';
 import { storage } from './storage';
 
 export function setupClerkAuth(app: Express) {
-  // Use test keys for development, live keys for production
-  const clerkSecretKey = process.env.NODE_ENV === 'production' && process.env.CLERK_LIVE_SECRET_KEY
-    ? process.env.CLERK_LIVE_SECRET_KEY
-    : process.env.CLERK_SECRET_KEY;
+  const clerkSecretKey = process.env.CLERK_LIVE_SECRET_KEY;
 
   if (!clerkSecretKey) {
-    throw new Error('Missing CLERK_SECRET_KEY environment variable');
+    throw new Error('Missing CLERK_LIVE_SECRET_KEY environment variable');
   }
 
   // Set the key for Clerk to use
