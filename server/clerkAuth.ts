@@ -3,28 +3,16 @@ import type { Express, RequestHandler } from 'express';
 import { storage } from './storage';
 
 export function setupClerkAuth(app: Express) {
-  // Use LIVE keys in production, TEST keys in development
-  let clerkSecretKey = '';
+  // Use test keys for development, live keys for production
+  const clerkSecretKey = process.env.NODE_ENV === 'production' && process.env.CLERK_LIVE_SECRET_KEY
+    ? process.env.CLERK_LIVE_SECRET_KEY
+    : process.env.CLERK_SECRET_KEY;
 
-  // In production (published deployment), always use LIVE keys
-  if (process.env.NODE_ENV === 'production' && process.env.CLERK_LIVE_SECRET_KEY) {
-    clerkSecretKey = process.env.CLERK_LIVE_SECRET_KEY;
-    console.log('Using LIVE Clerk secret key for production');
-  } 
-  // In development, use TEST keys
-  else if (process.env.CLERK_SECRET_KEY) {
-    clerkSecretKey = process.env.CLERK_SECRET_KEY;
-    console.log('Using TEST Clerk secret key for development');
-  } 
-  // Fallback to LIVE key if TEST key not available
-  else if (process.env.CLERK_LIVE_SECRET_KEY) {
-    clerkSecretKey = process.env.CLERK_LIVE_SECRET_KEY;
-    console.log('Using LIVE Clerk secret key');
-  } else {
-    throw new Error('Missing required Clerk secret: CLERK_SECRET_KEY or CLERK_LIVE_SECRET_KEY');
+  if (!clerkSecretKey) {
+    throw new Error('Missing CLERK_SECRET_KEY environment variable');
   }
 
-  // Set the secret key for Clerk
+  // Set the key for Clerk to use
   process.env.CLERK_SECRET_KEY = clerkSecretKey;
   
   // Add Clerk middleware
