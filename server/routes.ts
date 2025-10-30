@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import { storage } from "./storage";
-import { setupClerkAuth, isAuthenticated, isAdmin, optionalAuth } from "./clerkAuth";
+import { isAuthenticated, isAdmin, optionalAuth, requireReviewer } from "./auth/authMiddleware";
 import authRoutes from "./auth/authRoutes";
 import { 
   generateProductDescription, 
@@ -296,9 +296,6 @@ function checkActivityRateLimit(req: any): boolean {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth middleware
-  await setupClerkAuth(app);
-
   // Custom auth routes (new authentication system)
   app.use('/api/auth', authRoutes);
 
