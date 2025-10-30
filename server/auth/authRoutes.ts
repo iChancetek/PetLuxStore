@@ -36,6 +36,8 @@ const authRateLimiter = rateLimit({
   message: 'Too many authentication attempts. Please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
+  // Trust proxy for Replit environment
+  validate: { trustProxy: false },
 });
 
 const generalRateLimiter = rateLimit({
@@ -43,6 +45,8 @@ const generalRateLimiter = rateLimit({
   max: 100, // 100 requests per window
   standardHeaders: true,
   legacyHeaders: false,
+  // Trust proxy for Replit environment
+  validate: { trustProxy: false },
 });
 
 // Validation schemas
