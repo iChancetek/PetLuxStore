@@ -14,7 +14,7 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Session storage table (required for Replit Auth)
+// Session storage table (legacy - kept for compatibility)
 export const sessions = pgTable(
   "sessions",
   {
@@ -25,10 +25,73 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)]
 );
 
-// User storage table (required for Replit Auth)
+// Auth sessions table (for custom authentication)
+export const authSessions = pgTable(
+  "auth_sessions",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    userId: varchar("user_id").references(() => users.id).notNull(),
+    token: varchar("token", { length: 255 }).notNull().unique(),
+    refreshToken: varchar("refresh_token", { length: 255 }).notNull().unique(),
+    expiresAt: timestamp("expires_at").notNull(),
+    refreshExpiresAt: timestamp("refresh_expires_at").notNull(),
+    ipAddress: varchar("ip_address", { length: 45 }),
+    userAgent: text("user_agent"),
+    createdAt: timestamp("created_at").defaultNow(),
+    lastActiveAt: timestamp("last_active_at").defaultNow(),
+  },
+  (table) => [
+    index("idx_auth_sessions_token").on(table.token),
+    index("idx_auth_sessions_user_id").on(table.userId),
+    index("idx_auth_sessions_expires_at").on(table.expiresAt),
+  ]
+);
+
+// Email verification tokens
+export const verificationTokens = pgTable(
+  "verification_tokens",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    userId: varchar("user_id").references(() => users.id).notNull(),
+    token: varchar("token", { length: 255 }).notNull().unique(),
+    type: varchar("type", { length: 50 }).notNull().default("email_verification"), // email_verification, password_reset
+    expiresAt: timestamp("expires_at").notNull(),
+    usedAt: timestamp("used_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    index("idx_verification_tokens_token").on(table.token),
+    index("idx_verification_tokens_user_id").on(table.userId),
+    index("idx_verification_tokens_expires_at").on(table.expiresAt),
+  ]
+);
+
+// Password reset tokens
+export const passwordResetTokens = pgTable(
+  "password_reset_tokens",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    userId: varchar("user_id").references(() => users.id).notNull(),
+    token: varchar("token", { length: 255 }).notNull().unique(),
+    expiresAt: timestamp("expires_at").notNull(),
+    usedAt: timestamp("used_at"),
+    ipAddress: varchar("ip_address", { length: 45 }),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    index("idx_password_reset_tokens_token").on(table.token),
+    index("idx_password_reset_tokens_user_id").on(table.userId),
+    index("idx_password_reset_tokens_expires_at").on(table.expiresAt),
+  ]
+);
+
+// User storage table
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email").unique(),
+  email: varchar("email").unique().notNull(),
+  passwordHash: text("password_hash"), // Nullable for migration from Clerk
+  emailVerified: boolean("email_verified").default(false).notNull(),
+  emailVerifiedAt: timestamp("email_verified_at"),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
@@ -36,6 +99,9 @@ export const users = pgTable("users", {
   stripeCustomerId: varchar("stripe_customer_id"),
   stripeSubscriptionId: varchar("stripe_subscription_id"),
   isActive: boolean("is_active").default(true),
+  lockedUntil: timestamp("locked_until"), // For account lockout after failed login attempts
+  failedLoginAttempts: integer("failed_login_attempts").default(0).notNull(),
+  lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -205,6 +271,30 @@ export const usersRelations = relations(users, ({ many }) => ({
   aiInteractions: many(aiInteractions),
   auditLogs: many(auditLogs),
   activityEvents: many(activityEvents),
+  authSessions: many(authSessions),
+  verificationTokens: many(verificationTokens),
+  passwordResetTokens: many(passwordResetTokens),
+}));
+
+export const authSessionsRelations = relations(authSessions, ({ one }) => ({
+  user: one(users, {
+    fields: [authSessions.userId],
+    references: [users.id],
+  }),
+}));
+
+export const verificationTokensRelations = relations(verificationTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [verificationTokens.userId],
+    references: [users.id],
+  }),
+}));
+
+export const passwordResetTokensRelations = relations(passwordResetTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [passwordResetTokens.userId],
+    references: [users.id],
+  }),
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
@@ -349,6 +439,22 @@ export const insertActivityEventSchema = createInsertSchema(activityEvents).omit
   createdAt: true,
 });
 
+export const insertAuthSessionSchema = createInsertSchema(authSessions).omit({
+  id: true,
+  createdAt: true,
+  lastActiveAt: true,
+});
+
+export const insertVerificationTokenSchema = createInsertSchema(verificationTokens).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTokens).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type UpsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -370,6 +476,12 @@ export type AuditLog = typeof auditLogs.$inferSelect;
 export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 export type ActivityEvent = typeof activityEvents.$inferSelect;
 export type InsertActivityEvent = z.infer<typeof insertActivityEventSchema>;
+export type AuthSession = typeof authSessions.$inferSelect;
+export type InsertAuthSession = z.infer<typeof insertAuthSessionSchema>;
+export type VerificationToken = typeof verificationTokens.$inferSelect;
+export type InsertVerificationToken = z.infer<typeof insertVerificationTokenSchema>;
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSchema>;
 
 // Admin types
 export interface AdminStats {

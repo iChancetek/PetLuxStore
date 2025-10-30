@@ -1,0 +1,133 @@
+Replace Clerk with custom secure auth (for thepotluxe.com)
+
+Goal: Remove Clerk and replace it with a secure, encrypted, multi-user authentication system built from scratch that behaves exactly like Clerk from the user’s POV. The new auth must migrate every existing user account from Clerk, work seamlessly with the live Stripe payment flow and admin dashboard, preserve current UX (no design/layout changes), support guest checkout, and keep purchase/cart behavior identical.
+
+Non-functional constraints (must-haves)
+
+Do not change the site’s design, layout or format. Auth UX elements (login modal, sign-up forms, email flows, cart/checkout interactions) must look and behave the same.
+
+No Replit auth or other hosted auth-as-a-service. Build an in-house solution.
+
+Database: Neon (Postgres) for user accounts and purchase history. Use Drizzle ORM for DB layer.
+
+UI components: Use shadcn for buttons and any auth UI components to match the site design system.
+
+Encryption & secrets: Use industry best-practices: TLS for transport, AES-256 (or equivalent) for at-rest encryption of sensitive fields, HSM / cloud KMS for key management. Use Argon2id (or bcrypt/SCrypt with secure parameters) for password hashing.
+
+Session & tokens: Implement secure, HTTPOnly cookies (or short-lived access tokens + refresh tokens stored securely) with proper SameSite settings and CSRF protection. Use rotating refresh tokens.
+
+Compliance: Account for GDPR, CCPA, and PCI considerations for any payment-related data (do not store card data—Stripe handles that).
+
+Scalability: Designed for horizontal scaling and stateless app servers (session store via Redis if necessary).
+
+Logging & audit: Record auth events (login, logout, password change, failed login attempts) for auditing — logs must not contain plaintext secrets.
+
+Rate limiting & abuse protection: Implement throttling, IP-based rate limiting and bot detection for auth endpoints.
+
+2FA: Optional but recommended as an add-on (TOTP / SMS fallback). Not required at initial launch unless requested.
+
+Functional requirements
+
+Sign-up / sign-in
+
+Email & password sign-up/sign-in flows.
+
+Email verification on account creation (verification email with secure one-time code/link).
+
+Password reset flow (secure email link).
+
+Social login & OAuth only if already used by Clerk — otherwise out of scope unless requested.
+
+Guest checkout: Users may purchase as guest; guest cart & checkout workflows remain identical.
+
+User dashboard
+
+Each user has a dashboard showing all purchased items, with date/time stamps and order metadata (transaction id, Stripe customer id, items, totals).
+
+Dashboard read-only formatting must match existing pages (no design changes).
+
+Cart & checkout integration
+
+Adding items to cart, viewing cart, and checking out must behave exactly as now.
+
+Keep existing Stripe customer IDs and any metadata associations intact.
+
+Ensure webhook handling (Stripe) continues to attribute purchases to the correct user record.
+
+Admin dashboard
+
+Existing admin dashboard must continue to work unchanged (or with minimal config mapping). Admin auth integration should be compatible with current admin roles/permissions.
+
+Data migration
+
+Export and import all user accounts and relevant metadata from Clerk to Neon Postgres.
+
+User experience requirement: Existing users should be able to log in with their existing credentials without friction. Two possible migration strategies (see Migration Plan below).
+
+Migrate Stripe customer links, order history, and any Clerk-stored profile metadata necessary for the app.
+
+Security
+
+Use best-practice password hashing (Argon2id recommended).
+
+Encrypt sensitive columns in DB (PII) at rest.
+
+Securely store secrets and keys (KMS/HSM).
+
+Implement brute-force protection, account lockouts for repeated failures, and administrative tool to unlock accounts.
+
+Migration plan (practical, ordered steps)
+
+Inventory
+
+Export a sample JSON of Clerk data (users, emails, password hashes if available, OAuth providers, metadata).
+
+Export mapping of Clerk user IDs to Stripe customer IDs and any admin flags/roles.
+
+Compatibility check
+
+Determine Clerk’s password hashing algorithm. If Clerk stores salted hashed passwords using a compatible algorithm (bcrypt/Argon2/etc.) and salt format can be preserved, import hashed passwords directly. If Clerk uses a proprietary scheme or passwords are not exported, use fallback:
+
+Option A (preferred): Import password hashes directly if compatible.
+
+Option B (if incompatible): Import accounts and automatically send an account activation / secure one-time login link email that prompts one-time sign-in and password set (or trigger forced password reset). Notify users via email.
+
+Data migration script
+
+Script to transform Clerk JSON → Postgres schema (users, sessions optional, profiles, stripe_customer_id, roles). Script should run in staging; produce dry-run mode and row counts.
+
+Stripe mapping
+
+Preserve stripe_customer_id field on imported user records. Ensure webhook signature validation remains intact and webhooks map customer_id → user account.
+
+Staging & verification
+
+Run migration in staging; verify logins for a set of test accounts (both migrated-password-compatible and password-reset flows).
+
+End-to-end test for cart → checkout → Stripe → webhook → purchase shows in user dashboard.
+
+Cut-over
+
+Put Clerk into maintenance mode (stop new signups/logins), run final migration cutover, flip DNS/config to new auth service.
+
+Fallback & rollback plan
+
+Keep previous Clerk export and a rollback plan to return to Clerk if catastrophic failure occurs within defined rollback window.
+
+Acceptance criteria (what “done” looks like)
+
+Users exported from Clerk can log in with their existing email/password (or using the one-time secure flow) without UX differences.
+
+Guest checkout and logged-in checkout flows function identically on mobile and desktop (tested across modern mobile browsers).
+
+Stripe transactions created during checkout are associated with the same Stripe customer objects and reflected in the user dashboard with correct timestamp and details.
+
+Admin dashboard functions (user lookup, order lookup) operate the same.
+
+Email verify and password reset emails are sent and follow the same tone/branding as the site.
+
+No regression in site performance on mobile browsers.
+
+Security pentest checklist completed (or at least internal security review and automated scans).
+
+Migration script is idempotent and documented; can be re-run safely in staging

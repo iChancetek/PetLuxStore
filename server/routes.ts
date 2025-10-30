@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import { storage } from "./storage";
 import { setupClerkAuth, isAuthenticated, isAdmin, optionalAuth } from "./clerkAuth";
+import authRoutes from "./auth/authRoutes";
 import { 
   generateProductDescription, 
   generateProductRecommendations, 
@@ -298,7 +299,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupClerkAuth(app);
 
-  // Auth routes
+  // Custom auth routes (new authentication system)
+  app.use('/api/auth', authRoutes);
+
+  // Legacy auth routes (Clerk - to be migrated)
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.user as any)?.sub || (req.user as any)?.claims?.sub;

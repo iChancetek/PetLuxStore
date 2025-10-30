@@ -6,12 +6,19 @@ The PotLuxE is a production-ready pet e-commerce platform built as a full-stack 
 
 ## Recent Changes (October 30, 2025)
 
+- **MAJOR: Custom Authentication System (Backend Complete)**: Built production-ready custom auth to replace Clerk
+  - Argon2id password hashing with secure parameters (64MB memory, timeCost 3)
+  - SHA-256 hashed session/refresh/verification/reset tokens (database leak protection)
+  - Email verification and password reset flows with secure one-time tokens
+  - Rate limiting and brute force protection (account lockouts after 5 failed attempts)
+  - HTTPOnly cookies with SameSite=strict for CSRF protection
+  - Comprehensive audit logging for all auth events
+  - API routes: /api/auth/signup, /signin, /signout, /verify-email, /reset-password
+  - Running alongside Clerk (gradual migration planned)
 - **CRITICAL FIX - Mobile Authentication**: Fixed production authentication for www.thepotluxe.com - frontend now correctly detects all thepotluxe.com domains (including www) and uses live Clerk keys
 - **Enhanced AI Chat Formatting**: AI Assistant now properly renders markdown with bold headings, bullet points, and section spacing (removes # symbols)
 - **Auto-Fix Stale Authentication Cookies**: Added automatic detection and clearing of stale Clerk session cookies for mobile browser compatibility
-- **Fixed Production Authentication**: Updated Clerk authentication to automatically use live keys on production (thepotluxe.com) and test keys in development
 - **Fixed Guest Cart Reactivity**: Resolved issue where cart count wasn't updating immediately after adding items for guest users
-- **Environment-Based Key Selection**: Backend and frontend now automatically select appropriate Clerk keys based on deployment environment
 
 ## User Preferences
 
