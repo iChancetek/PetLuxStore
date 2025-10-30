@@ -36,8 +36,10 @@ import { eq, and, desc, asc, ilike, inArray, sql } from "drizzle-orm";
 export interface IStorage {
   // User operations (required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserStripeInfo(userId: string, stripeCustomerId: string, stripeSubscriptionId?: string): Promise<User>;
+  verifyUserEmail(userId: string): Promise<User>;
 
   // Category operations
   getCategories(): Promise<Category[]>;
@@ -197,6 +199,23 @@ export class DatabaseStorage implements IStorage {
       .set({
         stripeCustomerId,
         stripeSubscriptionId,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email.toLowerCase()));
+    return user;
+  }
+
+  async verifyUserEmail(userId: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({
+        emailVerified: true,
         updatedAt: new Date(),
       })
       .where(eq(users.id, userId))
