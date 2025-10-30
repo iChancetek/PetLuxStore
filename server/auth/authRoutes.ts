@@ -136,9 +136,16 @@ router.post('/signin', authRateLimiter, async (req, res) => {
     });
   } catch (error: any) {
     console.error('Signin error:', error);
+    
+    // Provide more helpful message for users without passwords (migrated from Clerk)
+    let errorMessage = error.message || 'Invalid email or password';
+    if (errorMessage.includes('Password not set')) {
+      errorMessage = 'This account needs a password. Please click "Forgot Password" to set one.';
+    }
+    
     res.status(401).json({
       success: false,
-      message: error.message || 'Invalid email or password',
+      message: errorMessage,
     });
   }
 });
