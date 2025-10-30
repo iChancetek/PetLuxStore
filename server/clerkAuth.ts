@@ -22,23 +22,17 @@ export function setupClerkAuth(app: Express) {
   
   // Middleware to detect and clear stale Clerk cookies BEFORE they cause issues
   app.use((req, res, next) => {
-    const sessionCookie = req.cookies?.__session || req.headers.cookie?.split(';').find(c => c.trim().startsWith('__session='))?.split('=')[1];
+    const sessionCookie = req.cookies?.__session;
     
-    if (sessionCookie) {
-      // Check if cookie contains the old instance ID
-      if (sessionCookie.includes('ins_32fRdFIS8HYl1QVoirGOjnwxdZo')) {
-        console.warn('Detected stale Clerk session cookie with old instance ID. Clearing...');
-        
-        // Clear the stale cookie
-        res.clearCookie('__session', { path: '/' });
-        res.clearCookie('__session', { path: '/', domain: req.hostname });
-        
-        // Send response telling client to clear cookie and reload
-        return res.status(401).json({ 
-          error: 'STALE_SESSION_COOKIE',
-          message: 'Session cookie is stale. Please clear cookies and reload.' 
-        });
-      }
+    if (sessionCookie && sessionCookie.includes('ins_32fRdFIS8HYl1QVoirGOjnwxdZo')) {
+      console.warn('⚠️  DETECTED STALE CLERK SESSION COOKIE - Clearing');
+      res.clearCookie('__session', { path: '/' });
+      res.clearCookie('__session', { path: '/', domain: req.hostname });
+      
+      return res.status(401).json({ 
+        error: 'STALE_SESSION_COOKIE',
+        message: 'Session cookie is stale. Please clear cookies and reload.' 
+      });
     }
     
     next();
