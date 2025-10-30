@@ -1,5 +1,5 @@
 import { ClerkProvider } from '@clerk/clerk-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 // Function to clear stale Clerk session cookies
 function clearClerkCookies() {
@@ -13,9 +13,28 @@ function clearClerkCookies() {
     const parentDomain = '.' + domainParts.slice(-2).join('.');
     document.cookie = '__session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=' + parentDomain + ';';
   }
+  
+  console.log('Cleared Clerk session cookies');
+}
+
+// Function to check if cookie contains old/stale instance ID
+function hasStaleSessionCookie() {
+  const cookies = document.cookie.split(';');
+  for (let cookie of cookies) {
+    const [name, value] = cookie.trim().split('=');
+    if (name === '__session' && value) {
+      // Check if cookie contains the old instance ID
+      if (value.includes('ins_32fRdFIS8HYl1QVoirGOjnwxdZo')) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 export default function ClerkProviderWrapper({ children }: { children: React.ReactNode }) {
+  const [isReady, setIsReady] = useState(false);
+  
   // Determine if we're in production (deployed to thepotluxe.com)
   const isProduction = window.location.hostname === 'thepotluxe.com';
   
@@ -30,35 +49,30 @@ export default function ClerkProviderWrapper({ children }: { children: React.Rea
 
   console.log(`Using ${isProduction ? 'LIVE' : 'TEST'} Clerk publishable key for domain: ${window.location.hostname}`);
 
-  // Listen for Clerk errors and auto-fix cookie issues
+  // Check for stale cookies on mount and clear them
   useEffect(() => {
-    const handleClerkError = (event: ErrorEvent) => {
-      const errorMessage = event.message || event.error?.message || '';
-      
-      // Check if this is a JWT kid mismatch error
-      if (errorMessage.includes('jwk-kid-mismatch') || 
-          errorMessage.includes('Unable to find a signing key in JWKS') ||
-          errorMessage.includes('Handshake token verification failed')) {
-        
-        console.warn('Detected stale Clerk session cookie. Clearing and reloading...');
-        
-        // Clear the stale cookies
+    const checkAndClearStaleCookies = () => {
+      if (hasStaleSessionCookie()) {
+        console.warn('Detected stale Clerk session cookie from old instance. Clearing...');
         clearClerkCookies();
-        
-        // Reload the page to start fresh
-        setTimeout(() => {
+        // Set a flag to prevent infinite loops
+        const hasCleared = sessionStorage.getItem('clerk_cookies_cleared');
+        if (!hasCleared) {
+          sessionStorage.setItem('clerk_cookies_cleared', 'true');
           window.location.reload();
-        }, 100);
+          return;
+        }
       }
+      setIsReady(true);
     };
 
-    // Add error listener
-    window.addEventListener('error', handleClerkError);
-    
-    return () => {
-      window.removeEventListener('error', handleClerkError);
-    };
+    checkAndClearStaleCookies();
   }, []);
+
+  // Don't render until we've checked for stale cookies
+  if (!isReady) {
+    return null;
+  }
 
   return (
     <ClerkProvider 

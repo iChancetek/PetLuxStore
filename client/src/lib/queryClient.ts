@@ -7,9 +7,40 @@ export function setAuthTokenGetter(getter: () => Promise<string | null>) {
   getAuthToken = getter;
 }
 
+// Function to clear stale Clerk session cookies
+function clearClerkCookies() {
+  document.cookie = '__session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  document.cookie = '__session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=' + window.location.hostname + ';';
+  
+  const domainParts = window.location.hostname.split('.');
+  if (domainParts.length > 2) {
+    const parentDomain = '.' + domainParts.slice(-2).join('.');
+    document.cookie = '__session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=' + parentDomain + ';';
+  }
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
+    
+    // Check if this is a Clerk JWT mismatch error
+    if (text.includes('jwk-kid-mismatch') || 
+        text.includes('Unable to find a signing key in JWKS') ||
+        text.includes('Handshake token verification failed') ||
+        text.includes('ins_32fRdFIS8HYl1QVoirGOjnwxdZo')) {
+      
+      console.warn('Detected stale Clerk session cookie in API response. Clearing and reloading...');
+      clearClerkCookies();
+      
+      // Prevent infinite loops
+      const hasCleared = sessionStorage.getItem('clerk_api_cookies_cleared');
+      if (!hasCleared) {
+        sessionStorage.setItem('clerk_api_cookies_cleared', 'true');
+        window.location.reload();
+        return;
+      }
+    }
+    
     throw new Error(`${res.status}: ${text}`);
   }
 }
