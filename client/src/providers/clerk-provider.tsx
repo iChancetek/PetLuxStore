@@ -35,8 +35,10 @@ function hasStaleSessionCookie() {
 export default function ClerkProviderWrapper({ children }: { children: React.ReactNode }) {
   const [isReady, setIsReady] = useState(false);
   
-  // Determine if we're in production (deployed to thepotluxe.com)
-  const isProduction = window.location.hostname === 'thepotluxe.com';
+  // Determine if we're in production (deployed to thepotluxe.com or www.thepotluxe.com)
+  const isProduction = window.location.hostname === 'thepotluxe.com' || 
+                       window.location.hostname === 'www.thepotluxe.com' ||
+                       window.location.hostname.endsWith('.thepotluxe.com');
   
   // Select the appropriate publishable key based on environment
   const publishableKey = isProduction
