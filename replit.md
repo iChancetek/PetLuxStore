@@ -4,8 +4,10 @@
 
 The PotLuxE is a production-ready pet e-commerce platform built as a full-stack web application with modern React frontend and Express backend. The application features AI-powered product recommendations, personalized shopping experiences, and comprehensive e-commerce functionality including cart management, checkout processing, and administrative tools. The platform is designed to provide a premium shopping experience for pet owners with intelligent product discovery and AI-driven customer assistance.
 
-## Recent Changes (October 17, 2025)
+## Recent Changes (October 30, 2025)
 
+- **Auto-Fix Stale Authentication Cookies**: Added automatic detection and clearing of stale Clerk session cookies for mobile browser compatibility
+- **Enhanced AI Chat Formatting**: AI Assistant now properly renders markdown with bold headings, bullet points, and section spacing
 - **Fixed Production Authentication**: Updated Clerk authentication to automatically use live keys on production (thepotluxe.com) and test keys in development
 - **Fixed Guest Cart Reactivity**: Resolved issue where cart count wasn't updating immediately after adding items for guest users
 - **Environment-Based Key Selection**: Backend and frontend now automatically select appropriate Clerk keys based on deployment environment
