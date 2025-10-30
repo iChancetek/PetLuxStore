@@ -60,7 +60,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
         onClose();
       } else if (mode === 'forgot-password') {
         // Send password reset request
-        const response = await fetch('/api/auth/request-password-reset', {
+        const response = await fetch('/api/auth/request-reset', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
