@@ -14,7 +14,7 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModalProps) {
-  const [mode, setMode] = useState<'signin' | 'signup'>(defaultMode);
+  const [mode, setMode] = useState<'signin' | 'signup' | 'forgot-password'>(defaultMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -40,24 +40,51 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
           title: 'Welcome back!',
           description: 'You have successfully signed in.',
         });
-      } else {
+        // Reset form and close modal
+        setEmail('');
+        setPassword('');
+        setFirstName('');
+        setLastName('');
+        onClose();
+      } else if (mode === 'signup') {
         await signup(email, password, firstName || undefined, lastName || undefined);
         toast({
           title: 'Account created!',
           description: 'Please check your email to verify your account.',
         });
+        // Reset form and close modal
+        setEmail('');
+        setPassword('');
+        setFirstName('');
+        setLastName('');
+        onClose();
+      } else if (mode === 'forgot-password') {
+        // Send password reset request
+        const response = await fetch('/api/auth/request-password-reset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ email }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Failed to send reset email');
+        }
+
+        toast({
+          title: 'Reset email sent!',
+          description: 'Check your email for a password reset link.',
+        });
+        
+        // Switch back to sign in mode
+        setMode('signin');
+        setEmail('');
       }
-      
-      // Reset form and close modal
-      setEmail('');
-      setPassword('');
-      setFirstName('');
-      setLastName('');
-      onClose();
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: mode === 'signin' ? 'Sign in failed' : 'Sign up failed',
+        title: mode === 'forgot-password' ? 'Reset failed' : mode === 'signin' ? 'Sign in failed' : 'Sign up failed',
         description: error.message || 'An error occurred. Please try again.',
       });
     } finally {
@@ -78,12 +105,14 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
       <DialogContent className="sm:max-w-md" data-testid="dialog-auth">
         <DialogHeader>
           <DialogTitle data-testid="text-auth-title">
-            {mode === 'signin' ? 'Welcome Back' : 'Create Account'}
+            {mode === 'signin' ? 'Welcome Back' : mode === 'signup' ? 'Create Account' : 'Reset Password'}
           </DialogTitle>
           <DialogDescription data-testid="text-auth-description">
             {mode === 'signin'
               ? 'Sign in to your account to continue'
-              : 'Create a new account to get started'}
+              : mode === 'signup'
+              ? 'Create a new account to get started'
+              : 'Enter your email to receive a password reset link'}
           </DialogDescription>
         </DialogHeader>
 
@@ -128,46 +157,71 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              minLength={8}
-              data-testid="input-password"
-            />
-            {mode === 'signup' && (
-              <p className="text-xs text-muted-foreground">
-                Password must be at least 8 characters
-              </p>
-            )}
-          </div>
+          {mode !== 'forgot-password' && (
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                minLength={8}
+                data-testid="input-password"
+              />
+              {mode === 'signup' && (
+                <p className="text-xs text-muted-foreground">
+                  Password must be at least 8 characters
+                </p>
+              )}
+              {mode === 'signin' && (
+                <div className="text-right">
+                  <button
+                    type="button"
+                    onClick={() => setMode('forgot-password')}
+                    className="text-xs text-primary hover:underline"
+                    data-testid="button-forgot-password"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           <Button
             type="submit"
             className="w-full"
             disabled={isLoading}
-            data-testid={mode === 'signin' ? 'button-sign-in' : 'button-sign-up'}
+            data-testid={mode === 'signin' ? 'button-sign-in' : mode === 'signup' ? 'button-sign-up' : 'button-reset-password'}
           >
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {mode === 'signin' ? 'Sign In' : 'Create Account'}
+            {mode === 'signin' ? 'Sign In' : mode === 'signup' ? 'Create Account' : 'Send Reset Link'}
           </Button>
 
           <div className="text-center text-sm">
-            <button
-              type="button"
-              onClick={toggleMode}
-              className="text-primary hover:underline"
-              data-testid="button-toggle-mode"
-            >
-              {mode === 'signin'
-                ? "Don't have an account? Sign up"
-                : 'Already have an account? Sign in'}
-            </button>
+            {mode === 'forgot-password' ? (
+              <button
+                type="button"
+                onClick={() => setMode('signin')}
+                className="text-primary hover:underline"
+                data-testid="button-back-to-signin"
+              >
+                Back to sign in
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={toggleMode}
+                className="text-primary hover:underline"
+                data-testid="button-toggle-mode"
+              >
+                {mode === 'signin'
+                  ? "Don't have an account? Sign up"
+                  : 'Already have an account? Sign in'}
+              </button>
+            )}
           </div>
         </form>
       </DialogContent>
