@@ -23,22 +23,19 @@ async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
     
-    // Check if this is a Clerk JWT mismatch error
-    if (text.includes('jwk-kid-mismatch') || 
+    // Check if this is a stale session cookie error from backend
+    if (text.includes('STALE_SESSION_COOKIE') ||
+        text.includes('jwk-kid-mismatch') || 
         text.includes('Unable to find a signing key in JWKS') ||
         text.includes('Handshake token verification failed') ||
         text.includes('ins_32fRdFIS8HYl1QVoirGOjnwxdZo')) {
       
-      console.warn('Detected stale Clerk session cookie in API response. Clearing and reloading...');
+      console.warn('Detected stale Clerk session cookie. Clearing and reloading...');
       clearClerkCookies();
       
-      // Prevent infinite loops
-      const hasCleared = sessionStorage.getItem('clerk_api_cookies_cleared');
-      if (!hasCleared) {
-        sessionStorage.setItem('clerk_api_cookies_cleared', 'true');
-        window.location.reload();
-        return;
-      }
+      // Always reload - don't check for previous clears since this is the fix
+      window.location.reload();
+      return;
     }
     
     throw new Error(`${res.status}: ${text}`);
