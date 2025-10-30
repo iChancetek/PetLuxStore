@@ -6,8 +6,9 @@ The PotLuxE is a production-ready pet e-commerce platform built as a full-stack 
 
 ## Recent Changes (October 30, 2025)
 
+- **CRITICAL FIX - Mobile Authentication**: Fixed production authentication for www.thepotluxe.com - frontend now correctly detects all thepotluxe.com domains (including www) and uses live Clerk keys
+- **Enhanced AI Chat Formatting**: AI Assistant now properly renders markdown with bold headings, bullet points, and section spacing (removes # symbols)
 - **Auto-Fix Stale Authentication Cookies**: Added automatic detection and clearing of stale Clerk session cookies for mobile browser compatibility
-- **Enhanced AI Chat Formatting**: AI Assistant now properly renders markdown with bold headings, bullet points, and section spacing
 - **Fixed Production Authentication**: Updated Clerk authentication to automatically use live keys on production (thepotluxe.com) and test keys in development
 - **Fixed Guest Cart Reactivity**: Resolved issue where cart count wasn't updating immediately after adding items for guest users
 - **Environment-Based Key Selection**: Backend and frontend now automatically select appropriate Clerk keys based on deployment environment
