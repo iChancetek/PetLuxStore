@@ -14,6 +14,7 @@ import Checkout from "@/pages/checkout";
 import Admin from "@/pages/admin";
 import AIPicks from "@/pages/ai-picks";
 import Dashboard from "@/pages/dashboard";
+import ResetPassword from "@/pages/reset-password";
 import NotFound from "@/pages/not-found";
 
 // Component to handle cart merge logic (inside QueryClientProvider)
@@ -34,6 +35,7 @@ function Router() {
       <Route path="/cart" component={Cart} />
       <Route path="/checkout" component={Checkout} />
       <Route path="/admin" component={Admin} />
+      <Route path="/reset-password" component={ResetPassword} />
       <Route component={NotFound} />
     </Switch>
   );
