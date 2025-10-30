@@ -6,6 +6,7 @@ import { useRoute } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { activityTracker } from "@/lib/activityTracker";
+import { useGuestCart } from "@/hooks/useGuestCart";
 import { Product as ProductType, Review, InsertReview, InsertCartItem } from "@shared/schema";
 import Navbar from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
@@ -24,6 +25,7 @@ export default function Product() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
   const queryClient = useQueryClient();
+  const guestCart = useGuestCart();
   const [, params] = useRoute("/product/:slug");
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -111,8 +113,35 @@ export default function Product() {
     },
   });
 
-  const handleAddToCart = () => {
-    addToCartMutation.mutate();
+  const handleAddToCart = async () => {
+    if (isAuthenticated) {
+      // Authenticated users: use API
+      addToCartMutation.mutate();
+    } else {
+      // Guest users: use guest cart
+      try {
+        await guestCart.addItem(product!.id, quantity);
+        
+        // Track add to cart event
+        activityTracker.trackAddToCart(product!.id, quantity, {
+          productName: product!.name,
+          price: parseFloat(product!.price),
+          categoryId: product!.categoryId,
+          petType: product!.petType
+        });
+
+        toast({
+          title: "Added to cart",
+          description: `${quantity} ${product!.name}${quantity > 1 ? 's' : ''} added to your cart.`,
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to add item to cart. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   const handleQuantityChange = (delta: number) => {
