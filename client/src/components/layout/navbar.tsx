@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
-import { useClerk, SignInButton, SignUpButton, UserButton } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +17,8 @@ import {
   SheetTrigger 
 } from "@/components/ui/sheet";
 import CartDrawer from "@/components/cart/cart-drawer";
+import { AuthModal } from "@/components/auth/auth-modal";
+import { UserMenu } from "@/components/auth/user-menu";
 import { 
   Search, 
   User, 
@@ -35,11 +36,12 @@ import { useGuestCart } from "@/hooks/useGuestCart";
 
 export default function Navbar() {
   const [location] = useLocation();
-  const { user } = useAuth();
-  const { signOut } = useClerk();
+  const { user, signout } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
   const guestCart = useGuestCart();
 
   // Fetch cart items count
@@ -48,18 +50,12 @@ export default function Navbar() {
     enabled: !!user,
   });
 
-  // Fetch user profile to check admin role
-  const { data: userProfile } = useQuery<UserType>({
-    queryKey: ["/api/me/profile"],
-    enabled: !!user,
-  });
-
   // Calculate total cart count from both authenticated and guest carts
   const authCartCount = Array.isArray(cartItems) ? cartItems.reduce((total: number, item: any) => total + item.quantity, 0) : 0;
   // Use guestCart.items directly instead of getItemCount() to ensure reactivity
   const guestCartCount = guestCart.items.reduce((total, item) => total + item.quantity, 0);
   const cartItemCount = user ? authCartCount : guestCartCount;
-  const isAdmin = userProfile?.role === 'admin';
+  const isAdmin = user?.role === 'admin';
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,10 +65,22 @@ export default function Navbar() {
     }
   };
 
-  const handleLogout = () => {
-    signOut(() => {
-      window.location.href = "/";
-    });
+  const openSignInModal = () => {
+    setAuthModalMode('signin');
+    setAuthModalOpen(true);
+  };
+
+  const openSignUpModal = () => {
+    setAuthModalMode('signup');
+    setAuthModalOpen(true);
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signout();
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
   };
 
   const navLinks = [
@@ -137,28 +145,15 @@ export default function Navbar() {
             <div className="hidden md:flex items-center space-x-4">
               {/* Authentication Buttons */}
               {user ? (
-                /* Authenticated User Menu */
-                <UserButton 
-                  afterSignOutUrl="/"
-                  appearance={{
-                    elements: {
-                      userButtonAvatarBox: "w-8 h-8",
-                    }
-                  }}
-                />
+                <UserMenu />
               ) : (
-                /* Login/Signup Buttons */
                 <div className="flex items-center space-x-2">
-                  <SignInButton mode="modal">
-                    <Button variant="ghost" data-testid="button-login">
-                      Sign In
-                    </Button>
-                  </SignInButton>
-                  <SignUpButton mode="modal">
-                    <Button data-testid="button-signup">
-                      Sign Up
-                    </Button>
-                  </SignUpButton>
+                  <Button variant="ghost" onClick={openSignInModal} data-testid="button-login">
+                    Sign In
+                  </Button>
+                  <Button onClick={openSignUpModal} data-testid="button-signup">
+                    Sign Up
+                  </Button>
                 </div>
               )}
 
@@ -258,7 +253,7 @@ export default function Navbar() {
                           <Button 
                             variant="outline" 
                             className="w-full justify-start"
-                            onClick={handleLogout}
+                            onClick={handleSignOut}
                             data-testid="button-mobile-logout"
                           >
                             <LogOut className="w-4 h-4 mr-2" />
@@ -268,23 +263,21 @@ export default function Navbar() {
                       </div>
                     ) : (
                       <div className="flex flex-col space-y-2">
-                        <SignInButton mode="modal">
-                          <Button 
-                            variant="outline" 
-                            className="w-full"
-                            data-testid="button-mobile-login"
-                          >
-                            Sign In
-                          </Button>
-                        </SignInButton>
-                        <SignUpButton mode="modal">
-                          <Button 
-                            className="w-full"
-                            data-testid="button-mobile-signup"
-                          >
-                            Sign Up
-                          </Button>
-                        </SignUpButton>
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={openSignInModal}
+                          data-testid="button-mobile-login"
+                        >
+                          Sign In
+                        </Button>
+                        <Button 
+                          className="w-full"
+                          onClick={openSignUpModal}
+                          data-testid="button-mobile-signup"
+                        >
+                          Sign Up
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -297,6 +290,13 @@ export default function Navbar() {
 
       {/* Cart Drawer */}
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={authModalOpen} 
+        onClose={() => setAuthModalOpen(false)} 
+        defaultMode={authModalMode}
+      />
     </>
   );
 }

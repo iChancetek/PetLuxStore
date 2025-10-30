@@ -7,6 +7,8 @@ declare global {
         first_name?: string;
         last_name?: string;
         profile_image_url?: string;
+        role: 'user' | 'reviewer' | 'admin';
+        email_verified: boolean;
       };
     }
 

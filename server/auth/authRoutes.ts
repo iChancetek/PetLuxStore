@@ -214,14 +214,13 @@ router.get('/me', requireAuth, async (req, res) => {
     }
 
     res.json({
-      success: true,
-      user: {
-        id: req.user.claims.sub,
-        email: req.user.claims.email,
-        firstName: req.user.claims.first_name,
-        lastName: req.user.claims.last_name,
-        profileImageUrl: req.user.claims.profile_image_url,
-      },
+      id: req.user.claims.sub,
+      email: req.user.claims.email,
+      firstName: req.user.claims.first_name,
+      lastName: req.user.claims.last_name,
+      profileImageUrl: req.user.claims.profile_image_url,
+      role: req.user.claims.role,
+      emailVerified: req.user.claims.email_verified,
     });
   } catch (error: any) {
     console.error('Get user error:', error);

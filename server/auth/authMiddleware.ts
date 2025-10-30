@@ -36,6 +36,8 @@ export async function requireAuth(
         first_name: user.firstName || '',
         last_name: user.lastName || '',
         profile_image_url: user.profileImageUrl || '',
+        role: user.role,
+        email_verified: user.emailVerified,
       },
     };
 
@@ -65,6 +67,8 @@ export async function optionalAuth(
             first_name: user.firstName || '',
             last_name: user.lastName || '',
             profile_image_url: user.profileImageUrl || '',
+            role: user.role,
+            email_verified: user.emailVerified,
           },
         };
       }
@@ -111,6 +115,8 @@ export async function requireAdmin(
         first_name: user.firstName || '',
         last_name: user.lastName || '',
         profile_image_url: user.profileImageUrl || '',
+        role: user.role,
+        email_verified: user.emailVerified,
       },
     };
 
@@ -155,6 +161,8 @@ export async function requireReviewer(
         first_name: user.firstName || '',
         last_name: user.lastName || '',
         profile_image_url: user.profileImageUrl || '',
+        role: user.role,
+        email_verified: user.emailVerified,
       },
     };
 
