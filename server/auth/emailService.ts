@@ -1,46 +1,56 @@
-import nodemailer from 'nodemailer';
-import type { Transporter } from 'nodemailer';
+import { Resend } from 'resend';
 
 interface EmailConfig {
   from: string;
   replyTo?: string;
 }
 
+let connectionSettings: any;
+
+async function getCredentials() {
+  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
+  const xReplitToken = process.env.REPL_IDENTITY
+    ? 'repl ' + process.env.REPL_IDENTITY
+    : process.env.WEB_REPL_RENEWAL
+    ? 'depl ' + process.env.WEB_REPL_RENEWAL
+    : null;
+
+  if (!xReplitToken) {
+    throw new Error('X_REPLIT_TOKEN not found for repl/depl');
+  }
+
+  connectionSettings = await fetch(
+    'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=resend',
+    {
+      headers: {
+        'Accept': 'application/json',
+        'X_REPLIT_TOKEN': xReplitToken
+      }
+    }
+  ).then(res => res.json()).then(data => data.items?.[0]);
+
+  if (!connectionSettings || (!connectionSettings.settings.api_key)) {
+    throw new Error('Resend not connected');
+  }
+  return { apiKey: connectionSettings.settings.api_key, fromEmail: connectionSettings.settings.from_email };
+}
+
+async function getUncachableResendClient() {
+  const { apiKey, fromEmail } = await getCredentials();
+  return {
+    client: new Resend(apiKey),
+    fromEmail: fromEmail || 'noreply@thepotluxe.com'
+  };
+}
+
 class EmailService {
-  private transporter: Transporter | null = null;
   private config: EmailConfig;
 
   constructor() {
     this.config = {
-      from: process.env.EMAIL_FROM || 'noreply@thepotluxe.com',
-      replyTo: process.env.EMAIL_REPLY_TO || 'support@thepotluxe.com',
+      from: 'PotLuxE <noreply@thepotluxe.com>',
+      replyTo: 'support@thepotluxe.com',
     };
-
-    this.initializeTransporter();
-  }
-
-  private initializeTransporter() {
-    // Check if email credentials are configured
-    const emailHost = process.env.EMAIL_HOST;
-    const emailPort = process.env.EMAIL_PORT;
-    const emailUser = process.env.EMAIL_USER;
-    const emailPassword = process.env.EMAIL_PASSWORD;
-
-    if (emailHost && emailPort && emailUser && emailPassword) {
-      this.transporter = nodemailer.createTransport({
-        host: emailHost,
-        port: parseInt(emailPort),
-        secure: emailPort === '465', // true for 465, false for other ports
-        auth: {
-          user: emailUser,
-          pass: emailPassword,
-        },
-      });
-    } else {
-      console.warn(
-        'Email service not configured. Email sending will be logged to console instead.'
-      );
-    }
   }
 
   async sendVerificationEmail(to: string, token: string, userName?: string): Promise<void> {
@@ -206,7 +216,7 @@ If you didn't request a password reset, you can safely ignore this email or cont
                 <div class="feature-item">Track your orders in your dashboard</div>
               </div>
               <p style="text-align: center;">
-                <a href="${baseUrl}/products" class="button">Start Shopping</a>
+                <a href="${baseUrl}/shop" class="button">Start Shopping</a>
               </p>
               <p>If you have any questions, our support team is here to help at <a href="mailto:support@thepotluxe.com">support@thepotluxe.com</a></p>
             </div>
@@ -232,7 +242,7 @@ What you can do now:
 - Enjoy secure checkout and fast shipping
 - Track your orders in your dashboard
 
-Start shopping: ${baseUrl}/products
+Start shopping: ${baseUrl}/shop
 
 If you have any questions, our support team is here to help at support@thepotluxe.com
 
@@ -250,31 +260,34 @@ Happy shopping! 🐾
     html: string;
     text: string;
   }): Promise<void> {
-    if (this.transporter) {
-      try {
-        await this.transporter.sendMail({
-          from: this.config.from,
-          replyTo: this.config.replyTo,
-          to: data.to,
-          subject: data.subject,
-          html: data.html,
-          text: data.text,
-        });
-        console.log(`✉️  Email sent to ${data.to}: ${data.subject}`);
-      } catch (error) {
-        console.error('Failed to send email:', error);
+    try {
+      const { client, fromEmail } = await getUncachableResendClient();
+      
+      const result = await client.emails.send({
+        from: fromEmail,
+        to: data.to,
+        subject: data.subject,
+        html: data.html,
+        text: data.text,
+      });
+
+      console.log(`✉️  Email sent via Resend to ${data.to}: ${data.subject} (ID: ${result.data?.id})`);
+    } catch (error: any) {
+      // If Resend is not configured, fall back to console logging
+      if (error.message?.includes('not connected') || error.message?.includes('X_REPLIT_TOKEN')) {
+        console.warn('Resend not configured. Logging email to console instead.');
+        console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('📧 EMAIL (Development Mode)');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log(`To: ${data.to}`);
+        console.log(`Subject: ${data.subject}`);
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log(data.text);
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+      } else {
+        console.error('Failed to send email via Resend:', error);
         throw new Error('Failed to send email. Please try again later.');
       }
-    } else {
-      // Log email to console in development
-      console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('📧 EMAIL (Development Mode)');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log(`To: ${data.to}`);
-      console.log(`Subject: ${data.subject}`);
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log(data.text);
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
     }
   }
 
