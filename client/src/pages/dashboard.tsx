@@ -1,12 +1,13 @@
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import Navbar from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
 import DashboardStats from "@/components/dashboard/dashboard-stats";
 import OrderHistoryTable from "@/components/dashboard/order-history-table";
 import ActivityTimeline from "@/components/dashboard/activity-timeline";
+import { ChangePasswordForm } from "@/components/auth/change-password-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +25,9 @@ import {
 export default function Dashboard() {
   const { user, isLoading, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
+  const searchString = useSearch();
+  const urlParams = new URLSearchParams(searchString);
+  const defaultTab = urlParams.get('tab') || 'overview';
 
   // Fetch dashboard stats
   const { data: dashboardStats, isLoading: loadingStats } = useQuery<{
@@ -137,7 +141,7 @@ export default function Dashboard() {
         </div>
 
         {/* Main Content */}
-        <Tabs defaultValue="overview" className="space-y-6">
+        <Tabs defaultValue={defaultTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="overview" className="flex items-center space-x-2" data-testid="tab-overview">
               <BarChart3 className="w-4 h-4" />
@@ -257,11 +261,13 @@ export default function Dashboard() {
 
           {/* Preferences Tab */}
           <TabsContent value="preferences" className="space-y-6">
+            <ChangePasswordForm />
+            
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Settings className="w-5 h-5" />
-                  <span>Account Preferences</span>
+                  <span>Additional Settings</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -269,10 +275,10 @@ export default function Dashboard() {
                   <div className="text-center py-12">
                     <Settings className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                     <h3 className="text-lg font-medium mb-2" data-testid="text-preferences-title">
-                      Preferences Coming Soon
+                      More Preferences Coming Soon
                     </h3>
                     <p className="text-muted-foreground mb-4" data-testid="text-preferences-description">
-                      We're working on account preferences and settings. Check back soon!
+                      We're working on additional account preferences and settings.
                     </p>
                     <div className="space-y-2 text-sm text-muted-foreground">
                       <p>• Email notifications</p>

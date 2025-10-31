@@ -27,7 +27,8 @@ import {
   Mail,
   Calendar,
   UserCheck,
-  UserX
+  UserX,
+  Key
 } from "lucide-react";
 
 const userFormSchema = z.object({
@@ -62,6 +63,9 @@ export default function UsersTab() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const limit = 20;
 
   const form = useForm<UserFormData>({
@@ -174,6 +178,31 @@ export default function UsersTab() {
     },
   });
 
+  // Admin reset password mutation
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ userId, password }: { userId: string; password: string }) => {
+      const response = await apiRequest("POST", `/api/admin/users/${userId}/reset-password`, { password });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Password reset successfully.",
+      });
+      setIsResetPasswordDialogOpen(false);
+      setSelectedUser(null);
+      setNewPassword("");
+      setConfirmPassword("");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to reset password: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCreateUser = (data: UserFormData) => {
     createUserMutation.mutate(data);
   };
@@ -202,6 +231,37 @@ export default function UsersTab() {
 
   const handleToggleUserStatus = (userId: string, currentStatus: boolean) => {
     toggleUserStatusMutation.mutate({ userId, isActive: !currentStatus });
+  };
+
+  const handleResetPassword = () => {
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 8 characters.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedUser) {
+      resetPasswordMutation.mutate({ userId: selectedUser.id, password: newPassword });
+    }
+  };
+
+  const openResetPasswordDialog = (user: User) => {
+    setSelectedUser(user);
+    setNewPassword("");
+    setConfirmPassword("");
+    setIsResetPasswordDialogOpen(true);
   };
 
   const users = (usersData as any)?.users || [];
@@ -487,6 +547,15 @@ export default function UsersTab() {
                           <Button
                             variant="ghost"
                             size="sm"
+                            onClick={() => openResetPasswordDialog(user)}
+                            title="Reset Password"
+                            data-testid={`button-reset-password-${user.id}`}
+                          >
+                            <Key className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleEditUser(user)}
                             data-testid={`button-edit-user-${user.id}`}
                           >
@@ -566,6 +635,66 @@ export default function UsersTab() {
           )}
         </CardContent>
       </Card>
+
+      {/* Reset Password Dialog */}
+      <Dialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reset User Password</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm text-muted-foreground">
+                Reset password for: <strong>{selectedUser?.firstName} {selectedUser?.lastName}</strong> ({selectedUser?.email})
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">New Password</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password"
+                minLength={8}
+                data-testid="input-admin-reset-password"
+              />
+              <p className="text-xs text-muted-foreground">
+                Must be at least 8 characters
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm New Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm new password"
+                minLength={8}
+                data-testid="input-admin-confirm-password"
+              />
+            </div>
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsResetPasswordDialogOpen(false)}
+                data-testid="button-cancel-reset"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleResetPassword}
+                disabled={resetPasswordMutation.isPending}
+                data-testid="button-confirm-reset"
+              >
+                {resetPasswordMutation.isPending ? "Resetting..." : "Reset Password"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit User Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

@@ -73,7 +73,7 @@ export function UserMenu() {
             <span>Admin Panel</span>
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem data-testid="menu-item-settings">
+        <DropdownMenuItem onClick={() => setLocation('/dashboard?tab=preferences')} data-testid="menu-item-settings">
           <Settings className="mr-2 h-4 w-4" />
           <span>Settings</span>
         </DropdownMenuItem>

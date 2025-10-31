@@ -515,6 +515,36 @@ export class AuthService {
     });
   }
 
+  async adminResetUserPassword(userId: string, newPassword: string): Promise<void> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const passwordHash = await this.hashPassword(newPassword);
+    await db.update(users).set({ 
+      passwordHash,
+      failedLoginAttempts: 0,
+      lockedUntil: null,
+    }).where(eq(users.id, userId));
+
+    // Invalidate all existing sessions for security
+    await db.delete(authSessions).where(eq(authSessions.userId, userId));
+
+    await this.logAuthEvent({
+      userId: user.id,
+      action: 'admin_password_reset',
+      success: true,
+      category: 'auth',
+      message: 'Password reset by administrator',
+    });
+  }
+
   async logAuthEvent(data: {
     userId?: string;
     action: string;

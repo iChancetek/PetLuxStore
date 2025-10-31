@@ -1033,6 +1033,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin reset user password
+  app.post('/api/admin/users/:id/reset-password', isAdmin, async (req: any, res) => {
+    try {
+      const { password } = req.body;
+      
+      if (!password || password.length < 8) {
+        return res.status(400).json({ message: "Password must be at least 8 characters" });
+      }
+
+      const user = await storage.getUser(req.params.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Use authService to hash and update password
+      const { authService } = await import('./auth/authService');
+      await authService.adminResetUserPassword(req.params.id, password);
+
+      await logAudit(req, 'admin_reset_password', 'user', req.params.id, { 
+        targetEmail: user.email 
+      });
+
+      res.json({ message: "Password reset successfully" });
+    } catch (error) {
+      console.error("Error resetting user password:", error);
+      res.status(500).json({ message: "Failed to reset password" });
+    }
+  });
+
   // Enhanced Order Management Routes
   app.get('/api/admin/orders', isAdmin, async (req: any, res) => {
     try {
