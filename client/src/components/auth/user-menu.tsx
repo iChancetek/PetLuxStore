@@ -9,12 +9,15 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/providers/auth-provider';
-import { User, LogOut, Settings, Shield } from 'lucide-react';
+import { User, LogOut, Settings, Shield, Mail } from 'lucide-react';
 import { useLocation } from 'wouter';
+import { useToast } from '@/hooks/use-toast';
 
 export function UserMenu() {
   const { user, signout } = useAuth();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const [isResendingEmail, setIsResendingEmail] = useState(false);
 
   if (!user) return null;
 
@@ -26,6 +29,36 @@ export function UserMenu() {
       setLocation('/');
     } catch (error) {
       console.error('Sign out error:', error);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setIsResendingEmail(true);
+    try {
+      const response = await fetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to resend verification email');
+      }
+
+      toast({
+        title: 'Email sent',
+        description: 'Please check your inbox for the verification link.',
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to send email',
+        description: error.message || 'Please try again later.',
+      });
+    } finally {
+      setIsResendingEmail(false);
     }
   };
 
@@ -63,6 +96,19 @@ export function UserMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {!user.emailVerified && (
+          <>
+            <DropdownMenuItem 
+              onClick={handleResendVerification}
+              disabled={isResendingEmail}
+              data-testid="menu-item-resend-verification"
+            >
+              <Mail className="mr-2 h-4 w-4" />
+              <span>{isResendingEmail ? 'Sending...' : 'Resend Verification Email'}</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
         <DropdownMenuItem onClick={() => setLocation('/dashboard')} data-testid="menu-item-dashboard">
           <User className="mr-2 h-4 w-4" />
           <span>Dashboard</span>

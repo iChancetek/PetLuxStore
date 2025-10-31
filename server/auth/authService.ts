@@ -42,6 +42,32 @@ export class AuthService {
     return crypto.randomBytes(32).toString('hex');
   }
 
+  async createVerificationToken(userId: string): Promise<string> {
+    // Delete any existing verification tokens for this user
+    await db
+      .delete(verificationTokens)
+      .where(
+        and(
+          eq(verificationTokens.userId, userId),
+          eq(verificationTokens.type, 'email_verification')
+        )
+      );
+
+    // Create new verification token
+    const verificationToken = this.generateToken();
+    const hashedToken = this.hashToken(verificationToken);
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    await db.insert(verificationTokens).values({
+      userId,
+      token: hashedToken,
+      type: 'email_verification',
+      expiresAt,
+    });
+
+    return verificationToken;
+  }
+
   async createUser(data: {
     email: string;
     password: string;

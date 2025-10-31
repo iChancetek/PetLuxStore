@@ -279,6 +279,46 @@ router.post('/verify-email', generalRateLimiter, async (req, res) => {
   }
 });
 
+// POST /api/auth/resend-verification
+router.post('/resend-verification', requireAuth, authRateLimiter, async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+    }
+
+    const userId = req.user.claims.sub;
+    const email = req.user.claims.email;
+    
+    // Check if already verified
+    if (req.user.claims.email_verified) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is already verified',
+      });
+    }
+
+    // Create new verification token
+    const token = await authService.createVerificationToken(userId);
+    
+    // Send verification email
+    await emailService.sendVerificationEmail(email, token);
+
+    res.json({
+      success: true,
+      message: 'Verification email sent. Please check your inbox.',
+    });
+  } catch (error: any) {
+    console.error('Resend verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to resend verification email',
+    });
+  }
+});
+
 // POST /api/auth/request-reset
 router.post('/request-reset', authRateLimiter, async (req, res) => {
   try {
