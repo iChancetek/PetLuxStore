@@ -516,6 +516,11 @@ export class AuthService {
   }
 
   async adminResetUserPassword(userId: string, newPassword: string): Promise<void> {
+    // Validate password strength
+    if (!newPassword || newPassword.length < 8) {
+      throw new Error('Password must be at least 8 characters long');
+    }
+
     const [user] = await db
       .select()
       .from(users)
