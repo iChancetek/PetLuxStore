@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRoute } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { activityTracker } from "@/lib/activityTracker";
@@ -27,6 +27,7 @@ export default function Product() {
   const queryClient = useQueryClient();
   const guestCart = useGuestCart();
   const [, params] = useRoute("/product/:slug");
+  const [, setLocation] = useLocation();
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [isWishlisted, setIsWishlisted] = useState(false);
@@ -134,6 +135,59 @@ export default function Product() {
           title: "Added to cart",
           description: `${quantity} ${product!.name}${quantity > 1 ? 's' : ''} added to your cart.`,
         });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to add item to cart. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleBuyNow = async () => {
+    // Add to cart first
+    if (isAuthenticated) {
+      try {
+        const cartData: Pick<InsertCartItem, 'productId' | 'quantity'> = {
+          productId: product!.id,
+          quantity,
+        };
+        await apiRequest("POST", "/api/cart", cartData);
+        
+        // Track add to cart event
+        activityTracker.trackAddToCart(product!.id, quantity, {
+          productName: product!.name,
+          price: parseFloat(product!.price),
+          categoryId: product!.categoryId,
+          petType: product!.petType
+        });
+        
+        queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+        // Navigate to checkout
+        setLocation('/checkout');
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to add item to cart. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } else {
+      // Guest users: add to guest cart and redirect to checkout
+      try {
+        await guestCart.addItem(product!.id, quantity);
+        
+        // Track add to cart event
+        activityTracker.trackAddToCart(product!.id, quantity, {
+          productName: product!.name,
+          price: parseFloat(product!.price),
+          categoryId: product!.categoryId,
+          petType: product!.petType
+        });
+        
+        // Navigate to checkout
+        setLocation('/checkout');
       } catch (error) {
         toast({
           title: "Error",
@@ -369,7 +423,14 @@ export default function Product() {
                 Add to Cart - ${(parseFloat(product.price) * quantity).toFixed(2)}
               </Button>
               
-              <Button variant="outline" size="lg" className="w-full" data-testid="button-buy-now">
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="w-full" 
+                onClick={handleBuyNow}
+                disabled={(product.inStock ?? 0) <= 0}
+                data-testid="button-buy-now"
+              >
                 Buy Now
               </Button>
             </div>
