@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, useSearch } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
 import Navbar from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
 import DashboardStats from "@/components/dashboard/dashboard-stats";
@@ -45,19 +46,12 @@ export default function Dashboard() {
   useEffect(() => {
     if (isAuthenticated) {
       // Track dashboard page view
-      fetch("/api/activity/events", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          type: "page_view",
-          metadata: {
-            page: "dashboard",
-            url: "/dashboard"
-          }
-        }),
-        credentials: "include",
+      apiRequest("POST", "/api/activity/events", {
+        type: "page_view",
+        metadata: {
+          page: "dashboard",
+          url: "/dashboard"
+        }
       }).catch(console.error);
     }
   }, [isAuthenticated]);

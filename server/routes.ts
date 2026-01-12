@@ -311,7 +311,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Global CSRF protection for all mutating API requests
-  // Only exempt server-to-server endpoints (webhooks), bootstrap auth flows, and analytics
+  // Exempt: bootstrap auth flows (protected by rate limiting), webhooks
   const csrfExemptPaths = [
     '/api/auth/signin',
     '/api/auth/signup',
@@ -320,7 +320,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     '/api/auth/reset-password',
     '/api/auth/resend-verification',
     '/api/webhooks',
-    '/api/activity/events',
   ];
 
   app.use('/api', (req, res, next) => {
@@ -336,6 +335,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     return verifyCsrf(req, res, next);
+  });
+  
+  // CSRF token bootstrap endpoint for non-browser clients (mobile, CLI, etc.)
+  app.get('/api/csrf', (req, res) => {
+    const existingToken = req.cookies?.pot_csrf;
+    if (existingToken) {
+      return res.json({ csrfToken: existingToken });
+    }
+    const newToken = generateCsrfToken();
+    setCsrfCookie(res, newToken);
+    return res.json({ csrfToken: newToken });
   });
   
   // Custom auth routes (new authentication system)
