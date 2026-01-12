@@ -17,8 +17,6 @@
 
 BEGIN;
 
--- Sync users from development to production
--- Uses ON CONFLICT to update existing users or insert new ones
 INSERT INTO users (
     id, 
     email, 
@@ -39,7 +37,6 @@ INSERT INTO users (
     updated_at, 
     deleted_at
 ) VALUES
--- User: cm@chancellorminus.com (Sydney Minus)
 (
     'eb5446d3-4c7e-4a06-94cf-7fdae61040f3',
     'cm@chancellorminus.com',
@@ -60,7 +57,6 @@ INSERT INTO users (
     '2025-10-30 05:51:04.36476',
     NULL
 ),
--- User: chancellor@isynera.com (Admin)
 (
     'user_34A3nBLyMag1ZLbmWUCNOKd6g9s',
     'chancellor@isynera.com',
@@ -81,7 +77,6 @@ INSERT INTO users (
     '2025-10-17 15:14:56.817',
     NULL
 ),
--- User: Chancellor@isynera.com (Admin)
 (
     '6bcdf034-bdf6-4b73-b3c0-516fdafe34e4',
     'Chancellor@isynera.com',
@@ -102,7 +97,6 @@ INSERT INTO users (
     '2025-09-23 02:14:44.887476',
     NULL
 ),
--- User: reviewer@example.com (Test Reviewer)
 (
     '05e8baf2-63bd-46e2-b1f4-a2e5d946e5a3',
     'reviewer@example.com',
@@ -123,7 +117,6 @@ INSERT INTO users (
     '2025-09-14 04:43:41.205431',
     NULL
 ),
--- User: chancellor@ichancetek.com (Admin with password)
 (
     'user_32ftxldMZBKdkyV3hoEywbiGhNN',
     'chancellor@ichancetek.com',
@@ -144,7 +137,6 @@ INSERT INTO users (
     '2025-10-16 19:23:36.444',
     NULL
 ),
--- User: regular@example.com (Regular User)
 (
     'test-user-123',
     'regular@example.com',
@@ -165,7 +157,6 @@ INSERT INTO users (
     '2025-09-14 00:45:27.227337',
     NULL
 ),
--- User: GVuVfW@example.com (Admin)
 (
     'GVuVfW',
     'GVuVfW@example.com',
@@ -195,18 +186,12 @@ ON CONFLICT (id) DO UPDATE SET
     stripe_subscription_id = COALESCE(EXCLUDED.stripe_subscription_id, users.stripe_subscription_id),
     role = EXCLUDED.role,
     is_active = EXCLUDED.is_active,
-    -- CRITICAL: Only update password_hash if the new value is NOT NULL
-    -- This preserves existing production passwords when dev has no password set
     password_hash = COALESCE(EXCLUDED.password_hash, users.password_hash),
     email_verified = EXCLUDED.email_verified,
     email_verified_at = COALESCE(EXCLUDED.email_verified_at, users.email_verified_at),
-    -- PRESERVE operational fields from production - do not overwrite with dev values
     locked_until = users.locked_until,
     failed_login_attempts = users.failed_login_attempts,
     last_login_at = users.last_login_at,
     updated_at = NOW();
 
 COMMIT;
-
--- Verification query - run this after to confirm the sync
--- SELECT id, email, role, is_active, password_hash IS NOT NULL as has_password FROM users ORDER BY created_at DESC;
