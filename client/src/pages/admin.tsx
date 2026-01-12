@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/providers/auth-provider";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { activityTracker } from "@/lib/activityTracker";
-import { SignIn } from "@clerk/clerk-react";
+import { SignInForm } from "@/components/auth/sign-in-form";
 import type { AdminStats as AdminStatsType, User } from "@shared/schema";
 import Navbar from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
@@ -85,15 +85,14 @@ export default function Admin() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-md px-4">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-serif font-bold mb-2">Admin Access Required</h1>
             <p className="text-muted-foreground">Please sign in to access the admin dashboard</p>
           </div>
-          <SignIn 
-            routing="hash"
-            afterSignInUrl="/admin"
-            signUpUrl={undefined}
+          <SignInForm 
+            title="Admin Sign In"
+            description="Enter your credentials to access the admin dashboard"
           />
         </div>
       </div>
