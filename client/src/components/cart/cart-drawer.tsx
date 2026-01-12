@@ -45,44 +45,48 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
   // Fetch product details for guest cart items
   useEffect(() => {
-    if (!isAuthenticated && guestCart.items.length > 0) {
-      const fetchGuestProductDetails = async () => {
-        setLoadingGuestProducts(true);
-        try {
-          const productPromises = guestCart.items.map(async (guestItem) => {
-            try {
-              const response = await apiRequest("GET", `/api/products/${guestItem.productId}`);
-              const product = await response.json() as ProductType;
-              return {
-                id: guestItem.id,
-                userId: guestItem.userId,
-                productId: guestItem.productId,
-                quantity: guestItem.quantity,
-                createdAt: guestItem.createdAt ? new Date(guestItem.createdAt) : null,
-                updatedAt: guestItem.updatedAt ? new Date(guestItem.updatedAt) : null,
-                product,
-                isGuestItem: true,
-              } as EnhancedCartItem;
-            } catch (error) {
-              console.error(`Failed to fetch product ${guestItem.productId}:`, error);
-              return null;
-            }
-          });
-          
-          const resolvedProducts = await Promise.all(productPromises);
-          const validProducts = resolvedProducts.filter(item => item !== null) as EnhancedCartItem[];
-          setGuestCartItems(validProducts);
-        } catch (error) {
-          console.error('Error fetching guest cart product details:', error);
-        } finally {
-          setLoadingGuestProducts(false);
-        }
-      };
-
-      fetchGuestProductDetails();
-    } else if (isAuthenticated) {
+    // Clear guest cart items when authenticated or when guest cart is empty
+    if (isAuthenticated || guestCart.items.length === 0) {
       setGuestCartItems([]);
+      setLoadingGuestProducts(false);
+      return;
     }
+
+    // Fetch product details for guest cart items
+    const fetchGuestProductDetails = async () => {
+      setLoadingGuestProducts(true);
+      try {
+        const productPromises = guestCart.items.map(async (guestItem) => {
+          try {
+            const response = await apiRequest("GET", `/api/products/${guestItem.productId}`);
+            const product = await response.json() as ProductType;
+            return {
+              id: guestItem.id,
+              userId: guestItem.userId,
+              productId: guestItem.productId,
+              quantity: guestItem.quantity,
+              createdAt: guestItem.createdAt ? new Date(guestItem.createdAt) : null,
+              updatedAt: guestItem.updatedAt ? new Date(guestItem.updatedAt) : null,
+              product,
+              isGuestItem: true,
+            } as EnhancedCartItem;
+          } catch (error) {
+            console.error(`Failed to fetch product ${guestItem.productId}:`, error);
+            return null;
+          }
+        });
+        
+        const resolvedProducts = await Promise.all(productPromises);
+        const validProducts = resolvedProducts.filter(item => item !== null) as EnhancedCartItem[];
+        setGuestCartItems(validProducts);
+      } catch (error) {
+        console.error('Error fetching guest cart product details:', error);
+      } finally {
+        setLoadingGuestProducts(false);
+      }
+    };
+
+    fetchGuestProductDetails();
   }, [isAuthenticated, isOpen, guestCart.items]);
 
   // Update cart item quantity (handles both authenticated and guest)
@@ -172,13 +176,10 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     removeItemMutation.mutate({ id, item });
   };
 
-  // Combine both authenticated and guest cart items
-  const allItems: EnhancedCartItem[] = [
-    ...(authCartItems || []).map(item => ({ ...item, isGuestItem: false })),
-    ...guestCartItems
-  ];
-
-  const items = allItems;
+  // Use appropriate cart items based on authentication status (not both)
+  const items: EnhancedCartItem[] = isAuthenticated
+    ? (authCartItems || []).map(item => ({ ...item, isGuestItem: false }))
+    : guestCartItems;
   const isLoadingItems = loadingAuthCart || loadingGuestProducts || authLoading;
   
   // Safe price calculation with defensive null handling

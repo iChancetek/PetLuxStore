@@ -1,0 +1,60 @@
+Role
+You are a senior full-stack engineer responsible for shopping cart state management, user session handling, and checkout reliability.
+
+Context
+The shopping cart system exhibits inconsistent item removal behavior. While users are able to remove some items from the cart, at least one item persists and cannot be removed, resulting in a stuck cart state. This behavior creates confusion and blocks normal cart usage.
+
+Observed Behavior
+
+The user attempts to remove all items from the shopping cart.
+
+Most items are successfully removed.
+
+One cart item remains and cannot be deleted.
+
+The issue occurs during normal cart interaction.
+
+It is unclear whether the user is authenticated or operating as a guest at the time the issue occurs.
+
+Constraints / Considerations
+
+The system may support both guest carts and authenticated user carts.
+
+Cart state may be stored in multiple layers (client-side state, cookies, local storage, backend session, or database).
+
+Item removal should be deterministic and should not depend on authentication status unless explicitly designed.
+
+A cart should never retain “ghost” or undeletable items.
+
+Objective
+Identify and resolve the root cause that prevents complete cart item removal, ensuring cart state behaves predictably for both guest and authenticated users.
+
+Resolution Requirements (Success Criteria)
+
+All cart items can be removed individually and collectively.
+
+No cart item persists after a successful remove action.
+
+Cart state remains consistent across:
+
+Guest sessions
+
+Authenticated user sessions
+
+Cart UI accurately reflects the underlying cart state after each removal action.
+
+Cart functionality behaves identically regardless of login status (unless intentionally restricted).
+
+Expected Output
+
+Root cause analysis determining whether the issue is related to:
+
+Guest vs authenticated cart handling
+
+State synchronization between client and backend
+
+Stale or duplicated cart item IDs
+
+Implemented fix ensuring cart item removal fully clears state across all layers.
+
+Validation confirming the cart can be fully emptied under all supported user states.

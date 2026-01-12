@@ -37,43 +37,47 @@ export default function Cart() {
 
   // Fetch product details for guest cart items
   useEffect(() => {
-    if (!isAuthenticated && guestCart.items.length > 0) {
-      const fetchGuestProductDetails = async () => {
-        setLoadingGuestProducts(true);
-        try {
-          const productPromises = guestCart.items.map(async (guestItem) => {
-            try {
-              const response = await apiRequest("GET", `/api/products/${guestItem.productId}`);
-              const product = await response.json() as ProductType;
-              return {
-                id: guestItem.id,
-                userId: guestItem.userId,
-                productId: guestItem.productId,
-                quantity: guestItem.quantity,
-                createdAt: guestItem.createdAt ? new Date(guestItem.createdAt) : null,
-                updatedAt: guestItem.updatedAt ? new Date(guestItem.updatedAt) : null,
-                product,
-              } as CartItemWithProduct;
-            } catch (error) {
-              console.error(`Failed to fetch product ${guestItem.productId}:`, error);
-              return null;
-            }
-          });
-          
-          const resolvedProducts = await Promise.all(productPromises);
-          const validProducts = resolvedProducts.filter(item => item !== null) as CartItemWithProduct[];
-          setGuestCartItems(validProducts);
-        } catch (error) {
-          console.error('Error fetching guest cart product details:', error);
-        } finally {
-          setLoadingGuestProducts(false);
-        }
-      };
-
-      fetchGuestProductDetails();
-    } else if (isAuthenticated) {
+    // Clear guest cart items when authenticated or when guest cart is empty
+    if (isAuthenticated || guestCart.items.length === 0) {
       setGuestCartItems([]);
+      setLoadingGuestProducts(false);
+      return;
     }
+
+    // Fetch product details for guest cart items
+    const fetchGuestProductDetails = async () => {
+      setLoadingGuestProducts(true);
+      try {
+        const productPromises = guestCart.items.map(async (guestItem) => {
+          try {
+            const response = await apiRequest("GET", `/api/products/${guestItem.productId}`);
+            const product = await response.json() as ProductType;
+            return {
+              id: guestItem.id,
+              userId: guestItem.userId,
+              productId: guestItem.productId,
+              quantity: guestItem.quantity,
+              createdAt: guestItem.createdAt ? new Date(guestItem.createdAt) : null,
+              updatedAt: guestItem.updatedAt ? new Date(guestItem.updatedAt) : null,
+              product,
+            } as CartItemWithProduct;
+          } catch (error) {
+            console.error(`Failed to fetch product ${guestItem.productId}:`, error);
+            return null;
+          }
+        });
+        
+        const resolvedProducts = await Promise.all(productPromises);
+        const validProducts = resolvedProducts.filter(item => item !== null) as CartItemWithProduct[];
+        setGuestCartItems(validProducts);
+      } catch (error) {
+        console.error('Error fetching guest cart product details:', error);
+      } finally {
+        setLoadingGuestProducts(false);
+      }
+    };
+
+    fetchGuestProductDetails();
   }, [isAuthenticated, guestCart.items]);
 
   // Update cart item quantity
