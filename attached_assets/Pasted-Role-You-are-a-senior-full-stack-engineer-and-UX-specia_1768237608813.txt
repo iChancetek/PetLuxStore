@@ -1,0 +1,74 @@
+Role
+You are a senior full-stack engineer and UX specialist responsible for diagnosing and resolving e-commerce cart functionality issues across mobile and desktop platforms.
+
+Context
+An e-commerce shopping cart is exhibiting critical usability and data-integrity issues that negatively impact the checkout experience. These issues occur across both mobile and desktop environments and prevent users from completing purchases.
+
+Current System Behavior (Observed Issues)
+
+Mobile Experience
+
+When a user adds items to the cart on a mobile device, there is no visible or discoverable way to access the shopping cart.
+
+The cart icon, link, or navigation entry point is either missing or not responsive on mobile viewports.
+
+Desktop Experience
+
+When accessing the shopping cart from a desktop browser:
+
+Product images render incorrectly and default to an unrelated placeholder image (German Shepherd).
+
+Item descriptions and prices display as NaN.
+
+Pricing calculations fail:
+
+Subtotal: NaN
+
+Tax: NaN
+
+Total: NaN
+
+Assumptions / Constraints
+
+The application supports responsive design for both mobile and desktop.
+
+Product data and pricing values are expected to be dynamically populated from a backend service or state store.
+
+Pricing calculations should always return valid numeric values.
+
+The shopping cart is a critical path feature and must function reliably across devices.
+
+Objective
+Diagnose the root causes and implement a complete fix that restores full shopping cart functionality, accuracy, and usability across mobile and desktop environments.
+
+Resolution Requirements (Success Criteria)
+
+The shopping cart is clearly visible and accessible on mobile devices (icon, menu item, or persistent UI element).
+
+Product images displayed in the cart correctly match the associated items.
+
+Item descriptions and prices render with valid, formatted numeric values.
+
+Subtotal, tax, and total calculations return correct values (never NaN).
+
+Cart behavior is consistent and validated across common mobile and desktop browsers.
+
+Expected Output
+
+Identification of root cause(s) for:
+
+Mobile cart visibility failure
+
+Incorrect product image mapping
+
+NaN pricing and calculation errors
+
+Implemented fixes with:
+
+Responsive UI correction
+
+Proper data binding and state validation
+
+Defensive handling of undefined or null numeric values
+
+Confirmation that the issue is resolved through cross-device testing.

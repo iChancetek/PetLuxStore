@@ -218,6 +218,22 @@ export default function Navbar() {
                     ))}
                   </div>
 
+                  {/* Mobile Cart Button - Always visible */}
+                  <div className="border-t pt-6">
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start mb-4"
+                      onClick={() => {
+                        setIsCartOpen(true);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      data-testid="button-mobile-cart"
+                    >
+                      <ShoppingBag className="w-4 h-4 mr-2" />
+                      Cart {cartItemCount > 0 && `(${cartItemCount})`}
+                    </Button>
+                  </div>
+
                   {/* Mobile User Info */}
                   <div className="border-t pt-6">
                     {user ? (
@@ -241,15 +257,6 @@ export default function Navbar() {
                         </div>
                         
                         <div className="flex flex-col space-y-2">
-                          <Button 
-                            variant="outline" 
-                            className="w-full justify-start"
-                            onClick={() => setIsCartOpen(true)}
-                            data-testid="button-mobile-cart"
-                          >
-                            <ShoppingBag className="w-4 h-4 mr-2" />
-                            Cart ({cartItemCount})
-                          </Button>
                           <Button 
                             variant="outline" 
                             className="w-full justify-start"

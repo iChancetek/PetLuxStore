@@ -190,7 +190,18 @@ export default function Cart() {
       </div>
     );
   }
-  const subtotal = items.reduce((total: number, item: any) => total + (parseFloat(item.product.price) * item.quantity), 0);
+  // Safe price calculation with defensive null handling
+  const getItemPrice = (item: any): number => {
+    if (!item?.product?.price) return 0;
+    const price = parseFloat(item.product.price);
+    return isNaN(price) ? 0 : price;
+  };
+  
+  const subtotal = items.reduce((total: number, item: any) => {
+    const price = getItemPrice(item);
+    const quantity = item?.quantity || 0;
+    return total + (price * quantity);
+  }, 0);
   const tax = subtotal * 0.08; // 8% tax
   const shipping = subtotal >= 50 ? 0 : 9.99;
   const total = subtotal + tax + shipping;
@@ -246,23 +257,24 @@ export default function Cart() {
 
                     {items.map((item: any) => (
                       <div key={item.id} className="flex items-center space-x-4 p-4 bg-muted/30 rounded-lg">
-                        <Link href={`/product/${item.product.slug || item.product.id}`}>
+                        <Link href={`/product/${item.product?.slug || item.product?.id || item.productId}`}>
                           <img 
-                            src={item.product.imageUrl || "https://images.unsplash.com/photo-1589941013453-ec89f33b5e95?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=100"}
-                            alt={item.product.name}
+                            src={item.product?.imageUrl || "/placeholder-product.svg"}
+                            alt={item.product?.name || "Product"}
                             className="w-20 h-20 object-cover rounded-lg cursor-pointer"
+                            onError={(e) => { e.currentTarget.src = "/placeholder-product.svg"; }}
                             data-testid={`img-cart-item-${item.id}`}
                           />
                         </Link>
                         
                         <div className="flex-1">
-                          <Link href={`/product/${item.product.slug || item.product.id}`}>
+                          <Link href={`/product/${item.product?.slug || item.product?.id || item.productId}`}>
                             <h4 className="font-medium hover:text-primary cursor-pointer" data-testid={`text-cart-item-name-${item.id}`}>
-                              {item.product.name}
+                              {item.product?.name || "Product"}
                             </h4>
                           </Link>
                           
-                          {item.product.aiMatch && (
+                          {item.product?.aiMatch && (
                             <Badge className="mt-1 bg-accent/10 text-accent">
                               <Sparkles className="w-3 h-3 mr-1" />
                               AI Match: {item.product.aiMatch}%
@@ -310,10 +322,10 @@ export default function Cart() {
                         
                         <div className="text-right">
                           <p className="font-semibold text-lg" data-testid={`text-item-total-${item.id}`}>
-                            ${(parseFloat(item.product.price) * item.quantity).toFixed(2)}
+                            ${(getItemPrice(item) * (item.quantity || 0)).toFixed(2)}
                           </p>
                           <p className="text-sm text-muted-foreground" data-testid={`text-item-price-${item.id}`}>
-                            ${item.product.price} each
+                            ${getItemPrice(item).toFixed(2)} each
                           </p>
                         </div>
                       </div>
