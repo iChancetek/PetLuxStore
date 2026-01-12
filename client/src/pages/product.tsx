@@ -90,7 +90,7 @@ export default function Product() {
         title: "Added to cart",
         description: `${quantity} ${product!.name}${quantity > 1 ? 's' : ''} added to your cart.`,
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      queryClient.refetchQueries({ queryKey: ["/api/cart"] });
     },
   });
 
@@ -163,7 +163,7 @@ export default function Product() {
           petType: product!.petType
         });
         
-        queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+        queryClient.refetchQueries({ queryKey: ["/api/cart"] });
         // Navigate to checkout
         setLocation('/checkout');
       } catch (error) {

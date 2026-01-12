@@ -51,7 +51,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         title: "Added to cart",
         description: `${product.name} has been added to your cart.`,
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      queryClient.refetchQueries({ queryKey: ["/api/cart"] });
     },
     onError: (error: Error) => {
       toast({

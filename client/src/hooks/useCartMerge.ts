@@ -53,7 +53,7 @@ export function useCartMerge() {
         await guestCart.clearCart();
         
         // Invalidate cart queries to refresh the UI
-        queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+        queryClient.refetchQueries({ queryKey: ["/api/cart"] });
         
         // Show success message
         toast({

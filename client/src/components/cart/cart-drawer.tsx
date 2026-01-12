@@ -108,7 +108,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
       }
 
       if (!item?.isGuestItem) {
-        queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+        queryClient.refetchQueries({ queryKey: ["/api/cart"] });
       }
     },
     onError: () => {
@@ -143,7 +143,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
       }
 
       if (!item?.isGuestItem) {
-        queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+        queryClient.refetchQueries({ queryKey: ["/api/cart"] });
       }
       
       toast({

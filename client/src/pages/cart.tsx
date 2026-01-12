@@ -81,7 +81,7 @@ export default function Cart() {
       await apiRequest("PATCH", `/api/cart/${id}`, { quantity });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      queryClient.refetchQueries({ queryKey: ["/api/cart"] });
     },
   });
 
@@ -91,7 +91,7 @@ export default function Cart() {
       await apiRequest("DELETE", `/api/cart/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      queryClient.refetchQueries({ queryKey: ["/api/cart"] });
       toast({
         title: "Item removed",
         description: "Item has been removed from your cart.",
@@ -105,7 +105,7 @@ export default function Cart() {
       await apiRequest("DELETE", "/api/cart");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      queryClient.refetchQueries({ queryKey: ["/api/cart"] });
       toast({
         title: "Cart cleared",
         description: "All items have been removed from your cart.",
