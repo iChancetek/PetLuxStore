@@ -4,7 +4,16 @@
 
 The PotLuxE is a production-ready pet e-commerce platform built as a full-stack web application with modern React frontend and Express backend. The application features AI-powered product recommendations, personalized shopping experiences, and comprehensive e-commerce functionality including cart management, checkout processing, and administrative tools. The platform is designed to provide a premium shopping experience for pet owners with intelligent product discovery and AI-driven customer assistance.
 
-## Recent Changes (October 30, 2025)
+## Recent Changes (January 12, 2026)
+
+- **CSRF Protection System**: Comprehensive CSRF protection for all mutating API endpoints
+  - Global middleware issues tokens to all visitors on first request
+  - Bootstrap endpoint (`GET /api/csrf`) for mobile/CLI clients
+  - All POST/PUT/PATCH/DELETE require valid x-csrf-token header
+  - Frontend apiRequest() automatically includes CSRF token
+  - Exempt list limited to: bootstrap auth flows (signin, signup, etc.) and webhooks
+
+## Previous Changes (October 30, 2025)
 
 - **MAJOR: Custom Authentication System (Backend Complete)**: Built production-ready custom auth to replace Clerk
   - Argon2id password hashing with secure parameters (64MB memory, timeCost 3)
