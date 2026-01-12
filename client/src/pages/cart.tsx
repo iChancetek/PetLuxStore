@@ -43,7 +43,8 @@ export default function Cart() {
         try {
           const productPromises = guestCart.items.map(async (guestItem) => {
             try {
-              const product = await apiRequest("GET", `/api/products/${guestItem.productId}`) as unknown as ProductType;
+              const response = await apiRequest("GET", `/api/products/${guestItem.productId}`);
+              const product = await response.json() as ProductType;
               return {
                 id: guestItem.id,
                 userId: guestItem.userId,
