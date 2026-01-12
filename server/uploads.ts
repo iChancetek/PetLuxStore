@@ -4,7 +4,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { randomUUID } from "crypto";
-import { isAuthenticated, isAdmin } from "./auth/authMiddleware";
+import { isAuthenticated, isAdmin, verifyCsrf } from "./auth/authMiddleware";
 
 const UPLOADS_DIR = path.join(process.cwd(), "server", "public", "uploads", "products");
 
@@ -54,6 +54,7 @@ export function registerUploadRoutes(app: Express): void {
     "/api/admin/uploads/image",
     isAuthenticated,
     isAdmin,
+    verifyCsrf,
     upload.single("image"),
     (req, res) => {
       if (!req.file) {

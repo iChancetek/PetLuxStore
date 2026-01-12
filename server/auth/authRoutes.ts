@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { authService } from './authService';
 import { emailService } from './emailService';
-import { requireAuth, optionalAuth } from './authMiddleware';
+import { requireAuth, optionalAuth, generateCsrfToken, setCsrfCookie, verifyCsrf } from './authMiddleware';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 
@@ -126,6 +126,10 @@ router.post('/signin', authRateLimiter, async (req, res) => {
     res.cookie(SESSION_COOKIE_NAME, sessionToken, cookieOptions);
     res.cookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions);
 
+    // Set CSRF token cookie
+    const csrfToken = generateCsrfToken();
+    setCsrfCookie(res, csrfToken);
+
     res.json({
       success: true,
       message: 'Signed in successfully',
@@ -155,7 +159,7 @@ router.post('/signin', authRateLimiter, async (req, res) => {
 });
 
 // POST /api/auth/signout
-router.post('/signout', optionalAuth, async (req, res) => {
+router.post('/signout', optionalAuth, verifyCsrf, async (req, res) => {
   try {
     const sessionToken = req.cookies?.[SESSION_COOKIE_NAME];
 
@@ -166,6 +170,7 @@ router.post('/signout', optionalAuth, async (req, res) => {
     // Clear cookies
     res.clearCookie(SESSION_COOKIE_NAME);
     res.clearCookie(REFRESH_COOKIE_NAME, { path: '/api/auth/refresh' });
+    res.clearCookie('pot_csrf');
 
     res.json({
       success: true,
@@ -181,7 +186,7 @@ router.post('/signout', optionalAuth, async (req, res) => {
 });
 
 // POST /api/auth/refresh
-router.post('/refresh', generalRateLimiter, async (req, res) => {
+router.post('/refresh', generalRateLimiter, verifyCsrf, async (req, res) => {
   try {
     const refreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
 
@@ -198,6 +203,10 @@ router.post('/refresh', generalRateLimiter, async (req, res) => {
     // Set new session cookies
     res.cookie(SESSION_COOKIE_NAME, sessionToken, cookieOptions);
     res.cookie(REFRESH_COOKIE_NAME, newRefreshToken, refreshCookieOptions);
+
+    // Refresh CSRF token as well
+    const csrfToken = generateCsrfToken();
+    setCsrfCookie(res, csrfToken);
 
     res.json({
       success: true,
@@ -372,7 +381,7 @@ router.post('/reset-password', authRateLimiter, async (req, res) => {
 });
 
 // POST /api/auth/change-password
-router.post('/change-password', requireAuth, generalRateLimiter, async (req, res) => {
+router.post('/change-password', requireAuth, verifyCsrf, generalRateLimiter, async (req, res) => {
   try {
     const data = changePasswordSchema.parse(req.body);
 

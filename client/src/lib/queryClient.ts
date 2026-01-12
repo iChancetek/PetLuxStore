@@ -42,6 +42,11 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+function getCsrfToken(): string | null {
+  const match = document.cookie.match(/pot_csrf=([^;]+)/);
+  return match ? match[1] : null;
+}
+
 export async function apiRequest(
   method: string,
   url: string,
@@ -52,6 +57,12 @@ export async function apiRequest(
     ...(data ? { "Content-Type": "application/json" } : {}),
     ...(customHeaders || {}),
   };
+
+  // Add CSRF token for mutating requests
+  const csrfToken = getCsrfToken();
+  if (csrfToken && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase())) {
+    headers['x-csrf-token'] = csrfToken;
+  }
 
   // Add auth token for protected routes
   if (getAuthToken) {

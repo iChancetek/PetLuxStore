@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import { storage } from "./storage";
-import { isAuthenticated, isAdmin, optionalAuth, requireReviewer } from "./auth/authMiddleware";
+import { isAuthenticated, isAdmin, optionalAuth, requireReviewer, verifyCsrf, generateCsrfToken, setCsrfCookie } from "./auth/authMiddleware";
 import authRoutes from "./auth/authRoutes";
 import { registerUploadRoutes } from "./uploads";
 import { 
@@ -299,6 +299,44 @@ function checkActivityRateLimit(req: any): boolean {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Local file upload routes for product images
   registerUploadRoutes(app);
+  
+  // Issue CSRF token to all visitors on any request if not present
+  // This ensures both guests and authenticated users have tokens
+  app.use('/api', (req, res, next) => {
+    if (!req.cookies?.pot_csrf) {
+      const csrfToken = generateCsrfToken();
+      setCsrfCookie(res, csrfToken);
+    }
+    next();
+  });
+  
+  // Global CSRF protection for all mutating API requests
+  // Only exempt server-to-server endpoints (webhooks), bootstrap auth flows, and analytics
+  const csrfExemptPaths = [
+    '/api/auth/signin',
+    '/api/auth/signup',
+    '/api/auth/verify-email',
+    '/api/auth/forgot-password',
+    '/api/auth/reset-password',
+    '/api/auth/resend-verification',
+    '/api/webhooks',
+    '/api/activity/events',
+  ];
+
+  app.use('/api', (req, res, next) => {
+    const mutatingMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
+    if (!mutatingMethods.includes(req.method)) {
+      return next();
+    }
+
+    // Check if route is exempt from CSRF
+    const isExempt = csrfExemptPaths.some(path => req.path.startsWith(path.replace('/api', '')));
+    if (isExempt) {
+      return next();
+    }
+
+    return verifyCsrf(req, res, next);
+  });
   
   // Custom auth routes (new authentication system)
   app.use('/api/auth', authRoutes);

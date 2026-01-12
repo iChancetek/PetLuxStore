@@ -74,9 +74,13 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
       const formData = new FormData();
       formData.append("image", file);
 
+      const csrfMatch = document.cookie.match(/pot_csrf=([^;]+)/);
+      const csrfToken = csrfMatch ? csrfMatch[1] : '';
+
       const response = await fetch("/api/admin/uploads/image", {
         method: "POST",
         credentials: "include",
+        headers: csrfToken ? { 'x-csrf-token': csrfToken } : {},
         body: formData,
       });
 

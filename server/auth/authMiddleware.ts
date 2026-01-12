@@ -1,10 +1,54 @@
 import type { Request, Response, NextFunction } from 'express';
+import crypto from 'crypto';
 import { authService } from './authService';
 import { db } from '../db';
 import { users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 
 const SESSION_COOKIE_NAME = 'pot_session';
+const CSRF_COOKIE_NAME = 'pot_csrf';
+const CSRF_HEADER_NAME = 'x-csrf-token';
+
+export function generateCsrfToken(): string {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+export function setCsrfCookie(res: Response, token: string): void {
+  res.cookie(CSRF_COOKIE_NAME, token, {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    path: '/',
+  });
+}
+
+export function verifyCsrf(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
+  const mutatingMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
+  
+  if (!mutatingMethods.includes(req.method)) {
+    return next();
+  }
+
+  const csrfCookie = req.cookies?.[CSRF_COOKIE_NAME];
+  const csrfHeader = req.headers[CSRF_HEADER_NAME] as string | undefined;
+
+  if (!csrfCookie || !csrfHeader) {
+    res.status(403).json({ message: 'CSRF token missing' });
+    return;
+  }
+
+  if (csrfCookie !== csrfHeader) {
+    res.status(403).json({ message: 'CSRF token invalid' });
+    return;
+  }
+
+  next();
+}
 
 export async function requireAuth(
   req: Request,
