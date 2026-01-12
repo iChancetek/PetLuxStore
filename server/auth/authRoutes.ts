@@ -29,15 +29,26 @@ const refreshCookieOptions = {
   path: '/api/auth/refresh',
 };
 
-// Rate limiters
+// Rate limiters - production uses proxy so we need to trust it
 const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 requests per window
+  max: 10, // 10 requests per window per IP (increased for production reliability)
   message: 'Too many authentication attempts. Please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
-  // Trust proxy for Replit environment
-  validate: { trustProxy: false },
+  // Disable validations that conflict with Replit's proxy setup
+  validate: false,
+  // Use X-Forwarded-For header for IP detection behind Replit's proxy
+  keyGenerator: (req) => {
+    const forwardedFor = req.headers['x-forwarded-for'];
+    if (forwardedFor) {
+      const ip = typeof forwardedFor === 'string' 
+        ? forwardedFor.split(',')[0]?.trim() 
+        : forwardedFor[0]?.split(',')[0]?.trim();
+      if (ip) return ip;
+    }
+    return req.ip || 'unknown';
+  },
 });
 
 const generalRateLimiter = rateLimit({
@@ -45,8 +56,19 @@ const generalRateLimiter = rateLimit({
   max: 100, // 100 requests per window
   standardHeaders: true,
   legacyHeaders: false,
-  // Trust proxy for Replit environment
-  validate: { trustProxy: false },
+  // Disable validations that conflict with Replit's proxy setup
+  validate: false,
+  // Use X-Forwarded-For header for IP detection behind Replit's proxy
+  keyGenerator: (req) => {
+    const forwardedFor = req.headers['x-forwarded-for'];
+    if (forwardedFor) {
+      const ip = typeof forwardedFor === 'string' 
+        ? forwardedFor.split(',')[0]?.trim() 
+        : forwardedFor[0]?.split(',')[0]?.trim();
+      if (ip) return ip;
+    }
+    return req.ip || 'unknown';
+  },
 });
 
 // Validation schemas

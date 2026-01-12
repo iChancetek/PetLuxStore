@@ -317,6 +317,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     '/api/auth/signup',
     '/api/auth/verify-email',
     '/api/auth/forgot-password',
+    '/api/auth/request-reset',
     '/api/auth/reset-password',
     '/api/auth/resend-verification',
     '/api/webhooks',
