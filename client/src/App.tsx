@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/providers/auth-provider";
+import { GuestCartProvider } from "@/hooks/useGuestCart";
 import { useCartMerge } from "@/hooks/useCartMerge";
 import Landing from "@/pages/landing";
 import Home from "@/pages/home";
@@ -44,13 +45,15 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <CartMergeSetup />
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
-      </AuthProvider>
+      <GuestCartProvider>
+        <AuthProvider>
+          <CartMergeSetup />
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </AuthProvider>
+      </GuestCartProvider>
     </QueryClientProvider>
   );
 }

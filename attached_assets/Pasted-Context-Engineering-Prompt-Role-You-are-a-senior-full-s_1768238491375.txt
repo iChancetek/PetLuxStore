@@ -1,0 +1,60 @@
+Context Engineering Prompt
+
+Role
+You are a senior full-stack engineer responsible for diagnosing data consistency and routing issues within an e-commerce shopping cart and checkout system.
+
+Context
+The shopping cart UI and the checkout flow are presenting conflicting system states. While the checkout process correctly retains and displays the user’s selected products, the cart interface shows an incorrect product image and broken product linkage.
+
+Observed Behavior
+
+The shopping cart displays a default product image (German Shepherd) instead of the actual product image.
+
+Clicking the German Shepherd image in the cart results in an error message: “Product not found.”
+
+Despite this error, when the user selects “Proceed to Checkout”:
+
+The correct products appear.
+
+Order details are accurate.
+
+The checkout process functions as expected.
+
+Assumptions / Constraints
+
+The cart UI and checkout flow may reference different product identifiers or data sources.
+
+Checkout appears to rely on validated backend order data, while the cart UI may rely on an incorrect or stale client-side reference.
+
+Product images and links in the cart should always map to valid product records.
+
+Objective
+Identify and resolve the mismatch between cart product references and checkout order data to ensure consistency, accuracy, and reliable navigation.
+
+Resolution Requirements (Success Criteria)
+
+Cart product images correctly represent the associated products.
+
+Clicking a product image or link in the cart routes to a valid product detail page.
+
+Cart product identifiers match those used in checkout.
+
+Cart and checkout use a shared, synchronized source of truth for product data.
+
+No “Product not found” errors occur during normal cart interaction.
+
+Expected Output
+
+Root cause analysis explaining why cart product links are broken while checkout remains correct.
+
+Implemented fix aligning cart product references with checkout data.
+
+Validation confirming consistent behavior across the cart and checkout flow.
+
+If you want, I can:
+
+Compress this further into a one-paragraph AI execution prompt
+
+Convert it into a Jira / Linear / GitHub issue
+
+Add likely technical causes (e.g., missing product slug, invalid SKU mapping, fallback image logic failure)
