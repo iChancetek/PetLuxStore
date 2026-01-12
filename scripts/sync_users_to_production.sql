@@ -3,7 +3,7 @@
 -- Case-insensitive email matching
 
 UPDATE users 
-SET password_hash = '$argon2id$v=19$m=65536,t=3,p=4$aKdKKT7OzwgswlW3TFiQnw$ewyOc+ppMlsOza4hw9OmsFgoiAn7fAQzO5IaqzP2pWk'
+SET password_hash = '$argon2id$v=19$m=65536,t=3,p=4$I/aBnDxwHym7Q+7bfsyu5A$29gANYX4tHWA3DDQBsBxi15Qhm6nHtrnca2fRqBJeqw'
 WHERE LOWER(email) = LOWER('cm@chancellorminus.com');
 
 UPDATE users 
