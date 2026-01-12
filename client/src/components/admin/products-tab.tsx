@@ -438,7 +438,7 @@ export default function ProductsTab() {
                                   variant="ghost"
                                   size="sm"
                                   className="text-destructive hover:text-destructive"
-                                  title="Delete permanently"
+                                  title="Delete product"
                                   disabled={deleteProductMutation.isPending}
                                   data-testid={`button-delete-${product.id}`}
                                 >
@@ -449,11 +449,13 @@ export default function ProductsTab() {
                                 <AlertDialogHeader>
                                   <AlertDialogTitle className="flex items-center gap-2">
                                     <AlertTriangle className="w-5 h-5 text-destructive" />
-                                    Delete Product Permanently
+                                    Delete Product
                                   </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete "{product.name}" 
-                                    and all associated data. Consider archiving instead if you want to keep the data.
+                                  <AlertDialogDescription className="space-y-2">
+                                    <p>Are you sure you want to delete "{product.name}"?</p>
+                                    <p className="text-sm font-medium text-muted-foreground">
+                                      This product will be recoverable for 60 days. After 60 days, it will be permanently removed.
+                                    </p>
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
@@ -463,7 +465,7 @@ export default function ProductsTab() {
                                     disabled={deleteProductMutation.isPending}
                                     className="bg-destructive hover:bg-destructive/90"
                                   >
-                                    {deleteProductMutation.isPending ? "Deleting..." : "Delete Permanently"}
+                                    {deleteProductMutation.isPending ? "Deleting..." : "Delete"}
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>

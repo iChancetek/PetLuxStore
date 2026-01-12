@@ -4,6 +4,7 @@ import Stripe from "stripe";
 import { storage } from "./storage";
 import { isAuthenticated, isAdmin, optionalAuth, requireReviewer } from "./auth/authMiddleware";
 import authRoutes from "./auth/authRoutes";
+import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 import { 
   generateProductDescription, 
   generateProductRecommendations, 
@@ -296,6 +297,9 @@ function checkActivityRateLimit(req: any): boolean {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Object Storage routes for file uploads
+  registerObjectStorageRoutes(app);
+  
   // Custom auth routes (new authentication system)
   app.use('/api/auth', authRoutes);
 

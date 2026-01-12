@@ -102,6 +102,7 @@ export const users = pgTable("users", {
   lockedUntil: timestamp("locked_until"), // For account lockout after failed login attempts
   failedLoginAttempts: integer("failed_login_attempts").default(0).notNull(),
   lastLoginAt: timestamp("last_login_at"),
+  deletedAt: timestamp("deleted_at"), // Soft delete - recoverable for 60 days
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -138,6 +139,7 @@ export const products = pgTable("products", {
   petType: varchar("pet_type", { length: 50 }), // dog, cat, bird, fish, etc.
   tags: text("tags").array(),
   aiMatch: integer("ai_match"), // AI matching percentage for recommendations
+  deletedAt: timestamp("deleted_at"), // Soft delete - recoverable for 60 days
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

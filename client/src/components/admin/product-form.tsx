@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useUpload } from "@/hooks/use-upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Sparkles, Save, Wand2 } from "lucide-react";
+import { Sparkles, Save, Wand2, Upload, ImageIcon, X } from "lucide-react";
 
 const productFormSchema = z.object({
   name: z.string().min(1, "Product name is required"),
@@ -44,6 +45,58 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
   const queryClient = useQueryClient();
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [tagInput, setTagInput] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(product?.imageUrl || null);
+  
+  const { uploadFile, isUploading } = useUpload({
+    onSuccess: (response) => {
+      const imageUrl = response.objectPath;
+      form.setValue("imageUrl", imageUrl);
+      setImagePreview(imageUrl);
+      toast({
+        title: "Image uploaded",
+        description: "Product image has been uploaded successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith("image/")) {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload an image file.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Image must be less than 10MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+      await uploadFile(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    form.setValue("imageUrl", "");
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productFormSchema),
@@ -425,24 +478,87 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="imageUrl"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Image URL</FormLabel>
-                <FormControl>
-                  <Input 
-                    {...field} 
-                    type="url"
-                    placeholder="https://example.com/image.jpg"
-                    data-testid="input-image-url"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+          {/* Product Image Upload */}
+          <div className="space-y-3">
+            <Label>Product Image</Label>
+            
+            {/* Image Preview */}
+            {(imagePreview || form.watch("imageUrl")) && (
+              <div className="relative w-32 h-32 border rounded-lg overflow-hidden group">
+                <img
+                  src={imagePreview || form.watch("imageUrl") || ""}
+                  alt="Product preview"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = "https://images.unsplash.com/photo-1589941013453-ec89f33b5e95?w=128&h=128&fit=crop";
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleRemoveImage}
+                  className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  title="Remove image"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             )}
-          />
+
+            {/* Upload Button */}
+            <div className="flex items-center gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+                data-testid="input-file-upload"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                data-testid="button-upload-image"
+              >
+                {isUploading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Image
+                  </>
+                )}
+              </Button>
+              <span className="text-sm text-muted-foreground">or enter URL below</span>
+            </div>
+
+            {/* URL Input Fallback */}
+            <FormField
+              control={form.control}
+              name="imageUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input 
+                      {...field} 
+                      type="url"
+                      placeholder="https://example.com/image.jpg"
+                      onChange={(e) => {
+                        field.onChange(e);
+                        setImagePreview(e.target.value || null);
+                      }}
+                      data-testid="input-image-url"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
 
         <Separator />

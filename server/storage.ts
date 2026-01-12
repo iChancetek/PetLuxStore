@@ -31,7 +31,7 @@ import {
   type InsertActivityEvent,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, asc, ilike, inArray, sql } from "drizzle-orm";
+import { eq, and, desc, asc, ilike, inArray, sql, isNotNull, lt } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -374,8 +374,36 @@ export class DatabaseStorage implements IStorage {
 
   async deleteProduct(id: string): Promise<void> {
     await db.update(products)
-      .set({ isActive: false, updatedAt: new Date() })
+      .set({ deletedAt: new Date(), isActive: false, updatedAt: new Date() })
       .where(eq(products.id, id));
+  }
+
+  async restoreDeletedProduct(id: string): Promise<Product> {
+    const [restored] = await db.update(products)
+      .set({ deletedAt: null, isActive: true, updatedAt: new Date() })
+      .where(eq(products.id, id))
+      .returning();
+    return restored;
+  }
+
+  async permanentlyDeleteProduct(id: string): Promise<void> {
+    await db.delete(products).where(eq(products.id, id));
+  }
+
+  async getDeletedProducts(): Promise<Product[]> {
+    return db.select().from(products).where(isNotNull(products.deletedAt));
+  }
+
+  async cleanupExpiredProducts(): Promise<number> {
+    const sixtyDaysAgo = new Date();
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+    
+    const result = await db.delete(products)
+      .where(and(
+        isNotNull(products.deletedAt),
+        lt(products.deletedAt, sixtyDaysAgo)
+      ));
+    return result.rowCount || 0;
   }
 
   async updateProductAI(id: string, aiDescription: string, aiMatch?: number): Promise<Product> {
@@ -679,8 +707,36 @@ export class DatabaseStorage implements IStorage {
   async deleteUser(id: string): Promise<void> {
     await db
       .update(users)
-      .set({ isActive: false, updatedAt: new Date() })
+      .set({ deletedAt: new Date(), isActive: false, updatedAt: new Date() })
       .where(eq(users.id, id));
+  }
+
+  async restoreDeletedUser(id: string): Promise<User> {
+    const [restored] = await db.update(users)
+      .set({ deletedAt: null, isActive: true, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return restored;
+  }
+
+  async permanentlyDeleteUser(id: string): Promise<void> {
+    await db.delete(users).where(eq(users.id, id));
+  }
+
+  async getDeletedUsers(): Promise<User[]> {
+    return db.select().from(users).where(isNotNull(users.deletedAt));
+  }
+
+  async cleanupExpiredUsers(): Promise<number> {
+    const sixtyDaysAgo = new Date();
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+    
+    const result = await db.delete(users)
+      .where(and(
+        isNotNull(users.deletedAt),
+        lt(users.deletedAt, sixtyDaysAgo)
+      ));
+    return result.rowCount || 0;
   }
 
   // Admin Product Management
@@ -1111,6 +1167,7 @@ export class DatabaseStorage implements IStorage {
       petType: products.petType,
       tags: products.tags,
       aiMatch: products.aiMatch,
+      deletedAt: products.deletedAt,
       createdAt: products.createdAt,
       updatedAt: products.updatedAt,
     })

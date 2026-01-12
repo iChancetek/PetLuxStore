@@ -573,6 +573,7 @@ export default function UsersTab() {
                                 variant="ghost"
                                 size="sm"
                                 className="text-destructive hover:text-destructive"
+                                disabled={deleteUserMutation.isPending}
                                 data-testid={`button-delete-user-${user.id}`}
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -581,18 +582,21 @@ export default function UsersTab() {
                             <AlertDialogContent>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Delete User</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete {user.firstName} {user.lastName}? 
-                                  This action will deactivate their account.
+                                <AlertDialogDescription className="space-y-2">
+                                  <p>Are you sure you want to delete {user.firstName} {user.lastName}?</p>
+                                  <p className="text-sm font-medium text-muted-foreground">
+                                    This account will be recoverable for 60 days. After 60 days, it will be permanently removed along with all associated data.
+                                  </p>
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogCancel disabled={deleteUserMutation.isPending}>Cancel</AlertDialogCancel>
                                 <AlertDialogAction
                                   onClick={() => handleDeleteUser(user.id)}
+                                  disabled={deleteUserMutation.isPending}
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                 >
-                                  Delete
+                                  {deleteUserMutation.isPending ? "Deleting..." : "Delete"}
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
