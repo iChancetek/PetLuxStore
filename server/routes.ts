@@ -911,10 +911,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/admin/products', isAdmin, async (req, res) => {
+  app.get('/api/admin/products', isAdmin, async (req: any, res) => {
+    try {
+      const { search, status, categoryId, stockStatus, page = 1, limit = 20 } = req.query;
+      
+      const result = await storage.listProductsAdmin({
+        search: search as string,
+        status: status as string,
+        categoryId: categoryId as string,
+        stockStatus: stockStatus as string,
+        page: Number(page),
+        limit: Number(limit)
+      });
+
+      await logAudit(req, 'list_products', 'product', undefined, { 
+        filters: { search, status, categoryId, stockStatus, page, limit },
+        resultCount: result.products.length 
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error listing products:", error);
+      res.status(500).json({ message: "Failed to list products" });
+    }
+  });
+
+  app.post('/api/admin/products', isAdmin, async (req: any, res) => {
     try {
       const productData = insertProductSchema.parse(req.body);
       const product = await storage.createProduct(productData);
+      
+      await logAudit(req, 'create_product', 'product', product.id, { 
+        productName: product.name,
+        price: product.price,
+        categoryId: product.categoryId
+      });
+      
       res.json(product);
     } catch (error) {
       console.error("Error creating product:", error);
@@ -922,10 +954,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/admin/products/:id', isAdmin, async (req, res) => {
+  app.patch('/api/admin/products/:id', isAdmin, async (req: any, res) => {
     try {
       const updates = req.body;
-      const product = await storage.updateProduct(req.params.id, updates);
+      const productId = req.params.id;
+      
+      const product = await storage.updateProduct(productId, updates);
+      
+      const action = updates.isActive === false ? 'archive_product' : 
+                     updates.isActive === true ? 'restore_product' : 'update_product';
+      
+      await logAudit(req, action, 'product', productId, { 
+        updates: Object.keys(updates),
+        productName: product?.name
+      });
+      
       res.json(product);
     } catch (error) {
       console.error("Error updating product:", error);
@@ -933,9 +976,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/admin/products/:id', isAdmin, async (req, res) => {
+  app.delete('/api/admin/products/:id', isAdmin, async (req: any, res) => {
     try {
-      await storage.deleteProduct(req.params.id);
+      const productId = req.params.id;
+      await storage.deleteProduct(productId);
+      
+      await logAudit(req, 'delete_product', 'product', productId, { 
+        action: 'permanent_delete'
+      });
+      
       res.json({ message: "Product deleted successfully" });
     } catch (error) {
       console.error("Error deleting product:", error);

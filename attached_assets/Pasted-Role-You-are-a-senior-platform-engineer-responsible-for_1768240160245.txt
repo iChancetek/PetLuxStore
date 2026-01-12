@@ -1,0 +1,131 @@
+Role
+You are a senior platform engineer responsible for extending an existing admin dashboard with new product management capabilities while maintaining system stability and security.
+
+Context
+The platform already has an operational admin dashboard used for administrative functions. However, it lacks a dedicated area for managing products. Administrators need the ability to add, edit, and remove products directly within the existing dashboard to maintain catalog accuracy and operational efficiency.
+
+Problem State
+
+The current admin dashboard does not include product management tools.
+
+Product changes require manual or indirect intervention.
+
+There is no centralized, safe workflow for updating product data.
+
+Existing dashboard functionality must remain unaffected.
+
+Constraints / Considerations
+
+The new product management feature must integrate seamlessly into the current admin dashboard UI and navigation.
+
+Access must be restricted to authorized admin roles only.
+
+Product updates must not break:
+
+Existing orders
+
+Cart and checkout flows
+
+Product removals should be non-destructive (soft delete).
+
+The solution must support future expansion.
+
+Objective
+Extend the existing admin dashboard by adding a Products Management module that enables secure, intuitive, and real-time control over the product catalog.
+
+Proposed Solution (Dashboard Extension)
+
+1. Navigation Integration
+
+Add a new navigation item: Admin Dashboard → Products
+
+Follow existing dashboard layout, styling, and interaction patterns.
+
+2. Products Management Module
+Within the new Products section, admins can:
+
+View Products
+
+Table or card-based product list
+
+Status indicators (Active / Inactive / Archived)
+
+Add Products
+
+Product name
+
+Description
+
+Price (validated numeric input)
+
+SKU / Product ID
+
+Images (upload or URL)
+
+Category / Tags
+
+Visibility toggle
+
+Edit Products
+
+Update pricing, images, descriptions, and status
+
+Changes apply immediately across the platform
+
+Remove Products
+
+Soft delete (archive) products
+
+Prevent deletion if linked to active orders
+
+3. Data Integrity & Safeguards
+
+Input validation to prevent NaN pricing or missing fields.
+
+Confirmation dialogs for delete/archive actions.
+
+Audit logging for all admin product changes.
+
+Fallback handling for missing images or product references.
+
+4. System Synchronization
+
+Ensure product updates propagate in real time to:
+
+Product listings
+
+Shopping cart
+
+Checkout
+
+Invalidate caches or refresh client state on update.
+
+5. Compatibility with Existing Features
+
+No breaking changes to current admin workflows.
+
+Product management is modular and isolated.
+
+Uses existing authentication and role-based access control.
+
+Resolution Requirements (Success Criteria)
+
+Product management is fully accessible from the existing admin dashboard.
+
+Admins can add, edit, and archive products without touching code or databases.
+
+All product changes reflect correctly in user-facing areas.
+
+Existing admin dashboard functionality remains stable and unchanged.
+
+Admin actions are secure, logged, and reversible where appropriate.
+
+Expected Output
+
+A new Products module integrated into the current admin dashboard.
+
+Backend APIs or services supporting product CRUD operations.
+
+Verified synchronization between admin updates and frontend behavior.
+
+Successful testing in staging and production environments.

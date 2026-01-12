@@ -112,6 +112,16 @@ export interface IStorage {
   updateUser(id: string, userData: Partial<UpsertUser>): Promise<User>;
   deleteUser(id: string): Promise<void>;
 
+  // Admin Product Management
+  listProductsAdmin(filters?: {
+    search?: string;
+    status?: string;
+    categoryId?: string;
+    stockStatus?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ products: Product[]; total: number; page: number; limit: number; totalPages: number }>;
+
   // Audit Logging
   createAuditLog(entry: InsertAuditLog): Promise<AuditLog>;
   getAuditLogs(filters?: {
@@ -671,6 +681,66 @@ export class DatabaseStorage implements IStorage {
       .update(users)
       .set({ isActive: false, updatedAt: new Date() })
       .where(eq(users.id, id));
+  }
+
+  // Admin Product Management
+  async listProductsAdmin(filters?: {
+    search?: string;
+    status?: string;
+    categoryId?: string;
+    stockStatus?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ products: Product[]; total: number; page: number; limit: number; totalPages: number }> {
+    const conditions = [];
+    const limit = filters?.limit || 20;
+    const page = filters?.page || 1;
+    const offset = (page - 1) * limit;
+
+    if (filters?.search) {
+      conditions.push(
+        sql`(${ilike(products.name, `%${filters.search}%`)} OR ${ilike(products.slug, `%${filters.search}%`)} OR ${ilike(products.brand, `%${filters.search}%`)})`
+      );
+    }
+
+    if (filters?.status === 'active') {
+      conditions.push(eq(products.isActive, true));
+    } else if (filters?.status === 'archived') {
+      conditions.push(eq(products.isActive, false));
+    }
+
+    if (filters?.categoryId) {
+      conditions.push(eq(products.categoryId, filters.categoryId));
+    }
+
+    if (filters?.stockStatus === 'in-stock') {
+      conditions.push(sql`${products.inStock} > 10`);
+    } else if (filters?.stockStatus === 'low-stock') {
+      conditions.push(sql`${products.inStock} > 0 AND ${products.inStock} <= 10`);
+    } else if (filters?.stockStatus === 'out-of-stock') {
+      conditions.push(eq(products.inStock, 0));
+    }
+
+    const whereCondition = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const [productsResult, totalResult] = await Promise.all([
+      db.select().from(products)
+        .where(whereCondition)
+        .orderBy(desc(products.updatedAt))
+        .limit(limit)
+        .offset(offset),
+      db.select({ count: sql<number>`count(*)` }).from(products).where(whereCondition)
+    ]);
+
+    const total = totalResult[0]?.count || 0;
+
+    return {
+      products: productsResult,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit)
+    };
   }
 
   // Audit Logging

@@ -4,34 +4,25 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { activityTracker } from "@/lib/activityTracker";
 import { SignIn } from "@clerk/clerk-react";
-import type { AdminStats as AdminStatsType, ProductsResponse, Product, User } from "@shared/schema";
+import type { AdminStats as AdminStatsType, User } from "@shared/schema";
 import Navbar from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
 import AdminStats from "@/components/admin/admin-stats";
-import ProductForm from "@/components/admin/product-form";
 import UsersTab from "@/components/admin/users-tab";
 import OrdersTab from "@/components/admin/orders-tab";
 import AnalyticsTab from "@/components/admin/analytics-tab";
 import AuditLogsTab from "@/components/admin/audit-logs-tab";
+import ProductsTab from "@/components/admin/products-tab";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
   Package, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Eye, 
   Sparkles, 
-  TrendingUp, 
   ShoppingCart, 
-  DollarSign,
   AlertTriangle,
   Users,
-  Activity,
   Shield,
   BarChart3
 } from "lucide-react";
@@ -39,8 +30,6 @@ import {
 export default function Admin() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("users");
 
   // Fetch user profile to check admin role - MUST be called before any early returns
@@ -55,12 +44,6 @@ export default function Admin() {
   // Fetch admin stats - MUST be called before any early returns
   const { data: stats, isLoading: loadingStats } = useQuery<AdminStatsType>({
     queryKey: ["/api/admin/stats"],
-    enabled: isAuthenticated && isAdmin,
-  });
-
-  // Fetch products for management - MUST be called before any early returns
-  const { data: productsData, isLoading: loadingProducts } = useQuery<ProductsResponse>({
-    queryKey: ["/api/products", { limit: 50 }],
     enabled: isAuthenticated && isAdmin,
   });
 
@@ -203,21 +186,6 @@ export default function Admin() {
     );
   }
 
-  const handleEditProduct = (product: Product) => {
-    setSelectedProduct(product);
-    setIsProductDialogOpen(true);
-  };
-
-  const handleAddProduct = () => {
-    setSelectedProduct(null);
-    setIsProductDialogOpen(true);
-  };
-
-  const handleCloseDialog = () => {
-    setIsProductDialogOpen(false);
-    setSelectedProduct(null);
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -301,135 +269,7 @@ export default function Admin() {
 
           {/* Products Tab */}
           <TabsContent value="products" className="mt-6">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center">
-                    <Package className="w-5 h-5 mr-2" />
-                    Product Management
-                  </CardTitle>
-                  <Dialog open={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button onClick={handleAddProduct} data-testid="button-add-product">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Product
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle>
-                          {selectedProduct ? "Edit Product" : "Add New Product"}
-                        </DialogTitle>
-                      </DialogHeader>
-                      <ProductForm 
-                        product={selectedProduct} 
-                        onClose={handleCloseDialog}
-                      />
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {loadingProducts ? (
-                  <div className="space-y-4">
-                    {[...Array(5)].map((_, i) => (
-                      <div key={i} className="h-16 bg-muted animate-pulse rounded" />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Product</TableHead>
-                          <TableHead>Category</TableHead>
-                          <TableHead>Price</TableHead>
-                          <TableHead>Stock</TableHead>
-                          <TableHead>AI Match</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {productsData?.products?.slice(0, 10).map((product: Product) => (
-                          <TableRow key={product.id}>
-                            <TableCell>
-                              <div className="flex items-center space-x-3">
-                                <img 
-                                  src={product.imageUrl || "https://images.unsplash.com/photo-1589941013453-ec89f33b5e95?ixlib=rb-4.0.3&auto=format&fit=crop&w=40&h=40"}
-                                  alt={product.name}
-                                  className="w-10 h-10 object-cover rounded"
-                                />
-                                <div>
-                                  <div className="font-medium" data-testid={`text-product-name-${product.id}`}>
-                                    {product.name}
-                                  </div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {product.petType || "All pets"}
-                                  </div>
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>{product.brand || "Premium"}</TableCell>
-                            <TableCell>${product.price}</TableCell>
-                            <TableCell>
-                              <Badge 
-                                variant={(product.inStock || 0) > 10 ? "secondary" : (product.inStock || 0) > 0 ? "outline" : "destructive"}
-                                data-testid={`badge-stock-${product.id}`}
-                              >
-                                {product.inStock || 0} in stock
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {product.aiMatch ? (
-                                <Badge className="bg-accent/10 text-accent">
-                                  {product.aiMatch}%
-                                </Badge>
-                              ) : (
-                                <span className="text-muted-foreground">-</span>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex items-center justify-end space-x-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => window.open(`/product/${product.slug || product.id}`, '_blank')}
-                                  data-testid={`button-view-${product.id}`}
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleEditProduct(product)}
-                                  data-testid={`button-edit-${product.id}`}
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-destructive hover:text-destructive"
-                                  data-testid={`button-delete-${product.id}`}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )) || (
-                          <TableRow>
-                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                              No products found
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <ProductsTab />
           </TabsContent>
 
           {/* AI Tools Tab */}

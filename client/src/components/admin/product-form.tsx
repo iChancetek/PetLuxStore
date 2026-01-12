@@ -65,7 +65,7 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
   });
 
   // Fetch categories for dropdown
-  const { data: categories } = useQuery({
+  const { data: categories } = useQuery<Array<{ id: string; name: string; slug: string }>>({
     queryKey: ["/api/categories"],
   });
 
@@ -89,6 +89,7 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
         description: `Product ${product ? "updated" : "created"} successfully.`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
       onClose();
     },
     onError: (error: Error) => {
