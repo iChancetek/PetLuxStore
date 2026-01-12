@@ -1,5 +1,5 @@
 -- ONLY UPDATES - NO INSERTS
--- Development passwords override production
+-- Correct password hashes for production
 -- Case-insensitive email matching
 
 UPDATE users 
@@ -7,5 +7,5 @@ SET password_hash = '$argon2id$v=19$m=65536,t=3,p=4$aKdKKT7OzwgswlW3TFiQnw$ewyOc
 WHERE LOWER(email) = LOWER('cm@chancellorminus.com');
 
 UPDATE users 
-SET password_hash = '$argon2id$v=19$m=65536,t=3,p=4$MX5u6tnDDHb93/mDyZ0Eyg$S4Lq5IefspUd0C/9uWco0SyHFxASB/tOVLfn6955Yuo'
+SET password_hash = '$argon2id$v=19$m=65536,t=3,p=4$jr6wXBMNZ6W1K5zYFbzwoA$GENm7nNjRGzmZXx8J3ZxNET5dTyTFrxnHiWVhqPQVhg'
 WHERE LOWER(email) = LOWER('chancellor@ichancetek.com');
