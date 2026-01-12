@@ -166,7 +166,7 @@ export default function Dashboard() {
                     <span>Recent Orders</span>
                   </CardTitle>
                   <Button variant="outline" size="sm" asChild data-testid="button-view-all-orders">
-                    <a href="#" onClick={() => document.querySelector('[data-testid="tab-orders"]')?.click()}>
+                    <a href="#" onClick={() => (document.querySelector('[data-testid="tab-orders"]') as HTMLElement)?.click()}>
                       View All
                     </a>
                   </Button>
@@ -232,7 +232,7 @@ export default function Dashboard() {
                   <span>Recent Activity</span>
                 </CardTitle>
                 <Button variant="outline" size="sm" asChild data-testid="button-view-all-activity">
-                  <a href="#" onClick={() => document.querySelector('[data-testid="tab-activity"]')?.click()}>
+                  <a href="#" onClick={() => (document.querySelector('[data-testid="tab-activity"]') as HTMLElement)?.click()}>
                     View All
                   </a>
                 </Button>
