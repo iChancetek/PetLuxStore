@@ -1,18 +1,20 @@
 import { Link } from "wouter";
-import { motion } from "framer-motion";
 import { Sparkles, Mail, Twitter, Instagram, Facebook, Youtube } from "lucide-react";
 
 export default function Footer() {
   return (
-    <footer className="relative bg-[#030308] border-t border-white/8 overflow-hidden">
-      {/* Background glow */}
-      <div className="absolute bottom-0 left-1/4 w-96 h-64 bg-violet-900/15 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-64 bg-blue-900/10 rounded-full blur-[120px] pointer-events-none" />
+    <footer
+      className="relative border-t border-gray-200 dark:border-white/8 overflow-hidden"
+      style={{ background: "var(--page-bg)" }}
+    >
+      {/* Background glows */}
+      <div className="absolute bottom-0 left-1/4 w-96 h-64 bg-violet-100 dark:bg-violet-900/15 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-64 bg-blue-100 dark:bg-blue-900/10 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="relative container mx-auto px-4 pt-16 pb-8">
-        {/* Main footer grid */}
+        {/* Main grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-10 mb-14">
-          {/* Brand column */}
+          {/* Brand */}
           <div className="lg:col-span-2">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center">
@@ -22,23 +24,22 @@ export default function Footer() {
                 The PotLuxE
               </span>
             </div>
-            <p className="text-white/40 text-sm leading-relaxed mb-6 max-w-xs" data-testid="text-footer-description">
+            <p className="text-gray-500 dark:text-white/40 text-sm leading-relaxed mb-6 max-w-xs" data-testid="text-footer-description">
               The world's first AI-native luxury pet store. Curated products, intelligent
               recommendations, and premium quality for your beloved companions.
             </p>
-            {/* Social Links */}
             <div className="flex items-center gap-3">
               {[
-                { icon: Twitter, label: "Twitter", href: "#" },
-                { icon: Instagram, label: "Instagram", href: "#" },
-                { icon: Facebook, label: "Facebook", href: "#" },
-                { icon: Youtube, label: "YouTube", href: "#" },
-              ].map(({ icon: Icon, label, href }) => (
+                { icon: Twitter, label: "Twitter" },
+                { icon: Instagram, label: "Instagram" },
+                { icon: Facebook, label: "Facebook" },
+                { icon: Youtube, label: "YouTube" },
+              ].map(({ icon: Icon, label }) => (
                 <a
                   key={label}
-                  href={href}
+                  href="#"
                   aria-label={label}
-                  className="w-9 h-9 glass rounded-lg border border-white/10 hover:border-violet-500/30 flex items-center justify-center text-white/40 hover:text-violet-400 transition-all duration-200 hover:glow-sm"
+                  className="w-9 h-9 glass rounded-lg border border-gray-200 dark:border-white/10 hover:border-violet-400/50 dark:hover:border-violet-500/30 flex items-center justify-center text-gray-400 dark:text-white/40 hover:text-violet-600 dark:hover:text-violet-400 transition-all duration-200"
                 >
                   <Icon className="w-4 h-4" />
                 </a>
@@ -48,7 +49,7 @@ export default function Footer() {
 
           {/* Shop */}
           <div>
-            <h4 className="text-white font-semibold text-sm mb-4 tracking-wider uppercase" data-testid="text-footer-shop-title">
+            <h4 className="text-gray-900 dark:text-white font-semibold text-sm mb-4 tracking-wider uppercase" data-testid="text-footer-shop-title">
               Shop
             </h4>
             <ul className="space-y-3">
@@ -62,7 +63,7 @@ export default function Footer() {
                 <li key={item.label}>
                   <Link
                     href={item.href}
-                    className="text-sm text-white/40 hover:text-violet-300 transition-colors duration-200"
+                    className="text-sm text-gray-500 dark:text-white/40 hover:text-violet-600 dark:hover:text-violet-300 transition-colors duration-200"
                   >
                     {item.label}
                   </Link>
@@ -73,22 +74,22 @@ export default function Footer() {
 
           {/* Support */}
           <div>
-            <h4 className="text-white font-semibold text-sm mb-4 tracking-wider uppercase" data-testid="text-footer-support-title">
+            <h4 className="text-gray-900 dark:text-white font-semibold text-sm mb-4 tracking-wider uppercase" data-testid="text-footer-support-title">
               Support
             </h4>
             <ul className="space-y-3">
               {[
-                { label: "AI Assistant", href: "#" },
-                { label: "Help Center", href: "#" },
-                { label: "Contact Us", href: "#" },
-                { label: "Shipping Info", href: "#" },
-                { label: "Returns", href: "#" },
+                { label: "AI Assistant", testId: "link-footer-ai-assistant" },
+                { label: "Help Center", testId: "link-footer-help" },
+                { label: "Contact Us", testId: "link-footer-contact" },
+                { label: "Shipping Info", testId: "link-footer-shipping" },
+                { label: "Returns", testId: "link-footer-returns" },
               ].map((item) => (
                 <li key={item.label}>
                   <a
-                    href={item.href}
-                    className="text-sm text-white/40 hover:text-violet-300 transition-colors duration-200"
-                    data-testid={`link-footer-${item.label.toLowerCase().replace(" ", "-")}`}
+                    href="#"
+                    className="text-sm text-gray-500 dark:text-white/40 hover:text-violet-600 dark:hover:text-violet-300 transition-colors duration-200"
+                    data-testid={item.testId}
                   >
                     {item.label}
                   </a>
@@ -99,22 +100,22 @@ export default function Footer() {
 
           {/* Company */}
           <div>
-            <h4 className="text-white font-semibold text-sm mb-4 tracking-wider uppercase" data-testid="text-footer-company-title">
+            <h4 className="text-gray-900 dark:text-white font-semibold text-sm mb-4 tracking-wider uppercase" data-testid="text-footer-company-title">
               Company
             </h4>
             <ul className="space-y-3">
               {[
-                { label: "About Us", href: "#" },
-                { label: "Privacy Policy", href: "#" },
-                { label: "Terms of Service", href: "#" },
-                { label: "Careers", href: "#" },
-                { label: "Press", href: "#" },
+                { label: "About Us", testId: "link-footer-about" },
+                { label: "Privacy Policy", testId: "link-footer-privacy" },
+                { label: "Terms of Service", testId: "link-footer-terms" },
+                { label: "Careers", testId: "link-footer-careers" },
+                { label: "Press", testId: "link-footer-press" },
               ].map((item) => (
                 <li key={item.label}>
                   <a
-                    href={item.href}
-                    className="text-sm text-white/40 hover:text-violet-300 transition-colors duration-200"
-                    data-testid={`link-footer-${item.label.toLowerCase().replace(" ", "-")}`}
+                    href="#"
+                    className="text-sm text-gray-500 dark:text-white/40 hover:text-violet-600 dark:hover:text-violet-300 transition-colors duration-200"
+                    data-testid={item.testId}
                   >
                     {item.label}
                   </a>
@@ -124,31 +125,31 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* AI-powered badge strip */}
-        <div className="flex flex-wrap items-center justify-between gap-4 py-6 border-t border-white/8 mb-6">
+        {/* Badge strip */}
+        <div className="flex flex-wrap items-center justify-between gap-4 py-6 border-t border-gray-100 dark:border-white/8 mb-6">
           <div className="flex flex-wrap items-center gap-4">
             {["AI-Powered", "Luxury Curated", "Premium Quality", "Fast Shipping"].map((tag) => (
               <span
                 key={tag}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full glass border border-white/8 text-xs text-white/35 font-medium"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full glass border border-gray-200 dark:border-white/8 text-xs text-gray-400 dark:text-white/35 font-medium"
               >
-                <div className="w-1 h-1 bg-violet-400 rounded-full" />
+                <div className="w-1 h-1 bg-violet-500 rounded-full" />
                 {tag}
               </span>
             ))}
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-white/25">
+          <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-white/25">
             <Mail className="w-3.5 h-3.5" />
             hello@thepotluxe.com
           </div>
         </div>
 
-        {/* Bottom copyright */}
-        <div className="border-t border-white/5 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-white/20 text-xs" data-testid="text-footer-copyright">
+        {/* Copyright */}
+        <div className="border-t border-gray-100 dark:border-white/5 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-gray-400 dark:text-white/20 text-xs" data-testid="text-footer-copyright">
             &copy; 2026 The PotLuxE. All rights reserved. Powered by AI technology.
           </p>
-          <p className="text-white/15 text-xs">
+          <p className="text-gray-300 dark:text-white/15 text-xs">
             Developed by ChanceTEK LLC &amp; iSynera LLC
           </p>
         </div>

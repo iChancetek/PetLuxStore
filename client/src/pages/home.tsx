@@ -57,11 +57,11 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#050510] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="relative">
           <div className="w-16 h-16 border-2 border-violet-500/30 rounded-full animate-spin" />
           <div className="absolute inset-0 flex items-center justify-center">
-            <Sparkles className="w-6 h-6 text-violet-400 animate-pulse" />
+            <Sparkles className="w-6 h-6 text-violet-500 animate-pulse" />
           </div>
         </div>
       </div>
@@ -69,22 +69,56 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050510] text-white overflow-x-hidden">
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       <Navbar />
 
       {/* ── HERO SECTION ── */}
       <section ref={heroRef} className="relative min-h-screen flex items-center overflow-hidden">
-        <div className="absolute inset-0 animated-bg" />
+
+        {/* Video background */}
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover z-0"
+        >
+          <source src="/hero-video.mp4" type="video/mp4" />
+        </video>
+
+        {/* Theme-adaptive overlay over video */}
+        <div
+          className="absolute inset-0 z-[1]"
+          style={{ background: "var(--video-overlay)" }}
+        />
+
+        {/* Animated color gradient (semi-transparent, on top of overlay) */}
+        <div className="absolute inset-0 z-[2] animated-bg opacity-60" />
 
         {/* Floating orbs */}
-        <div className="absolute top-1/4 left-[8%] w-80 h-80 bg-violet-600/25 rounded-full blur-[120px] animate-float-orb pointer-events-none" />
-        <div className="absolute bottom-1/4 right-[8%] w-96 h-96 bg-blue-600/20 rounded-full blur-[130px] animate-float-orb-2 pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-purple-900/10 rounded-full blur-[160px] pointer-events-none" />
-        <div className="absolute top-[15%] right-[25%] w-48 h-48 bg-cyan-600/15 rounded-full blur-[80px] animate-float-orb-3 pointer-events-none" />
+        <div
+          className="absolute top-1/4 left-[8%] w-80 h-80 rounded-full blur-[120px] animate-float-orb pointer-events-none z-[3]"
+          style={{ background: "var(--orb-1)" }}
+        />
+        <div
+          className="absolute bottom-1/4 right-[8%] w-96 h-96 rounded-full blur-[130px] animate-float-orb-2 pointer-events-none z-[3]"
+          style={{ background: "var(--orb-2)" }}
+        />
+        <div
+          className="absolute top-[15%] right-[25%] w-48 h-48 rounded-full blur-[80px] animate-float-orb-3 pointer-events-none z-[3]"
+          style={{ background: "var(--orb-3)" }}
+        />
 
-        {/* Subtle grid overlay */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(139,92,246,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(139,92,246,0.03)_1px,transparent_1px)] bg-[size:60px_60px] pointer-events-none" />
+        {/* Subtle grid */}
+        <div
+          className="absolute inset-0 z-[4] pointer-events-none"
+          style={{
+            backgroundImage: `linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px)`,
+            backgroundSize: "60px 60px"
+          }}
+        />
 
+        {/* Content */}
         <motion.div
           className="relative z-10 container mx-auto px-4 pt-24 pb-20"
           style={{ y: heroY, opacity: heroOpacity }}
@@ -95,11 +129,12 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-violet-500/30 mb-10"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border mb-10"
+              style={{ borderColor: "rgba(139, 92, 246, 0.35)" }}
             >
-              <div className="w-2 h-2 bg-violet-400 rounded-full animate-pulse" />
-              <Sparkles className="w-4 h-4 text-violet-400" />
-              <span className="text-sm text-violet-300 font-medium tracking-wide">
+              <div className="w-2 h-2 bg-violet-500 rounded-full animate-pulse" />
+              <Sparkles className="w-4 h-4 text-violet-500 dark:text-violet-400" />
+              <span className="text-sm font-medium text-violet-700 dark:text-violet-300 tracking-wide">
                 AI-Native Pet Commerce — The Future is Now
               </span>
             </motion.div>
@@ -113,7 +148,7 @@ export default function Home() {
             >
               <span className="gradient-text">Premium</span>
               <br />
-              <span className="text-white">Pet Care</span>
+              <span className="text-gray-900 dark:text-white">Pet Care</span>
               <br />
               <span className="shimmer-text">Reimagined</span>
             </motion.h1>
@@ -122,7 +157,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-lg md:text-xl text-white/50 max-w-2xl mx-auto mb-12 leading-relaxed"
+              className="text-lg md:text-xl text-gray-600 dark:text-white/50 max-w-2xl mx-auto mb-12 leading-relaxed"
             >
               The world's first AI-native luxury pet store. Curated products, personalized
               recommendations, and intelligent shopping — powered by next-gen AI technology.
@@ -136,14 +171,14 @@ export default function Home() {
               onSubmit={handleSearch}
               className="relative max-w-2xl mx-auto mb-12"
             >
-              <div className="relative glass rounded-2xl border border-white/10 overflow-hidden hover:border-violet-500/40 transition-all duration-300 focus-within:border-violet-500/50 focus-within:glow-sm">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-violet-400" />
+              <div className="relative glass rounded-2xl border border-violet-300/30 dark:border-white/10 overflow-hidden hover:border-violet-500/50 transition-all duration-300 focus-within:border-violet-500/60 shadow-lg dark:shadow-none">
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-violet-500 dark:text-violet-400" />
                 <input
                   type="text"
                   placeholder="Ask AI: 'Best organic food for senior dogs'..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-transparent pl-14 pr-36 py-5 text-white placeholder:text-white/25 focus:outline-none text-base"
+                  className="w-full bg-transparent pl-14 pr-36 py-5 text-gray-800 dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/25 focus:outline-none text-base"
                 />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
                   <Button
@@ -178,7 +213,7 @@ export default function Home() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-white/15 text-white bg-white/5 hover:bg-white/10 hover:border-violet-500/50 px-10 py-7 text-base font-semibold rounded-2xl backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:-translate-y-1"
+                  className="border-violet-300 dark:border-white/15 text-violet-700 dark:text-white bg-white/40 dark:bg-white/5 hover:bg-white/60 dark:hover:bg-white/10 hover:border-violet-500 dark:hover:border-violet-500/50 px-10 py-7 text-base font-semibold rounded-2xl backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:-translate-y-1"
                 >
                   <Brain className="w-5 h-5 mr-2" />
                   Explore AI Picks
@@ -186,7 +221,7 @@ export default function Home() {
               </Link>
             </motion.div>
 
-            {/* Floating stats bar */}
+            {/* Stats bar */}
             <motion.div
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
@@ -200,10 +235,10 @@ export default function Home() {
               ].map((stat) => (
                 <div
                   key={stat.label}
-                  className="glass rounded-2xl p-4 text-center border border-white/8 hover:border-violet-500/30 transition-all duration-300"
+                  className="glass rounded-2xl p-4 text-center border border-violet-300/25 dark:border-white/8 hover:border-violet-500/40 transition-all duration-300 shadow-sm dark:shadow-none"
                 >
                   <div className="text-2xl font-bold gradient-text mb-1">{stat.value}</div>
-                  <div className="text-[11px] text-white/40 leading-tight">{stat.label}</div>
+                  <div className="text-[11px] text-gray-500 dark:text-white/40 leading-tight">{stat.label}</div>
                 </div>
               ))}
             </motion.div>
@@ -215,17 +250,19 @@ export default function Home() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.2 }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-10"
         >
-          <div className="w-px h-14 bg-gradient-to-b from-transparent via-violet-400/50 to-violet-400" />
-          <div className="w-1.5 h-1.5 bg-violet-400 rounded-full animate-pulse" />
+          <div className="w-px h-14 bg-gradient-to-b from-transparent via-violet-500/50 to-violet-500" />
+          <div className="w-1.5 h-1.5 bg-violet-500 rounded-full animate-pulse" />
         </motion.div>
       </section>
 
       {/* ── CATEGORIES SECTION ── */}
-      <section className="py-28 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#050510] via-[#090920] to-[#050510]" />
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/20 to-transparent" />
+      <section className="py-28 relative" style={{ background: "var(--page-bg)" }}>
+        <div
+          className="absolute top-0 left-0 right-0 h-px"
+          style={{ background: "linear-gradient(to right, transparent, rgba(139,92,246,0.25), transparent)" }}
+        />
 
         <div className="relative container mx-auto px-4">
           <motion.div
@@ -235,15 +272,15 @@ export default function Home() {
             variants={fadeInUp}
             className="text-center mb-16"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-violet-500/25 mb-6">
-              <Sparkles className="w-4 h-4 text-violet-400" />
-              <span className="text-violet-300 text-sm font-medium">AI Curated Collections</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-violet-300/30 dark:border-violet-500/25 mb-6 shadow-sm dark:shadow-none">
+              <Sparkles className="w-4 h-4 text-violet-500 dark:text-violet-400" />
+              <span className="text-violet-700 dark:text-violet-300 text-sm font-medium">AI Curated Collections</span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-serif font-bold text-white mb-4">
+            <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900 dark:text-white mb-4">
               Shop by{" "}
               <span className="gradient-text">Category</span>
             </h2>
-            <p className="text-white/40 text-lg max-w-xl mx-auto">
+            <p className="text-gray-500 dark:text-white/40 text-lg max-w-xl mx-auto">
               Every collection hand-curated and powered by intelligent product discovery
             </p>
           </motion.div>
@@ -265,27 +302,27 @@ export default function Home() {
                   onClick={() => setLocation(`/shop?categoryId=${category.id}`)}
                   data-testid={`card-category-${index}`}
                 >
-                  <div className="glass-card rounded-2xl overflow-hidden border border-white/8 hover:border-violet-500/40 transition-all duration-400 hover:shadow-[0_0_50px_rgba(139,92,246,0.2)] hover:glow-sm">
+                  <div className="glass-card rounded-2xl overflow-hidden border border-gray-200/80 dark:border-white/8 hover:border-violet-400/50 dark:hover:border-violet-500/40 transition-all duration-400 hover:shadow-xl dark:hover:shadow-[0_0_50px_rgba(139,92,246,0.2)]">
                     <div className="relative h-52 overflow-hidden">
                       <img
                         src={category.imageUrl}
                         alt={category.name}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-600"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
                       <div className="absolute inset-0 bg-gradient-to-br from-violet-600/0 to-blue-600/0 group-hover:from-violet-600/10 group-hover:to-blue-600/10 transition-all duration-400" />
                       <div className="absolute bottom-4 left-4">
-                        <Badge className="bg-violet-600/80 text-white border-0 text-xs backdrop-blur-sm">
+                        <Badge className="bg-violet-600/85 text-white border-0 text-xs backdrop-blur-sm">
                           AI Curated
                         </Badge>
                       </div>
                     </div>
                     <div className="p-5">
-                      <h3 className="text-lg font-semibold text-white mb-1.5">{category.name}</h3>
-                      <p className="text-white/40 text-sm line-clamp-2 mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1.5">{category.name}</h3>
+                      <p className="text-gray-500 dark:text-white/40 text-sm line-clamp-2 mb-4">
                         {category.description || "Premium products for your pet"}
                       </p>
-                      <div className="flex items-center gap-1 text-violet-400 text-sm font-medium group-hover:gap-2 transition-all duration-200">
+                      <div className="flex items-center gap-1 text-violet-600 dark:text-violet-400 text-sm font-medium group-hover:gap-2 transition-all duration-200">
                         Browse collection
                         <ChevronRight className="w-4 h-4" />
                       </div>
@@ -294,7 +331,7 @@ export default function Home() {
                 </motion.div>
               ))
             ) : (
-              <div className="col-span-4 text-center py-20 text-white/25">
+              <div className="col-span-4 text-center py-20 text-gray-400 dark:text-white/25">
                 <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
                 <p>Loading categories...</p>
               </div>
@@ -304,12 +341,15 @@ export default function Home() {
       </section>
 
       {/* ── AI RECOMMENDED PRODUCTS ── */}
-      <section className="py-28 relative">
-        <div className="absolute inset-0 bg-[#080820]" />
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
-        <div className="absolute left-0 top-1/2 w-80 h-80 bg-violet-600/8 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute right-0 top-1/3 w-80 h-80 bg-blue-600/8 rounded-full blur-[120px] pointer-events-none" />
+      <section className="py-28 relative" style={{ background: "var(--page-bg-alt)" }}>
+        <div
+          className="absolute top-0 left-0 right-0 h-px"
+          style={{ background: "linear-gradient(to right, transparent, rgba(139,92,246,0.3), transparent)" }}
+        />
+        <div
+          className="absolute bottom-0 left-0 right-0 h-px"
+          style={{ background: "linear-gradient(to right, transparent, rgba(59,130,246,0.2), transparent)" }}
+        />
 
         <div className="relative container mx-auto px-4">
           <motion.div
@@ -319,16 +359,16 @@ export default function Home() {
             variants={fadeInUp}
             className="text-center mb-16"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-violet-500/30 mb-6">
-              <Sparkles className="w-4 h-4 text-violet-400 animate-pulse" />
-              <span className="text-violet-300 text-sm font-medium">AI-Powered Recommendations</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-violet-300/30 dark:border-violet-500/30 mb-6 shadow-sm dark:shadow-none">
+              <Sparkles className="w-4 h-4 text-violet-500 dark:text-violet-400 animate-pulse" />
+              <span className="text-violet-700 dark:text-violet-300 text-sm font-medium">AI-Powered Recommendations</span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-serif font-bold text-white mb-4">
+            <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900 dark:text-white mb-4">
               Picked{" "}
               <span className="gradient-text">Perfect</span>
               {" "}for Your Pet
             </h2>
-            <p className="text-white/40 text-lg">
+            <p className="text-gray-500 dark:text-white/40 text-lg">
               Our AI analyzes millions of data points to surface products your pet will love
             </p>
           </motion.div>
@@ -336,12 +376,12 @@ export default function Home() {
           {loadingProducts ? (
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {[...Array(8)].map((_, i) => (
-                <div key={i} className="glass-card rounded-2xl overflow-hidden border border-white/5 animate-pulse">
-                  <div className="h-48 bg-white/5" />
+                <div key={i} className="glass-card rounded-2xl overflow-hidden border border-gray-200 dark:border-white/5 animate-pulse">
+                  <div className="h-48 bg-gray-100 dark:bg-white/5" />
                   <div className="p-5 space-y-3">
-                    <div className="h-4 bg-white/5 rounded-lg w-3/4" />
-                    <div className="h-4 bg-white/5 rounded-lg w-1/2" />
-                    <div className="h-10 bg-white/5 rounded-xl" />
+                    <div className="h-4 bg-gray-100 dark:bg-white/5 rounded-lg w-3/4" />
+                    <div className="h-4 bg-gray-100 dark:bg-white/5 rounded-lg w-1/2" />
+                    <div className="h-10 bg-gray-100 dark:bg-white/5 rounded-xl" />
                   </div>
                 </div>
               ))}
@@ -361,13 +401,11 @@ export default function Home() {
               ))}
             </motion.div>
           ) : (
-            <div className="text-center py-20 text-white/30">
+            <div className="text-center py-20 text-gray-400 dark:text-white/30">
               <ShoppingBag className="w-16 h-16 mx-auto mb-4 opacity-40" />
               <p className="text-lg mb-6">No products available yet</p>
               <Link href="/shop">
-                <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">
-                  Browse Shop
-                </Button>
+                <Button variant="outline">Browse Shop</Button>
               </Link>
             </div>
           )}
@@ -392,9 +430,7 @@ export default function Home() {
       </section>
 
       {/* ── WHY POTLUXE ── */}
-      <section className="py-28 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#050510] to-[#080820]" />
-
+      <section className="py-28 relative" style={{ background: "var(--page-bg)" }}>
         <div className="relative container mx-auto px-4">
           <motion.div
             initial="hidden"
@@ -403,15 +439,15 @@ export default function Home() {
             variants={fadeInUp}
             className="text-center mb-16"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-blue-500/25 mb-6">
-              <Shield className="w-4 h-4 text-blue-400" />
-              <span className="text-blue-300 text-sm font-medium">Why Choose PotLuxE</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-blue-300/30 dark:border-blue-500/25 mb-6 shadow-sm dark:shadow-none">
+              <Shield className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+              <span className="text-blue-700 dark:text-blue-300 text-sm font-medium">Why Choose PotLuxE</span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-serif font-bold text-white mb-4">
+            <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900 dark:text-white mb-4">
               The Future of{" "}
               <span className="gradient-text">Pet Shopping</span>
             </h2>
-            <p className="text-white/40 text-lg max-w-xl mx-auto">
+            <p className="text-gray-500 dark:text-white/40 text-lg max-w-xl mx-auto">
               We combine luxury curation with cutting-edge AI to deliver an unmatched pet shopping experience
             </p>
           </motion.div>
@@ -465,21 +501,25 @@ export default function Home() {
                 key={index}
                 variants={fadeInUp}
                 whileHover={{ y: -8, transition: { duration: 0.25 } }}
-                className="glass-card rounded-2xl p-8 border border-white/8 hover:border-violet-500/30 transition-all duration-300 group hover:shadow-[0_0_40px_rgba(139,92,246,0.15)]"
+                className="glass-card rounded-2xl p-8 border border-gray-200/70 dark:border-white/8 hover:border-violet-400/40 dark:hover:border-violet-500/30 transition-all duration-300 group hover:shadow-xl dark:hover:shadow-[0_0_40px_rgba(139,92,246,0.15)]"
               >
                 <div
                   className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-all duration-300 ${
                     feature.color === "violet"
-                      ? "bg-violet-500/10 group-hover:bg-violet-500/20"
-                      : "bg-blue-500/10 group-hover:bg-blue-500/20"
+                      ? "bg-violet-100 dark:bg-violet-500/10 group-hover:bg-violet-200 dark:group-hover:bg-violet-500/20"
+                      : "bg-blue-100 dark:bg-blue-500/10 group-hover:bg-blue-200 dark:group-hover:bg-blue-500/20"
                   }`}
                 >
                   <feature.icon
-                    className={`w-7 h-7 ${feature.color === "violet" ? "text-violet-400" : "text-blue-400"}`}
+                    className={`w-7 h-7 ${
+                      feature.color === "violet"
+                        ? "text-violet-600 dark:text-violet-400"
+                        : "text-blue-600 dark:text-blue-400"
+                    }`}
                   />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-3">{feature.title}</h3>
-                <p className="text-white/45 leading-relaxed">{feature.desc}</p>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">{feature.title}</h3>
+                <p className="text-gray-500 dark:text-white/45 leading-relaxed">{feature.desc}</p>
               </motion.div>
             ))}
           </motion.div>
@@ -487,11 +527,11 @@ export default function Home() {
       </section>
 
       {/* ── TESTIMONIALS ── */}
-      <section className="py-28 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[#080820]" />
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent" />
-        <div className="absolute -left-40 top-1/2 w-[500px] h-[500px] bg-violet-600/8 rounded-full blur-[150px] pointer-events-none" />
-        <div className="absolute -right-40 top-1/3 w-[500px] h-[500px] bg-blue-600/8 rounded-full blur-[150px] pointer-events-none" />
+      <section className="py-28 relative overflow-hidden" style={{ background: "var(--page-bg-alt)" }}>
+        <div
+          className="absolute top-0 left-0 right-0 h-px"
+          style={{ background: "linear-gradient(to right, transparent, rgba(139,92,246,0.3), transparent)" }}
+        />
 
         <div className="relative container mx-auto px-4">
           <motion.div
@@ -501,11 +541,11 @@ export default function Home() {
             variants={fadeInUp}
             className="text-center mb-16"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-violet-500/25 mb-6">
-              <Star className="w-4 h-4 text-violet-400 fill-violet-400" />
-              <span className="text-violet-300 text-sm font-medium">What Pet Parents Say</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-violet-300/30 dark:border-violet-500/25 mb-6 shadow-sm dark:shadow-none">
+              <Star className="w-4 h-4 text-violet-500 dark:text-violet-400 fill-current" />
+              <span className="text-violet-700 dark:text-violet-300 text-sm font-medium">What Pet Parents Say</span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-serif font-bold text-white mb-4">
+            <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900 dark:text-white mb-4">
               Loved by{" "}
               <span className="gradient-text">50,000+</span>
               {" "}Pet Parents
@@ -549,14 +589,14 @@ export default function Home() {
                 key={index}
                 variants={fadeInUp}
                 whileHover={{ y: -6, transition: { duration: 0.25 } }}
-                className="glass-card rounded-2xl p-8 border border-white/8 hover:border-violet-500/25 transition-all duration-300"
+                className="glass-card rounded-2xl p-8 border border-gray-200/70 dark:border-white/8 hover:border-violet-400/30 dark:hover:border-violet-500/25 transition-all duration-300 hover:shadow-lg dark:hover:shadow-none"
               >
                 <div className="flex items-center gap-1 mb-5">
                   {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-violet-400 text-violet-400" />
+                    <Star key={i} className="w-4 h-4 fill-violet-500 text-violet-500" />
                   ))}
                 </div>
-                <p className="text-white/60 leading-relaxed mb-7 italic text-base">
+                <p className="text-gray-600 dark:text-white/60 leading-relaxed mb-7 italic text-base">
                   "{testimonial.review}"
                 </p>
                 <div className="flex items-center gap-3">
@@ -564,8 +604,8 @@ export default function Home() {
                     {testimonial.avatar}
                   </div>
                   <div>
-                    <div className="font-semibold text-white text-sm">{testimonial.name}</div>
-                    <div className="text-white/35 text-xs mt-0.5">{testimonial.pet}</div>
+                    <div className="font-semibold text-gray-900 dark:text-white text-sm">{testimonial.name}</div>
+                    <div className="text-gray-400 dark:text-white/35 text-xs mt-0.5">{testimonial.pet}</div>
                   </div>
                 </div>
               </motion.div>
@@ -575,10 +615,15 @@ export default function Home() {
       </section>
 
       {/* ── NEWSLETTER CTA ── */}
-      <section className="py-28 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-violet-900/20 via-[#050510] to-blue-900/20" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(139,92,246,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(139,92,246,0.04)_1px,transparent_1px)] bg-[size:45px_45px]" />
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/20 to-transparent" />
+      <section className="py-28 relative overflow-hidden" style={{ background: "var(--page-bg)" }}>
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-50 dark:from-violet-900/20 via-transparent to-blue-50 dark:to-blue-900/20 pointer-events-none" />
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: `linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px)`,
+            backgroundSize: "45px 45px"
+          }}
+        />
 
         <div className="relative container mx-auto px-4">
           <motion.div
@@ -588,24 +633,23 @@ export default function Home() {
             variants={fadeInUp}
             className="max-w-2xl mx-auto text-center"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-violet-500/30 mb-8">
-              <Zap className="w-4 h-4 text-violet-400" />
-              <span className="text-violet-300 text-sm font-medium">Stay Ahead with AI Insights</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-violet-300/30 dark:border-violet-500/30 mb-8 shadow-sm dark:shadow-none">
+              <Zap className="w-4 h-4 text-violet-500 dark:text-violet-400" />
+              <span className="text-violet-700 dark:text-violet-300 text-sm font-medium">Stay Ahead with AI Insights</span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-serif font-bold text-white mb-4">
+            <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900 dark:text-white mb-4">
               Join the{" "}
               <span className="gradient-text">Future</span>
               {" "}of Pet Care
             </h2>
-            <p className="text-white/45 text-lg mb-10 leading-relaxed">
-              Get AI-curated product drops, exclusive offers, and expert pet care insights delivered
-              to your inbox.
+            <p className="text-gray-500 dark:text-white/45 text-lg mb-10 leading-relaxed">
+              Get AI-curated product drops, exclusive offers, and expert pet care insights delivered to your inbox.
             </p>
             <form className="flex gap-3 max-w-md mx-auto">
               <input
                 type="email"
                 placeholder="Enter your email..."
-                className="flex-1 glass rounded-xl border border-white/10 px-5 py-4 text-white placeholder:text-white/25 focus:outline-none focus:border-violet-500/50 bg-transparent text-sm"
+                className="flex-1 glass rounded-xl border border-gray-200 dark:border-white/10 px-5 py-4 text-gray-800 dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/25 focus:outline-none focus:border-violet-400 dark:focus:border-violet-500/50 bg-transparent text-sm shadow-sm dark:shadow-none"
               />
               <Button
                 type="submit"
@@ -615,7 +659,7 @@ export default function Home() {
                 Subscribe
               </Button>
             </form>
-            <p className="text-white/25 text-xs mt-4">
+            <p className="text-gray-400 dark:text-white/25 text-xs mt-4">
               No spam. Unsubscribe anytime. Powered by AI.
             </p>
           </motion.div>

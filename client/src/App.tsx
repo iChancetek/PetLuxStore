@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/providers/auth-provider";
 import { GuestCartProvider } from "@/hooks/useGuestCart";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { useCartMerge } from "@/hooks/useCartMerge";
 import Landing from "@/pages/landing";
 import Home from "@/pages/home";
@@ -18,11 +19,9 @@ import Dashboard from "@/pages/dashboard";
 import ResetPassword from "@/pages/reset-password";
 import NotFound from "@/pages/not-found";
 
-// Component to handle cart merge logic (inside QueryClientProvider)
 function CartMergeSetup() {
-  // Initialize cart merge functionality - this must be inside QueryClientProvider
   const cartMerge = useCartMerge();
-  return null; // This component only handles side effects
+  return null;
 }
 
 function Router() {
@@ -45,15 +44,17 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <GuestCartProvider>
-        <AuthProvider>
-          <CartMergeSetup />
-          <TooltipProvider>
-            <Toaster />
-            <Router />
-          </TooltipProvider>
-        </AuthProvider>
-      </GuestCartProvider>
+      <ThemeProvider>
+        <GuestCartProvider>
+          <AuthProvider>
+            <CartMergeSetup />
+            <TooltipProvider>
+              <Toaster />
+              <Router />
+            </TooltipProvider>
+          </AuthProvider>
+        </GuestCartProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
