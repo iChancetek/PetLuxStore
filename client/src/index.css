@@ -66,7 +66,7 @@
   --grid-line: rgba(109, 40, 217, 0.04);
 
   /* Video overlay */
-  --video-overlay: rgba(240, 237, 255, 0.82);
+  --video-overlay: rgba(240, 237, 255, 0.30);
 }
 
 /* ── DARK THEME ─────────────────────────────────────────── */
@@ -125,7 +125,7 @@
   --grid-line: rgba(139, 92, 246, 0.035);
 
   /* Video overlay */
-  --video-overlay: rgba(5, 5, 16, 0.78);
+  --video-overlay: rgba(5, 5, 16, 0.48);
 }
 
 @layer base {

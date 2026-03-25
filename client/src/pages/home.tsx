@@ -92,8 +92,18 @@ export default function Home() {
           style={{ background: "var(--video-overlay)" }}
         />
 
-        {/* Animated color gradient (semi-transparent, on top of overlay) */}
-        <div className="absolute inset-0 z-[2] animated-bg opacity-60" />
+        {/* Animated color gradient (very subtle, on top of overlay) */}
+        <div className="absolute inset-0 z-[2] animated-bg opacity-10" />
+
+        {/* Soft radial contrast zone so text stays readable over the video */}
+        <div
+          className="absolute inset-0 z-[3] pointer-events-none dark:hidden"
+          style={{ background: "radial-gradient(ellipse 80% 65% at 50% 50%, rgba(240,237,255,0.50) 0%, transparent 70%)" }}
+        />
+        <div
+          className="absolute inset-0 z-[3] pointer-events-none hidden dark:block"
+          style={{ background: "radial-gradient(ellipse 80% 65% at 50% 50%, rgba(4,4,18,0.45) 0%, transparent 70%)" }}
+        />
 
         {/* Floating orbs */}
         <div
