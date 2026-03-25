@@ -98,7 +98,7 @@ export default function Home() {
         {/* Soft radial contrast zone so text stays readable over the video */}
         <div
           className="absolute inset-0 z-[3] pointer-events-none dark:hidden"
-          style={{ background: "radial-gradient(ellipse 80% 65% at 50% 50%, rgba(240,237,255,0.50) 0%, transparent 70%)" }}
+          style={{ background: "radial-gradient(ellipse 80% 65% at 50% 50%, rgba(240,237,255,0.18) 0%, transparent 70%)" }}
         />
         <div
           className="absolute inset-0 z-[3] pointer-events-none hidden dark:block"
