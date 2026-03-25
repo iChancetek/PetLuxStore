@@ -4,7 +4,17 @@
 
 The PotLuxE is a production-ready pet e-commerce platform built as a full-stack web application with modern React frontend and Express backend. The application features AI-powered product recommendations, personalized shopping experiences, and comprehensive e-commerce functionality including cart management, checkout processing, and administrative tools. The platform is designed to provide a premium shopping experience for pet owners with intelligent product discovery and AI-driven customer assistance.
 
-## Recent Changes (March 25, 2026)
+## Recent Changes (March 25, 2026) — PWA
+
+- **Progressive Web App (PWA)**: Full PWA conversion
+  - `client/public/manifest.json` — app name, theme color (#7c3aed), shortcuts to Shop & AI Picks
+  - `client/public/sw.js` — service worker: cache-first for static assets, network-first for API, offline fallback
+  - `client/public/offline.html` — branded offline page with dark theme + orbs
+  - Icons generated: `icons/icon-192.png`, `icons/icon-512.png`, `icons/apple-touch-icon.png`, `favicon-32.png`
+  - `client/index.html` — manifest link, Apple PWA meta tags, OG tags, SW registration script
+  - App is now installable on mobile (iOS/Android) and desktop Chrome/Edge
+
+## Previous Changes (March 25, 2026)
 
 - **MAJOR: Futuristic AI-Native Frontend Redesign** — Complete visual overhaul of the platform
   - Dark luxury theme set as default across entire app (deep navy/black backgrounds)
