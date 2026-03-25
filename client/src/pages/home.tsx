@@ -119,14 +119,6 @@ export default function Home() {
           style={{ background: "var(--orb-3)" }}
         />
 
-        {/* Subtle grid */}
-        <div
-          className="absolute inset-0 z-[4] pointer-events-none"
-          style={{
-            backgroundImage: `linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px)`,
-            backgroundSize: "60px 60px"
-          }}
-        />
 
         {/* Content */}
         <motion.div
@@ -627,13 +619,6 @@ export default function Home() {
       {/* ── NEWSLETTER CTA ── */}
       <section className="py-28 relative overflow-hidden" style={{ background: "var(--page-bg)" }}>
         <div className="absolute inset-0 bg-gradient-to-br from-violet-50 dark:from-violet-900/20 via-transparent to-blue-50 dark:to-blue-900/20 pointer-events-none" />
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            backgroundImage: `linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px)`,
-            backgroundSize: "45px 45px"
-          }}
-        />
 
         <div className="relative container mx-auto px-4">
           <motion.div
