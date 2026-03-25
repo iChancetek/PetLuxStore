@@ -1,0 +1,318 @@
+Product Requirements Document (PRD)
+The PotLuxe – AI Native Futuristic Frontend Landing Page Redesign
+1. Project Overview
+
+Project Name: The PotLuxe AI Native Frontend Redesign
+Platform Type: Online E-Commerce Pet Store
+Objective: Redesign the frontend landing page to be stunning, futuristic, luxury, and AI-native while keeping the existing backend, database, authentication, and Stripe payment system unchanged and fully functional.
+
+This redesign is frontend only and must integrate seamlessly with the existing infrastructure.
+
+The new website should look like a luxury futuristic AI-powered pet e-commerce platform.
+
+2. Goals
+Primary Goals
+Redesign landing page to look futuristic and premium
+Transform site from outdated look to modern 2026 UI
+Create AI-Native frontend experience
+Improve user experience and engagement
+Maintain full compatibility with existing backend
+Maintain Auth, Database, and Stripe functionality
+Improve conversion and shopping experience
+Make site look like a luxury brand
+Non-Goals
+
+Do NOT modify:
+
+Backend
+Database
+API routes
+Authentication
+Stripe payments
+Product database
+Cart logic
+User accounts
+
+Frontend redesign only.
+
+3. AI Native Frontend Features (Very Important)
+
+The new landing page should be AI Native, meaning AI is integrated into the frontend experience.
+
+AI Features to Include
+1. AI Pet Product Assistant
+
+Chat assistant that helps users:
+
+Find pet products
+Recommend products
+Answer pet care questions
+Suggest food, toys, beds, grooming items
+Help users navigate store
+
+Example:
+
+“Find the best bed for a large dog”
+“Recommend toys for a kitten”
+“What food is best for puppies?”
+
+This connects to existing product database via API.
+
+2. AI Product Recommendations
+
+Show:
+
+Recommended products
+Trending products
+Recently viewed
+Personalized suggestions
+“AI Recommended For Your Pet”
+3. Smart Search (AI Search)
+
+Search bar that:
+
+Understands natural language
+“food for small dog”
+“luxury cat bed”
+“durable chew toy”
+Returns product results
+4. AI Shopping Assistant Floating Button
+
+Floating AI button on landing page:
+
+Opens AI chat assistant
+Helps customers shop
+Answers questions
+Guides users through store
+5. Personalized Homepage (Optional Advanced)
+
+If user logged in:
+
+Show recommended products
+Show pet-based recommendations
+Show saved items
+Show reorder suggestions
+4. Design Direction
+Visual Style
+
+Theme: Futuristic Luxury Pet Store + AI Native Platform
+
+Design Style
+Glassmorphism
+Metallic surfaces
+Gradient glow
+Dark theme
+Neon accents
+Soft shadows
+Floating UI elements
+Smooth animations
+Parallax sections
+Large hero sections
+Clean typography
+Rounded corners
+Premium spacing
+Apple/Tesla style UI
+Colors
+Black
+Dark Gray
+White
+Silver
+Metallic gradients
+Purple/Blue glow accents
+5. Landing Page Structure
+Page Sections
+Glass Sticky Navbar
+Hero Section (Futuristic)
+AI Assistant Section
+Featured Categories
+Featured Products
+AI Recommended Products
+Why Choose PotLuxe
+Testimonials
+Newsletter
+Footer
+6. Components to Build
+Core Components
+Navbar
+Hero Section
+AI Assistant Widget
+AI Search Bar
+Category Cards
+Product Cards
+AI Recommended Products Section
+Features Section
+Testimonials
+Newsletter Section
+Footer
+Floating AI Chat Button
+Glass Card Components
+Gradient Button Components
+Animated Background
+Parallax Section
+Product Grid
+Recommendation Carousel
+7. Tech Requirements
+Must Use
+Next.js (App Router)
+React
+Tailwind CSS
+shadcn/ui
+Framer Motion
+next/image
+Responsive design
+Mobile first
+SEO optimized
+Performance optimized
+8. Compatibility Requirements (CRITICAL)
+
+The new frontend MUST work with existing:
+
+Backend
+Database
+Authentication
+Stripe
+Product APIs
+Cart APIs
+User Accounts
+Orders
+Checkout
+
+Do NOT break existing functionality.
+
+Advanced Context Engineering Prompt
+
+Use this in Cursor / Replit AI / Firebase Studio AI.
+
+Advanced Context Engineering Prompt
+Writing
+
+You are a senior frontend architect, UI/UX designer, and Next.js engineer.
+
+Your task is to redesign the frontend landing page for an AI Native online e-commerce pet store called "The PotLuxe".
+
+IMPORTANT:
+This is a frontend redesign only.
+Do NOT modify backend.
+Do NOT modify database.
+Do NOT modify authentication.
+Do NOT modify Stripe.
+All existing functionality must continue to work exactly as it does now.
+
+The new frontend must connect to the existing backend APIs, database, authentication, and Stripe checkout.
+
+TECH STACK:
+
+Next.js App Router
+React
+Tailwind CSS
+shadcn/ui
+Framer Motion
+next/image
+
+DESIGN STYLE:
+Create a futuristic, luxury, cutting-edge, beautiful UI.
+The website should look like a luxury futuristic AI-powered e-commerce platform.
+
+Design style references:
+
+Apple style UI
+Tesla style UI
+Luxury fashion websites
+AI startup websites
+Glassmorphism
+Metallic UI
+Gradient glow accents
+Blur backgrounds
+Floating elements
+Smooth animations
+Dark theme with glowing highlights
+
+COLOR PALETTE:
+
+Black
+Dark gray
+White
+Silver
+Metallic gradients
+Purple/Blue glow accents
+
+LANDING PAGE STRUCTURE:
+
+Sticky glass navbar
+Futuristic hero section
+AI shopping assistant section
+Featured categories
+Featured products
+AI recommended products
+Why choose PotLuxe
+Testimonials
+Newsletter signup
+Footer
+
+AI NATIVE FEATURES TO BUILD:
+
+AI product recommendation section
+AI search bar (natural language search)
+AI shopping assistant chat widget
+Floating AI assistant button
+Personalized product recommendations
+Smart product suggestions
+Recently viewed products
+Trending products
+Recommendation carousel
+
+COMPONENTS TO CREATE:
+
+Navbar
+HeroSection
+AIAssistantWidget
+AISearchBar
+CategoryCards
+ProductGrid
+AIRecommendedProducts
+FeatureSection
+Testimonials
+Newsletter
+Footer
+FloatingAIButton
+GlassCard
+GradientButton
+AnimatedBackground
+ParallaxSection
+
+UI REQUIREMENTS:
+
+Rounded corners (2xl)
+Glass cards
+Glow hover effects
+Smooth animations
+Card hover lift
+Gradient buttons
+Blur backgrounds
+Premium typography
+Clean spacing
+Responsive design
+Dark futuristic theme
+
+The final result should look like a futuristic luxury AI-powered pet e-commerce platform built in 2026.
+
+Final Deliverables List
+The AI / Developer Should Produce
+New Landing Page
+Futuristic Navbar
+Hero Section
+AI Assistant Widget
+AI Search Bar
+Category Section
+Product Grid
+AI Recommended Products
+Testimonials
+Newsletter Section
+Footer
+Floating AI Chat Button
+Animations
+Glass UI Components
+Gradient Buttons
+Responsive Mobile Layout
+Dark Futuristic Theme
+Integration with existing backend, auth, database, Stripe

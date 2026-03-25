@@ -1,0 +1,331 @@
+Product Requirements Document (PRD)
+The PotLuxe – AI Native Futuristic Lively Frontend (Replit)
+1. Project Overview
+
+Platform: The PotLuxe
+Type: Online AI Native E-Commerce Pet Store
+Environment: Replit
+Frontend Stack: Next.js, React, Tailwind CSS, shadcn/ui
+Backend: Existing (Do NOT Modify)
+Auth: Existing
+Database: Existing
+Stripe: Existing
+
+Objective
+
+Redesign the frontend landing page to be:
+
+Futuristic
+Luxury
+AI Native
+Interactive
+Animated
+Lively
+Premium
+Modern (2026 UI)
+Visually stunning
+The platform should pop and feel alive
+
+The new frontend must work seamlessly with the existing backend, database, auth, and Stripe.
+
+2. Critical Constraints
+Do NOT Modify
+Backend
+API routes
+Database
+Authentication
+Stripe
+Cart system
+Product system
+Orders
+Users
+
+Frontend redesign only.
+
+3. The Platform Must “Pop” and Feel Lively
+
+This is a major requirement.
+
+The site should NOT feel:
+
+Flat
+Static
+Boring
+Basic
+Template-like
+Outdated
+Plain white ecommerce site
+The site SHOULD feel:
+Alive
+Interactive
+Smooth
+Animated
+Premium
+Futuristic
+Energetic
+Modern
+Luxury brand
+AI native platform
+High-end ecommerce experience
+4. Animation & Interaction Requirements
+Use Animations Throughout the Site
+
+Use:
+
+Framer Motion
+Hover animations
+Scroll animations
+Parallax effects
+Floating elements
+Glow effects
+Animated gradients
+Button animations
+Card hover lift
+Smooth page transitions
+Fade in sections
+Slide animations
+Micro-interactions
+Examples
+Buttons glow on hover
+Cards lift when hovered
+Background gradients slowly animate
+Sections fade in on scroll
+Floating glowing shapes in hero section
+Product cards animate in
+Navbar blur on scroll
+AI assistant button pulses/glows
+Icons animate slightly
+Image hover zoom
+Smooth transitions between pages
+
+The platform should feel alive and moving but still premium and smooth (not cheesy animations).
+
+5. AI Native Frontend Features
+
+The PotLuxe must be an AI Native E-Commerce Platform.
+
+AI Features
+AI Shopping Assistant Chat
+AI Product Recommendations
+Smart AI Search Bar
+Personalized Product Recommendations
+Trending Products
+Recently Viewed Products
+Floating AI Assistant Button
+AI Recommended For Your Pet
+Smart Category Suggestions
+AI Help Assistant
+6. Design Direction
+Visual Style
+
+Theme: Futuristic Luxury AI Pet Store
+
+Design Style
+Dark theme
+Glassmorphism
+Metallic UI
+Gradient glow accents
+Blur backgrounds
+Floating elements
+Smooth animations
+Parallax sections
+Large hero sections
+Premium typography
+Rounded corners
+Clean spacing
+Apple / Tesla / Luxury fashion style UI
+Color Palette
+Black
+Dark Gray
+White
+Silver
+Metallic gradients
+Purple/Blue glow accents
+7. Landing Page Structure
+Sections
+Sticky Glass Navbar
+Futuristic Hero Section
+AI Shopping Assistant Section
+Featured Categories
+Featured Products
+AI Recommended Products
+Trending Products
+Recently Viewed Products
+Why Choose PotLuxe
+Testimonials
+Newsletter Signup
+Footer
+8. Components to Build
+Navbar
+HeroSection
+AISearchBar
+AIAssistantWidget
+FloatingAIButton
+CategoryCards
+ProductGrid
+AIRecommendedProducts
+TrendingProducts
+RecentlyViewed
+FeatureSection
+Testimonials
+Newsletter
+Footer
+GlassCard
+GradientButton
+AnimatedBackground
+ParallaxSection
+GlowButton
+FloatingElements
+AnimatedGradient
+ScrollRevealSection
+Advanced Context Engineering Prompt for Replit AI
+
+Use this prompt inside Replit Agent.
+
+Writing
+
+You are a senior frontend architect and Next.js developer working inside Replit.
+
+Your task is to redesign the frontend landing page for an AI Native online e-commerce pet store called "The PotLuxe".
+
+CRITICAL:
+Frontend redesign only.
+Do NOT modify backend.
+Do NOT modify database.
+Do NOT modify authentication.
+Do NOT modify Stripe.
+All existing functionality must continue working.
+The new frontend must connect to existing APIs and backend services.
+
+IMPORTANT DESIGN REQUIREMENT:
+The platform must POP and feel LIVELY.
+The website should not feel flat or static.
+It should feel alive, interactive, animated, futuristic, and premium.
+
+Use animations, gradients, glow effects, hover effects, parallax scrolling, floating elements, and smooth transitions throughout the site.
+
+TECH STACK:
+
+Next.js (App Router)
+React
+Tailwind CSS
+shadcn/ui
+Framer Motion
+next/image
+
+DESIGN STYLE:
+Futuristic luxury AI e-commerce platform.
+Style references:
+
+Apple
+Tesla
+Luxury fashion websites
+AI startup websites
+Glassmorphism
+Metallic UI
+Gradient glow accents
+Dark theme
+Blur backgrounds
+Floating elements
+Smooth animations
+
+COLOR PALETTE:
+
+Black
+Dark gray
+White
+Silver
+Metallic gradients
+Purple/Blue glow accents
+
+LANDING PAGE STRUCTURE:
+
+Sticky glass navbar
+Futuristic hero section
+AI shopping assistant section
+Featured categories
+Featured products
+AI recommended products
+Trending products
+Recently viewed products
+Why choose PotLuxe
+Testimonials
+Newsletter signup
+Footer
+
+AI NATIVE FEATURES:
+
+AI shopping assistant chat widget
+AI product recommendations
+Smart AI search bar
+Floating AI assistant button
+Personalized product recommendations
+Trending products section
+Recently viewed products
+AI recommended for your pet section
+
+ANIMATION REQUIREMENTS:
+
+Hover animations
+Scroll animations
+Parallax sections
+Floating elements
+Glow effects
+Animated gradients
+Button animations
+Card hover lift
+Fade-in sections
+Smooth page transitions
+
+COMPONENTS TO BUILD:
+
+Navbar
+HeroSection
+AISearchBar
+AIAssistantWidget
+FloatingAIButton
+CategoryCards
+ProductGrid
+AIRecommendedProducts
+TrendingProducts
+RecentlyViewed
+FeatureSection
+Testimonials
+Newsletter
+Footer
+GlassCard
+GradientButton
+AnimatedBackground
+ParallaxSection
+GlowButton
+FloatingElements
+AnimatedGradient
+ScrollRevealSection
+
+The final result should look like a futuristic luxury AI-powered pet e-commerce platform built in 2026 that is animated, lively, interactive, and visually stunning.
+
+Final Vision for The PotLuxe
+The site should feel like a mix of:
+Apple website
+Tesla UI
+Luxury fashion brand
+Modern AI startup
+High-end ecommerce store
+Animated futuristic interface
+
+Keywords for the design:
+Futuristic
+Luxury
+AI Native
+Animated
+Glowing
+Metallic
+Glass
+Lively
+Interactive
+Premium
+Modern
+Beautiful
+Clean
+Smooth
+High-end

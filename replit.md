@@ -4,7 +4,22 @@
 
 The PotLuxE is a production-ready pet e-commerce platform built as a full-stack web application with modern React frontend and Express backend. The application features AI-powered product recommendations, personalized shopping experiences, and comprehensive e-commerce functionality including cart management, checkout processing, and administrative tools. The platform is designed to provide a premium shopping experience for pet owners with intelligent product discovery and AI-driven customer assistance.
 
-## Recent Changes (January 12, 2026)
+## Recent Changes (March 25, 2026)
+
+- **MAJOR: Futuristic AI-Native Frontend Redesign** — Complete visual overhaul of the platform
+  - Dark luxury theme set as default across entire app (deep navy/black backgrounds)
+  - Glassmorphism design system: `.glass`, `.glass-card` CSS utility classes with backdrop blur
+  - Custom glow effects: `.glow-purple`, `.glow-blue`, `.glow-sm` utility classes
+  - Gradient text utilities: `.gradient-text`, `.shimmer-text` with animated shimmer
+  - Animated background: `.animated-bg` with shifting gradient keyframe animation
+  - Floating orb animations: `animate-float-orb`, `animate-float-orb-2`, `animate-float-orb-3`
+  - **Home page** (`/`): Full redesign with hero section (floating orbs, parallax, animated gradient), AI search bar, categories grid (glass cards with hover glow), AI product recommendations, "Why PotLuxE" feature grid, testimonials, newsletter CTA — all animated with Framer Motion scroll reveals and stagger effects
+  - **Navbar**: Fixed glassmorphic navbar with scroll-based opacity, gradient logo, animated cart badge, futuristic search bar with AI badge, violet/blue gradient CTA button
+  - **Footer**: Dark luxury footer with gradient brand, social links, badge strip, futuristic spacing
+  - Primary accent color updated to violet/purple (`hsl(262, 83%, 68%)`) to match futuristic theme
+  - Framer Motion used throughout: `useScroll`, `useTransform`, `whileInView`, `staggerChildren`, `AnimatePresence`
+
+## Previous Changes (January 12, 2026)
 
 - **CSRF Protection System**: Comprehensive CSRF protection for all mutating API endpoints
   - Global middleware issues tokens to all visitors on first request
