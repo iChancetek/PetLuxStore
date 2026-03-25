@@ -150,7 +150,15 @@ export default function Footer() {
             &copy; 2026 The PotLuxE. All rights reserved. Powered by AI technology.
           </p>
           <p className="text-gray-300 dark:text-white/15 text-xs">
-            Developed by ChanceTEK LLC &amp; iSynera LLC
+            Developed by{" "}
+            <a
+              href="https://ichancetek.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-violet-500 dark:hover:text-violet-400 transition-colors duration-200"
+            >
+              ChanceTEK LLC
+            </a>
           </p>
         </div>
       </div>
