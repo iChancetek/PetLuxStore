@@ -216,5 +216,3 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
     </Dialog>
   );
 }
-  );
-}
