@@ -1,5 +1,8 @@
 kind: AppHostingConfig
 schemaVersion: v1
+buildConfig:
+  # The output directory of your build (matches package.json 'dist' outdir)
+  outputDirectory: dist
 runConfig:
   minInstances: 0
   maxInstances: 10
