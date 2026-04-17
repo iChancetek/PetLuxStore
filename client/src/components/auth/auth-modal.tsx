@@ -18,13 +18,21 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
   const [mode, setMode] = useState<'signin' | 'signup' | 'forgot-password'>(defaultMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
-  const { signin, signup, signInWithGoogle, sendPasswordResetEmail } = useAuth();
+  const { signin, signup, signInWithGoogle, sendPasswordResetEmail, isAuthenticated, isBackendSyncing } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+
+  // Redirect to dashboard ONLY after both authentication and backend sync are complete
+  useEffect(() => {
+    if (isOpen && isAuthenticated && !isBackendSyncing && !isLoading) {
+      onClose();
+      setLocation('/dashboard');
+    }
+  }, [isAuthenticated, isBackendSyncing, isLoading, isOpen, setLocation, onClose]);
 
   // Sync mode with defaultMode prop when it changes
   useEffect(() => {
@@ -37,23 +45,31 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
       await signInWithGoogle();
       toast({
         title: 'Welcome!',
-        description: 'You have successfully signed in with Google.',
+        description: 'Signing you in with Google...',
       });
-      onClose();
-      setLocation('/dashboard');
+      // Redirection is handled by the useEffect above
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Google Sign-in failed',
         description: error.message || 'An error occurred. Please try again.',
       });
-    } finally {
       setIsLoading(false);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (mode === 'signup' && password !== confirmPassword) {
+      toast({
+        variant: 'destructive',
+        title: 'Passwords mismatch',
+        description: 'Please ensure your passwords match.',
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -61,18 +77,16 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
         await signin(email, password);
         toast({
           title: 'Welcome back!',
-          description: 'You have successfully signed in.',
+          description: 'Signing you in...',
         });
-        onClose();
-        setLocation('/dashboard');
+        // Redirection handled by useEffect
       } else if (mode === 'signup') {
-        await signup(email, password);
+        await signup(email, password, displayName);
         toast({
           title: 'Account created!',
-          description: 'Firebase will send a verification email if configured.',
+          description: 'Welcome to PetLuxStore!',
         });
-        onClose();
-        setLocation('/dashboard');
+        // Redirection handled by useEffect
       } else if (mode === 'forgot-password') {
         await sendPasswordResetEmail(email);
         toast({
@@ -80,6 +94,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
           description: 'Check your email for a password reset link.',
         });
         setMode('signin');
+        setIsLoading(false);
       }
     } catch (error: any) {
       toast({
@@ -87,7 +102,6 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
         title: mode === 'forgot-password' ? 'Reset failed' : mode === 'signin' ? 'Sign in failed' : 'Sign up failed',
         description: error.message || 'An error occurred. Please try again.',
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -168,10 +182,25 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
               />
             </div>
 
+            {mode === 'signup' && (
+              <div className="space-y-2">
+                <Label htmlFor="displayName">Display Name</Label>
+                <Input
+                  id="displayName"
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="Your Name"
+                  required
+                  data-testid="input-display-name"
+                />
+              </div>
+            )}
+
             {mode !== 'forgot-password' && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">{mode === 'signup' ? 'Create Password' : 'Password'}</Label>
                   {mode === 'signin' && (
                     <button
                       type="button"
@@ -191,6 +220,22 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
                   required
                   minLength={8}
                   data-testid="input-password"
+                />
+              </div>
+            )}
+
+            {mode === 'signup' && (
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  minLength={8}
+                  data-testid="input-confirm-password"
                 />
               </div>
             )}

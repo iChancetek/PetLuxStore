@@ -35,8 +35,7 @@ import {
 
 const userFormSchema = z.object({
   email: z.string().email("Please enter a valid email"),
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
+  displayName: z.string().min(1, "Display name is required"),
   role: z.enum(["user", "reviewer", "admin"], {
     required_error: "Please select a role",
   }),
@@ -48,8 +47,9 @@ type UserFormData = z.infer<typeof userFormSchema>;
 interface User {
   id: string;
   email: string;
-  firstName: string;
-  lastName: string;
+  firstName: string | null;
+  lastName: string | null;
+  displayName: string | null;
   role: string;
   isActive: boolean;
   createdAt: string;
@@ -76,8 +76,7 @@ export default function UsersTab() {
     resolver: zodResolver(userFormSchema),
     defaultValues: {
       email: "",
-      firstName: "",
-      lastName: "",
+      displayName: "",
       role: "user",
       isActive: true,
     },
@@ -221,9 +220,8 @@ export default function UsersTab() {
     setSelectedUser(user);
     form.reset({
       email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role as "user" | "admin",
+      displayName: user.displayName || "",
+      role: user.role as "user" | "reviewer" | "admin",
       isActive: user.isActive,
     });
     setIsEditDialogOpen(true);
@@ -317,34 +315,19 @@ export default function UsersTab() {
                     </FormItem>
                   )}
                 />
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="firstName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>First Name *</FormLabel>
-                        <FormControl>
-                          <Input {...field} data-testid="input-user-first-name" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="lastName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Last Name *</FormLabel>
-                        <FormControl>
-                          <Input {...field} data-testid="input-user-last-name" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                <FormField
+                  control={form.control}
+                  name="displayName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Display Name *</FormLabel>
+                      <FormControl>
+                        <Input {...field} data-testid="input-user-display-name" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="role"
@@ -473,7 +456,7 @@ export default function UsersTab() {
                           </div>
                           <div>
                             <div className="font-medium" data-testid={`text-user-name-${user.id}`}>
-                              {user.firstName} {user.lastName}
+                              {user.displayName || user.email.split('@')[0]}
                             </div>
                             <div className="text-sm text-muted-foreground flex items-center">
                               <Mail className="w-3 h-3 mr-1" />
@@ -761,34 +744,19 @@ export default function UsersTab() {
                   </FormItem>
                 )}
               />
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="firstName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>First Name *</FormLabel>
-                      <FormControl>
-                        <Input {...field} data-testid="input-edit-user-first-name" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="lastName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Last Name *</FormLabel>
-                      <FormControl>
-                        <Input {...field} data-testid="input-edit-user-last-name" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="displayName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Display Name *</FormLabel>
+                    <FormControl>
+                      <Input {...field} data-testid="input-edit-user-display-name" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="role"

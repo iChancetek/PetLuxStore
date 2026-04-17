@@ -9,6 +9,7 @@ import {
   onAuthStateChanged,
   GoogleAuthProvider,
   signInWithPopup,
+  updateProfile,
   sendPasswordResetEmail as firebaseSendResetEmail,
   User as FirebaseUser
 } from 'firebase/auth';
@@ -18,6 +19,7 @@ interface User {
   email: string;
   firstName: string | null;
   lastName: string | null;
+  displayName: string | null;
   profileImageUrl: string | null;
   role: 'user' | 'reviewer' | 'admin';
   emailVerified: boolean;
@@ -27,8 +29,9 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  isBackendSyncing: boolean;
   signin: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, firstName?: string, lastName?: string) => Promise<void>;
+  signup: (email: string, password: string, displayName?: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signout: () => Promise<void>;
   sendPasswordResetEmail: (email: string) => Promise<void>;
@@ -40,16 +43,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
+  const [isBackendSyncing, setIsBackendSyncing] = useState(false);
 
   // Sync Firebase Auth state with our backend session
   useEffect(() => {
     return onAuthStateChanged(auth, async (user) => {
       setFirebaseUser(user);
       if (user) {
-        // Exchange ID token for session cookie
-        const idToken = await user.getIdToken();
-        await apiRequest('POST', '/api/auth/firebase-login', { idToken });
-        queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+        setIsBackendSyncing(true);
+        try {
+          // Exchange ID token for session cookie
+          const idToken = await user.getIdToken(true); // Force refresh to ensure latest claims
+          await apiRequest('POST', '/api/auth/firebase-login', { idToken });
+          await queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+        } catch (error) {
+          console.error("Backend sync failed:", error);
+        } finally {
+          setIsBackendSyncing(false);
+        }
       } else {
         queryClient.setQueryData(['/api/auth/me'], null);
       }
@@ -69,8 +80,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInWithEmailAndPassword(auth, email, password);
   };
 
-  const signup = async (email: string, password: string) => {
-    await createUserWithEmailAndPassword(auth, email, password);
+  const signup = async (email: string, password: string, displayName?: string) => {
+    const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
+    if (displayName) {
+      await updateProfile(newUser, { displayName });
+      // The onAuthStateChanged hook will trigger and sync the new name to the backend
+    }
   };
 
   const signInWithGoogle = async () => {
@@ -92,6 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     isLoading: !isAuthReady || isUserLoading,
     isAuthenticated: !!user,
+    isBackendSyncing,
     signin,
     signup,
     signInWithGoogle,

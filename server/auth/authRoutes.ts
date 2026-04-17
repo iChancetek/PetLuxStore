@@ -52,8 +52,7 @@ router.post('/firebase-login', authRateLimiter, async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        displayName: user.displayName,
         emailVerified: user.emailVerified,
         role: user.role,
       },
@@ -70,8 +69,8 @@ router.post('/firebase-login', authRateLimiter, async (req, res) => {
 // POST /api/auth/signout
 router.post('/signout', optionalAuth, async (req, res) => {
   try {
-    if (req.user?.uid) {
-      await authService.signout(req.user.uid);
+    if (req.user?.id) {
+      await authService.signout(req.user.id);
     }
     res.clearCookie(SESSION_COOKIE_NAME);
     res.json({ success: true, message: 'Signed out successfully' });

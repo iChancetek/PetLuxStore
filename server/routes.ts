@@ -701,7 +701,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             images: p.images,
             tags: p.tags,
             brand: p.brand,
-            price: p.price
+            price: p.price,
+            description: p.description,
+            shortDescription: p.shortDescription
           }).where(eq(products.slug, p.slug)).returning();
           insertedProducts.push(updated);
         }

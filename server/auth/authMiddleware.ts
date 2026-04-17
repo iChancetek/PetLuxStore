@@ -33,14 +33,13 @@ export async function requireAuth(
 
     // Add user info to request
     req.user = {
-      uid: decodedClaims.uid,
+      id: user.id,
       claims: {
         sub: user.id,
         email: user.email,
-        first_name: user.firstName || '',
-        last_name: user.lastName || '',
+        display_name: user.displayName || '',
         profile_image_url: user.profileImageUrl || '',
-        role: user.role,
+        role: user.role as 'user' | 'reviewer' | 'admin',
         email_verified: user.emailVerified,
       },
     };
@@ -67,14 +66,13 @@ export async function optionalAuth(
 
       if (user) {
         req.user = {
-          uid: decodedClaims.uid,
+          id: user.id,
           claims: {
             sub: user.id,
             email: user.email,
-            first_name: user.firstName || '',
-            last_name: user.lastName || '',
+            display_name: user.displayName || '',
             profile_image_url: user.profileImageUrl || '',
-            role: user.role,
+            role: user.role as 'user' | 'reviewer' | 'admin',
             email_verified: user.emailVerified,
           },
         };

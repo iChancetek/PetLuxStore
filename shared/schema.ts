@@ -94,6 +94,7 @@ export const users = pgTable("users", {
   emailVerifiedAt: timestamp("email_verified_at"),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
+  displayName: varchar("display_name"),
   profileImageUrl: varchar("profile_image_url"),
   role: varchar("role", { length: 50 }).notNull().default("user"), // user, reviewer, admin
   stripeCustomerId: varchar("stripe_customer_id"),

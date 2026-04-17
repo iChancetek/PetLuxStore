@@ -17,11 +17,15 @@ export class AuthService {
 
     try {
       const decodedToken = await firebaseAuth.verifyIdToken(idToken);
-      const { uid, email, email_verified } = decodedToken;
+      const { uid, email, email_verified, name: firebaseName, picture } = decodedToken;
 
       if (!email) {
         throw new Error("Email is required from Firebase token");
       }
+
+      const adminEmails = ['chancellor@ichancetek.com', 'd.parks@me.com'];
+      const isAdmin = adminEmails.includes(email.toLowerCase());
+      const role = isAdmin ? 'admin' : 'user';
 
       // 1. Check if user exists in our DB by Firebase UID (stored in id field)
       let [user] = await db.select().from(users).where(eq(users.id, uid)).limit(1);
@@ -33,23 +37,23 @@ export class AuthService {
         if (user) {
           // Link existing user to this Firebase UID
           [user] = await db.update(users)
-            .set({ id: uid, emailVerified: email_verified || user.emailVerified })
+            .set({ 
+              id: uid, 
+              emailVerified: email_verified || user.emailVerified,
+              role: isAdmin ? 'admin' : user.role, // Upgrade to admin if authorized
+              displayName: firebaseName || user.displayName
+            })
             .where(eq(users.email, email.toLowerCase()))
             .returning();
         } else {
           // 3. Create new user
-          const names = decodedToken.name?.split(' ') || [];
-          const firstName = names[0] || null;
-          const lastName = names.slice(1).join(' ') || null;
-
           [user] = await db.insert(users).values({
             id: uid,
             email: email.toLowerCase(),
-            firstName,
-            lastName,
-            profileImageUrl: decodedToken.picture || null,
+            displayName: firebaseName || null,
+            profileImageUrl: picture || null,
             emailVerified: email_verified || false,
-            role: 'user',
+            role,
             isActive: true,
           }).returning();
 
@@ -58,8 +62,16 @@ export class AuthService {
             action: 'signup_firebase',
             success: true,
             category: 'auth',
-            message: 'User created via Firebase Auth'
+            message: `User created via Firebase Auth (Role: ${role})`
           });
+        }
+      } else {
+        // Update role if user email was added to admin list after creation
+        if (user.role !== 'admin' && isAdmin) {
+          [user] = await db.update(users)
+            .set({ role: 'admin' })
+            .where(eq(users.id, uid))
+            .returning();
         }
       }
 
@@ -84,6 +96,15 @@ export class AuthService {
   async verifySessionCookie(cookie: string): Promise<any> {
     if (!firebaseAuth) throw new Error("Firebase Auth not initialized");
     return await firebaseAuth.verifySessionCookie(cookie, true);
+  }
+
+  /**
+   * Admin-only: Resets a user's password via Firebase Admin SDK.
+   * Firebase UID is stored as the user's DB id.
+   */
+  async adminResetUserPassword(userId: string, newPassword: string): Promise<void> {
+    if (!firebaseAuth) throw new Error("Firebase Auth not initialized");
+    await firebaseAuth.updateUser(userId, { password: newPassword });
   }
 
   async signout(uid: string): Promise<void> {
