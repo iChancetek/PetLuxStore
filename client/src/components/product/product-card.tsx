@@ -119,21 +119,20 @@ export default function ProductCard({ product }: ProductCardProps) {
       return null;
     }
     
-    // If imageUrl exists and looks like a direct image URL (ends with image extension)
-    if (product.imageUrl && /\.(jpg|jpeg|png|webp|gif)$/i.test(product.imageUrl)) {
+    // If it's a full URL, trust it (including Unsplash or URLs with query params)
+    if (product.imageUrl.startsWith('http://') || product.imageUrl.startsWith('https://')) {
+      // Avoid using the spocket detail pages as images if they were somehow saved as imageUrl
+      if (product.imageUrl.includes('spocket.co') && !/\.(jpg|jpeg|png|webp|gif)/i.test(product.imageUrl)) {
+         return null; 
+      }
       return product.imageUrl;
     }
     
-    // If imageUrl is a spocket.co URL or not a direct image, use fallback
-    if (product.imageUrl.includes('spocket.co') || !product.imageUrl.startsWith('http')) {
-      // Use product id or name to create a simple hash for consistent image mapping
-      const hashString = product.id || product.name || 'default';
-      const hash = hashString.split('').reduce((a: number, b: string) => a + b.charCodeAt(0), 0);
-      const imageIndex = (hash % 8) + 1; // Maps to product-1.jpg through product-8.jpg
-      return `/images/products/product-${imageIndex}.jpg`;
-    }
-    
-    return product.imageUrl;
+    // For relative paths or local fallbacks
+    const hashString = product.id || product.name || 'default';
+    const hash = hashString.split('').reduce((a: number, b: string) => a + b.charCodeAt(0), 0);
+    const imageIndex = (hash % 8) + 1; // Maps to product-1.jpg through product-8.jpg
+    return `/images/products/product-${imageIndex}.jpg`;
   };
 
   const imageUrl = getImageUrl(product);
