@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useLocation } from 'wouter';
 import { useAuth } from '@/providers/auth-provider';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
@@ -23,6 +24,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
   
   const { signin, signup, signInWithGoogle, sendPasswordResetEmail } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   // Sync mode with defaultMode prop when it changes
   useEffect(() => {
@@ -38,6 +40,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
         description: 'You have successfully signed in with Google.',
       });
       onClose();
+      setLocation('/dashboard');
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -61,6 +64,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
           description: 'You have successfully signed in.',
         });
         onClose();
+        setLocation('/dashboard');
       } else if (mode === 'signup') {
         await signup(email, password);
         toast({
@@ -68,6 +72,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: AuthModal
           description: 'Firebase will send a verification email if configured.',
         });
         onClose();
+        setLocation('/dashboard');
       } else if (mode === 'forgot-password') {
         await sendPasswordResetEmail(email);
         toast({
