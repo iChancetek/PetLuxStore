@@ -1,3 +1,4 @@
+import { db } from "./db"; import { eq } from "drizzle-orm"; import { users, products } from "@shared/schema";
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
@@ -566,6 +567,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Migration error:", error);
       res.status(500).json({ message: "Migration failed", error: error.message });
+    }
+  });
+
+  app.get('/api/_seed-products-8-items', async (req, res) => {
+    try {
+      const newProducts = [
+        {
+          name: "Personalized Dog Collar – Reflective Embroidered",
+          slug: "personalized-dog-collar-reflective-embroidered",
+          description: "Features: Reflective, embroidery, adjustable, multi-color options (green/rose/purple/blue/black).",
+          shortDescription: "Reflective and embroidered personalized dog collar.",
+          price: "0.00",
+          inStock: 100,
+          isActive: true,
+          petType: "dog",
+          imageUrl: "https://placehold.co/600x600/e2e8f0/1e293b?text=Collar+Image+Needed",
+          images: ["https://placehold.co/600x600/e2e8f0/1e293b?text=Collar+Image+Needed"],
+        },
+        {
+          name: "Personalized Reflective Dog Collar – Custom Pet",
+          slug: "personalized-reflective-dog-collar-custom-pet",
+          description: "Features: Personalization, reflective, full image set.",
+          shortDescription: "Reflective custom pet collar with personalization.",
+          price: "0.00",
+          inStock: 100,
+          isActive: true,
+          petType: "dog",
+          imageUrl: "https://placehold.co/600x600/e2e8f0/1e293b?text=Collar+Image+Needed",
+          images: ["https://placehold.co/600x600/e2e8f0/1e293b?text=Collar+Image+Needed"],
+        },
+        {
+          name: "Personalized Pet Dog Collar – Reflective Custom",
+          slug: "personalized-pet-dog-collar-reflective-custom",
+          description: "Features: Padded, reflective, multiple colors (pink/green/black).",
+          shortDescription: "Padded and reflective customizable dog collar.",
+          price: "0.00",
+          inStock: 100,
+          isActive: true,
+          petType: "dog",
+          imageUrl: "https://placehold.co/600x600/e2e8f0/1e293b?text=Collar+Image+Needed",
+          images: ["https://placehold.co/600x600/e2e8f0/1e293b?text=Collar+Image+Needed"],
+        },
+        {
+          name: "PaWz Orthopedic Dog Bed",
+          slug: "pawz-orthopedic-dog-bed",
+          description: "Features: Memory foam, plush cover, anti-slip bottom, removable washable cover.",
+          shortDescription: "Plush orthopedic memory foam dog bed.",
+          price: "0.00",
+          inStock: 100,
+          isActive: true,
+          petType: "dog",
+          imageUrl: "https://placehold.co/600x600/e2e8f0/1e293b?text=Dog+Bed+Needed",
+          images: ["https://placehold.co/600x600/e2e8f0/1e293b?text=Dog+Bed+Needed"],
+        },
+        {
+          name: "Large Orthopedic Memory Foam Dog Bed (15CM Thick)",
+          slug: "large-orthopedic-memory-foam-dog-bed-15cm",
+          description: "Features: Extra thick 15cm premium bed, large sizes, washable cover, non-slip.",
+          shortDescription: "Extra thick 15cm large orthopedic dog bed.",
+          price: "0.00",
+          inStock: 100,
+          isActive: true,
+          petType: "dog",
+          imageUrl: "https://placehold.co/600x600/e2e8f0/1e293b?text=Dog+Bed+Needed",
+          images: ["https://placehold.co/600x600/e2e8f0/1e293b?text=Dog+Bed+Needed"],
+        },
+        {
+          name: "Midwe Ortho Nest Bed – Gray",
+          slug: "midwe-ortho-nest-bed-gray",
+          description: "Features: Bolster style, nest-like design, supportive cushioning, easy access edges.",
+          shortDescription: "Gray bolster style ortho nest dog bed.",
+          price: "0.00",
+          inStock: 100,
+          isActive: true,
+          petType: "dog",
+          imageUrl: "https://placehold.co/600x600/e2e8f0/1e293b?text=Dog+Bed+Needed",
+          images: ["https://placehold.co/600x600/e2e8f0/1e293b?text=Dog+Bed+Needed"],
+        },
+        {
+          name: "Durable Nylon Reflective Personalized Dog Collar",
+          slug: "durable-nylon-reflective-personalized-dog-collar",
+          description: "Features: Reflective, nylon, adjustable, color options.",
+          shortDescription: "Durable nylon adjustable reflective collar.",
+          price: "0.00",
+          inStock: 100,
+          isActive: true,
+          petType: "dog",
+          imageUrl: "https://placehold.co/600x600/e2e8f0/1e293b?text=Collar+Image+Needed",
+          images: ["https://placehold.co/600x600/e2e8f0/1e293b?text=Collar+Image+Needed"],
+        },
+        {
+          name: "Dog Collar + Leash Set Reflective + Tag",
+          slug: "dog-collar-leash-set-reflective-tag",
+          description: "Features: Matching collar & leash, personalized tag, reflective material.",
+          shortDescription: "Matching reflective collar, leash, and tag set.",
+          price: "0.00",
+          inStock: 100,
+          isActive: true,
+          petType: "dog",
+          imageUrl: "https://placehold.co/600x600/e2e8f0/1e293b?text=Collar+Set+Needed",
+          images: ["https://placehold.co/600x600/e2e8f0/1e293b?text=Collar+Set+Needed"],
+        }
+      ];
+
+      const insertedProducts = [];
+      for (const p of newProducts) {
+        // Check if exists to prevent duplicates
+        const existing = await db.select().from(products).where(eq(products.slug, p.slug)).limit(1);
+        if (existing.length === 0) {
+          const [inserted] = await db.insert(products).values(p).returning();
+          insertedProducts.push(inserted);
+        }
+      }
+
+      res.json({ message: "Seed complete", count: insertedProducts.length, products: insertedProducts });
+    } catch (error: any) {
+      console.error("Seed error:", error);
+      res.status(500).json({ message: "Seed failed", error: error.message });
     }
   });
 
