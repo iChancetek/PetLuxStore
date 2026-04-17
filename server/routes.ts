@@ -533,6 +533,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/_migrate-auth-secret-1234', async (req, res) => {
+    try {
+      const allUsers = await db.select().from(users);
+      if (allUsers.length === 0) {
+         return res.json({ message: "No users found in database." });
+      }
+
+      const { auth } = await import('./firebase-admin');
+      if (!auth) {
+         return res.status(500).json({ message: "Firebase admin auth not initialized" });
+      }
+
+      const importedUsers = allUsers.map(u => ({
+        uid: u.id,
+        email: u.email,
+        emailVerified: u.emailVerified || false,
+        displayName: [u.firstName, u.lastName].filter(Boolean).join(' ') || undefined,
+        photoURL: u.profileImageUrl || undefined,
+        disabled: !u.isActive,
+      }));
+
+      // Firebase can only import 1000 users at a time
+      const results = [];
+      for (let i = 0; i < importedUsers.length; i += 1000) {
+        const batch = importedUsers.slice(i, i + 1000);
+        const result = await auth.importUsers(batch);
+        results.push(result);
+      }
+
+      res.json({ message: "Migration complete", results });
+    } catch (error: any) {
+      console.error("Migration error:", error);
+      res.status(500).json({ message: "Migration failed", error: error.message });
+    }
+  });
+
   // Categories routes
   app.get('/api/categories', async (req, res) => {
     try {
