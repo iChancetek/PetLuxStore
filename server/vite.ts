@@ -22,7 +22,9 @@ export async function setupVite(app: Express, server: Server) {
   };
 
   const { createServer: createViteServer, createLogger } = await import("vite");
-  const viteConfig = (await import("../vite.config")).default;
+  // dynamically import vite config to prevent esbuild from bundling it into the server
+  let viteConfigPath = "../vite.config";
+  const viteConfig = (await import(viteConfigPath)).default;
   const viteLogger = createLogger();
 
   const vite = await createViteServer({
