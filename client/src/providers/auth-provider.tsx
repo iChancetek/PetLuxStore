@@ -1,6 +1,17 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { auth } from '@/lib/firebase';
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup,
+  sendPasswordResetEmail as firebaseSendResetEmail,
+  User as FirebaseUser
+} from 'firebase/auth';
 
 interface User {
   id: string;
@@ -18,110 +29,63 @@ interface AuthContextType {
   isAuthenticated: boolean;
   signin: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, firstName?: string, lastName?: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signout: () => Promise<void>;
   sendPasswordResetEmail: (email: string) => Promise<void>;
-  resetPassword: (token: string, newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
 
-  // Fetch current user session
+  // Sync Firebase Auth state with our backend session
+  useEffect(() => {
+    return onAuthStateChanged(auth, async (user) => {
+      setFirebaseUser(user);
+      if (user) {
+        // Exchange ID token for session cookie
+        const idToken = await user.getIdToken();
+        await apiRequest('POST', '/api/auth/firebase-login', { idToken });
+        queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      } else {
+        queryClient.setQueryData(['/api/auth/me'], null);
+      }
+      setIsAuthReady(true);
+    });
+  }, [queryClient]);
+
+  // Fetch current user session from our DB
   const { data: user = null, isLoading: isUserLoading } = useQuery<User | null>({
     queryKey: ['/api/auth/me'],
     enabled: isAuthReady,
     retry: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-
-  // Check if auth is ready on mount
-  useEffect(() => {
-    setIsAuthReady(true);
-  }, []);
-
-  // Sign in mutation
-  const signinMutation = useMutation({
-    mutationFn: async ({ email, password }: { email: string; password: string }) => {
-      const response = await apiRequest('POST', '/api/auth/signin', { email, password });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
-    },
-  });
-
-  // Sign up mutation
-  const signupMutation = useMutation({
-    mutationFn: async ({
-      email,
-      password,
-      firstName,
-      lastName,
-    }: {
-      email: string;
-      password: string;
-      firstName?: string;
-      lastName?: string;
-    }) => {
-      const response = await apiRequest('POST', '/api/auth/signup', { email, password, firstName, lastName });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
-    },
-  });
-
-  // Sign out mutation
-  const signoutMutation = useMutation({
-    mutationFn: async () => {
-      await apiRequest('POST', '/api/auth/signout');
-    },
-    onSuccess: () => {
-      queryClient.clear();
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
-    },
-  });
-
-  // Password reset email mutation
-  const sendResetEmailMutation = useMutation({
-    mutationFn: async (email: string) => {
-      await apiRequest('POST', '/api/auth/request-password-reset', { email });
-    },
-  });
-
-  // Reset password mutation
-  const resetPasswordMutation = useMutation({
-    mutationFn: async ({ token, newPassword }: { token: string; newPassword: string }) => {
-      await apiRequest('POST', '/api/auth/reset-password', { token, newPassword });
-    },
+    staleTime: 5 * 60 * 1000,
   });
 
   const signin = async (email: string, password: string) => {
-    await signinMutation.mutateAsync({ email, password });
+    await signInWithEmailAndPassword(auth, email, password);
   };
 
-  const signup = async (
-    email: string,
-    password: string,
-    firstName?: string,
-    lastName?: string
-  ) => {
-    await signupMutation.mutateAsync({ email, password, firstName, lastName });
+  const signup = async (email: string, password: string) => {
+    await createUserWithEmailAndPassword(auth, email, password);
+  };
+
+  const signInWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
   };
 
   const signout = async () => {
-    await signoutMutation.mutateAsync();
+    await firebaseSignOut(auth);
+    await apiRequest('POST', '/api/auth/signout');
+    queryClient.clear();
   };
 
   const sendPasswordResetEmail = async (email: string) => {
-    await sendResetEmailMutation.mutateAsync(email);
-  };
-
-  const resetPassword = async (token: string, newPassword: string) => {
-    await resetPasswordMutation.mutateAsync({ token, newPassword });
+    await firebaseSendResetEmail(auth, email);
   };
 
   const value: AuthContextType = {
@@ -130,9 +94,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: !!user,
     signin,
     signup,
+    signInWithGoogle,
     signout,
     sendPasswordResetEmail,
-    resetPassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,0 +1,32 @@
+kind: AppHostingConfig
+schemaVersion: v1
+runConfig:
+  minInstances: 0
+  maxInstances: 10
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512
+
+# Environment variables for App Hosting
+# Secrets like DATABASE_URL should be configured in the Firebase Console
+env:
+  - variable: VITE_FIREBASE_API_KEY
+    value: AIzaSyDIRMf2-jXNEQhQoCBLAvMAvmkbkabWKEI
+  - variable: VITE_FIREBASE_AUTH_DOMAIN
+    value: ipetluxestore.firebaseapp.com
+  - variable: VITE_FIREBASE_PROJECT_ID
+    value: ipetluxestore
+  - variable: VITE_FIREBASE_STORAGE_BUCKET
+    value: ipetluxestore.firebasestorage.app
+  - variable: VITE_FIREBASE_MESSAGING_SENDER_ID
+    value: "174179897118"
+  - variable: VITE_FIREBASE_APP_ID
+    value: "1:174179897118:web:4060785809e44e85aa430f"
+  - variable: VITE_FIREBASE_MEASUREMENT_ID
+    value: G-5ZYG7VX9E6
+  - variable: FIREBASE_PROJECT_ID
+    value: ipetluxestore
+  - variable: FIREBASE_CLIENT_EMAIL
+    value: firebase-adminsdk-fbsvc@ipetluxestore.iam.gserviceaccount.com
+  - variable: FIREBASE_SERVICE_ACCOUNT_PATH
+    value: ./server/config/firebase-admin-sdk.json
