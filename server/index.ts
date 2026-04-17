@@ -1,4 +1,13 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+import path from 'path';
+import fs from 'fs';
+
+// Load .env.local if it exists, otherwise fall back to .env
+const envPath = fs.existsSync(path.resolve(process.cwd(), '.env.local')) 
+  ? '.env.local' 
+  : '.env';
+dotenv.config({ path: envPath });
+
 import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
