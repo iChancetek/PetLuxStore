@@ -15,14 +15,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
+
 import { Skeleton } from "@/components/ui/skeleton";
-import { 
-  Users, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Search, 
-  ChevronLeft, 
+import {
+  Users,
+  Plus,
+  Edit,
+  Trash2,
+  Search,
+  ChevronLeft,
   ChevronRight,
   Mail,
   Calendar,
@@ -466,7 +467,7 @@ export default function UsersTab() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge 
+                        <Badge
                           variant={user.role === "admin" ? "default" : "secondary"}
                           data-testid={`badge-role-${user.id}`}
                         >
@@ -474,7 +475,7 @@ export default function UsersTab() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge 
+                        <Badge
                           variant={user.isActive ? "secondary" : "destructive"}
                           data-testid={`badge-status-${user.id}`}
                         >
@@ -516,9 +517,9 @@ export default function UsersTab() {
                                   {user.isActive ? 'Disable' : 'Enable'} User
                                 </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Are you sure you want to {user.isActive ? 'disable' : 'enable'} {user.firstName} {user.lastName}? 
-                                  {user.isActive 
-                                    ? ' They will no longer be able to access their account.' 
+                                  Are you sure you want to {user.isActive ? 'disable' : 'enable'} {user.firstName} {user.lastName}?
+                                  {user.isActive
+                                    ? ' They will no longer be able to access their account.'
                                     : ' They will be able to access their account again.'}
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
