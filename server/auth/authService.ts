@@ -76,8 +76,13 @@ export class AuthService {
       }
 
       return user;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error verifying Firebase token:", error);
+      if (error.code === 'auth/id-token-expired') {
+        console.error("Firebase ID token expired");
+      } else if (error.message && error.message.includes('connect')) {
+        console.error("Database connection error during token verification:", error.message);
+      }
       return null;
     }
   }

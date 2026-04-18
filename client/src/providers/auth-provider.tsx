@@ -60,11 +60,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.error("Backend sync failed:", error);
         } finally {
           setIsBackendSyncing(false);
+          setIsAuthReady(true);
         }
       } else {
         queryClient.setQueryData(['/api/auth/me'], null);
+        setIsAuthReady(true);
       }
-      setIsAuthReady(true);
     });
   }, [queryClient]);
 
