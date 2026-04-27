@@ -33,3 +33,13 @@ env:
     value: firebase-adminsdk-fbsvc@ipetluxestore.iam.gserviceaccount.com
   - variable: FIREBASE_SERVICE_ACCOUNT_PATH
     value: ./server/config/firebase-admin-sdk.json
+  - variable: DATABASE_URL
+    value: postgresql://postgres:Chancetek869219204@34.86.112.231:5432/ipetluxestore-database
+  - variable: STRIPE_SECRET_KEY
+    value: sk_test_placeholder
+  - variable: STRIPE_LIVE_SECRET_KEY
+    value: sk_live_placeholder
+  - variable: VITE_STRIPE_PUBLIC_KEY
+    value: pk_test_51S72hjCdSXBdnFEiCTHCNgRvydq3HSc1ujwbSeGDqTCoB7q637iIt62TdEsgIjuh4cOT1kfisoFEu8ocdZeiAMv300WskmBTpn
+  - variable: VITE_STRIPE_LIVE_PUBLISHABLE_KEY
+    value: pk_live_51S72hCCozTpW7kqxIWmPmQCUZI3R34HNNyL6oXkexo6yVdiPnmZH4zhYW1fQnBEQeWvhnVP9XxgWfKuNG16tCIfd00ikxuzvKy

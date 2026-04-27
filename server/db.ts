@@ -11,8 +11,8 @@ if (!process.env.DATABASE_URL) {
 
 export const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
-  // Cloud SQL connections might need specific SSL settings depending on environment
-  // ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  // Cloud SQL connections require SSL when connecting over public IP
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
 export const db = drizzle({ client: pool, schema });
